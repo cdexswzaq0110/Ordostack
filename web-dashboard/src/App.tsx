@@ -531,6 +531,14 @@ function shiftDate(value: string, days: number): string {
   return `${year}-${month}-${day}`;
 }
 
+function todayDateString(): string {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function addMinutes(dateTime: Date, minutes: number): Date {
   return new Date(dateTime.getTime() + minutes * 60_000);
 }
@@ -806,13 +814,26 @@ export function App() {
         },
       ];
 
-  function changeSelectedDate(days: number) {
-    setSelectedDate((currentDate) => shiftDate(currentDate, days));
+  function closeDateScopedEditors() {
     setQuery("");
     setIsTaskFormOpen(false);
     setIsFixedEventFormOpen(false);
     cancelEditingTask();
     cancelEditingFixedEvent();
+  }
+
+  function selectDate(nextDate: string) {
+    if (nextDate.length === 0) {
+      return;
+    }
+
+    setSelectedDate(nextDate);
+    closeDateScopedEditors();
+  }
+
+  function changeSelectedDate(days: number) {
+    setSelectedDate((currentDate) => shiftDate(currentDate, days));
+    closeDateScopedEditors();
   }
 
   function startEditingTask(task: ApiTask) {
@@ -1107,6 +1128,15 @@ export function App() {
               <span>{formatWeekday(selectedDate)}</span>
               <strong>{formatSelectedDate(selectedDate)}</strong>
             </div>
+            <label className="date-picker" aria-label="Choose date">
+              <CalendarDays size={16} aria-hidden="true" />
+              <input
+                type="date"
+                value={selectedDate}
+                disabled={isLoading}
+                onChange={(event) => selectDate(event.target.value)}
+              />
+            </label>
             <button
               className="icon-button"
               type="button"
@@ -1115,6 +1145,14 @@ export function App() {
               onClick={() => changeSelectedDate(1)}
             >
               <ChevronRight size={18} aria-hidden="true" />
+            </button>
+            <button
+              className="ghost-button text-button"
+              type="button"
+              disabled={isLoading || selectedDate === todayDateString()}
+              onClick={() => selectDate(todayDateString())}
+            >
+              Today
             </button>
           </div>
 

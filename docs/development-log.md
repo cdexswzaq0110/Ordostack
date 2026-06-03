@@ -1,5 +1,36 @@
 # Development Log
 
+## 2026-06-04 - Issue 15 - Date Picker Navigation MVP
+
+Branch:
+
+```text
+feature/issue-15-date-picker
+```
+
+Scope:
+
+- Add date picker for arbitrary dashboard date selection.
+- Add Today shortcut next to previous and next day navigation.
+- Close date-scoped create/edit panels when selected date changes.
+
+MVP boundaries:
+
+- No week or month calendar view.
+- No recurring event expansion.
+- No timezone settings UI.
+
+Suggested git commit:
+
+```text
+feat(dashboard): add date picker navigation
+```
+
+Verification:
+
+- web-dashboard production build must pass.
+- Browser smoke must verify date picker and Today shortcut reload date-scoped data.
+
 ## 2026-06-04 - Issue 14 - Fixed Event Editing MVP
 
 Branch:

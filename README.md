@@ -172,6 +172,12 @@ Covered in Issue 14 MVP:
 - Fixed event delete controls use soft delete.
 - Fixed event form validation for title, type, and `HH:MM` time ranges.
 
+Covered in Issue 15 MVP:
+
+- Dashboard date picker for arbitrary date selection.
+- Today shortcut in the date control.
+- Open create/edit forms close when changing date.
+
 Not covered yet:
 
 - Production ML / DL model registry.

@@ -183,6 +183,7 @@ a {
 
 .date-control {
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .date-control span,
@@ -198,6 +199,27 @@ a {
 .date-control strong {
   color: #15191f;
   font-size: 0.98rem;
+}
+
+.date-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 10px;
+  color: #4d5663;
+  border: 1px solid #d7dbe1;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.date-picker input {
+  width: 132px;
+  min-width: 0;
+  color: #15191f;
+  border: 0;
+  outline: 0;
+  background: transparent;
 }
 
 .topbar-actions {
@@ -926,8 +948,13 @@ h3 {
   }
 
   .topbar-actions,
-  .search-box {
+  .search-box,
+  .date-control {
     width: 100%;
+  }
+
+  .date-control {
+    justify-content: flex-start;
   }
 
   .topbar-actions {
@@ -954,6 +981,14 @@ h3 {
 
   .topbar-actions {
     flex-wrap: wrap;
+  }
+
+  .date-picker {
+    flex: 1 1 100%;
+  }
+
+  .date-picker input {
+    width: 100%;
   }
 
   .primary-action,

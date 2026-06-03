@@ -1,6 +1,6 @@
 # QA MVP Test Plan
 
-Scope: Issue 14 Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
+Scope: Issue 15 Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
 
 ## Environment
 
@@ -69,7 +69,11 @@ Expected: output contains `20260603_0001`.
 5. Expected: task queue and analytics reload for June 4, 2026.
 6. Click `Previous day`.
 7. Expected: the top date shows June 3, 2026.
-8. Expected: latest saved schedule can appear again for June 3, 2026.
+8. Select a date through the date picker.
+9. Expected: dashboard data reloads for the selected date.
+10. Click `Today`.
+11. Expected: the top date changes to the current local date.
+12. Expected: latest saved schedule can appear again for dates with saved schedules.
 
 ### Create Task
 

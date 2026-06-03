@@ -2,6 +2,18 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.14.0 - 2026-06-04
+
+- Add dashboard date picker for arbitrary date selection.
+- Add Today shortcut beside previous and next day navigation.
+- Close date-scoped forms and edit panels when the selected date changes.
+
+Suggested commit:
+
+```text
+feat(dashboard): add date picker navigation
+```
+
 ## 0.13.0 - 2026-06-04
 
 - Add fixed event update and soft delete APIs.
