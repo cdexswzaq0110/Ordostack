@@ -106,6 +106,13 @@ class InMemoryStore:
 
         return sorted(filtered_events, key=lambda event: (event["start_time"], event["id"]))
 
+    def get_fixed_event(self, fixed_event_id: int) -> dict[str, Any] | None:
+        with self._lock:
+            fixed_event = self._fixed_events.get(fixed_event_id)
+            if fixed_event is None or fixed_event["deleted_at"] is not None:
+                return None
+            return deepcopy(fixed_event)
+
     def create_fixed_event(self, payload: dict[str, Any]) -> dict[str, Any]:
         now = datetime.now(UTC)
         with self._lock:
@@ -120,6 +127,26 @@ class InMemoryStore:
             }
             self._fixed_events[fixed_event_id] = fixed_event
             return deepcopy(fixed_event)
+
+    def update_fixed_event(self, fixed_event_id: int, payload: dict[str, Any]) -> dict[str, Any] | None:
+        with self._lock:
+            fixed_event = self._fixed_events.get(fixed_event_id)
+            if fixed_event is None or fixed_event["deleted_at"] is not None:
+                return None
+
+            fixed_event.update(payload)
+            fixed_event["updated_at"] = datetime.now(UTC)
+            return deepcopy(fixed_event)
+
+    def soft_delete_fixed_event(self, fixed_event_id: int) -> bool:
+        with self._lock:
+            fixed_event = self._fixed_events.get(fixed_event_id)
+            if fixed_event is None or fixed_event["deleted_at"] is not None:
+                return False
+
+            fixed_event["deleted_at"] = datetime.now(UTC)
+            fixed_event["updated_at"] = fixed_event["deleted_at"]
+            return True
 
     def create_execution_log(self, payload: dict[str, Any]) -> dict[str, Any]:
         now = datetime.now(UTC)

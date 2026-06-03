@@ -218,9 +218,21 @@ type TaskMutationPayload = {
   requires_focus: boolean;
 };
 
+type FixedEventMutationPayload = {
+  title: string;
+  event_type: string;
+  start_time: string;
+  end_time: string;
+};
+
 type TaskFormFieldsProps = {
   form: TaskFormState;
   onChange: Dispatch<SetStateAction<TaskFormState>>;
+};
+
+type FixedEventFormFieldsProps = {
+  form: FixedEventFormState;
+  onChange: Dispatch<SetStateAction<FixedEventFormState>>;
 };
 
 function TaskFormFields({ form, onChange }: TaskFormFieldsProps) {
@@ -313,6 +325,63 @@ function TaskFormFields({ form, onChange }: TaskFormFieldsProps) {
   );
 }
 
+function FixedEventFormFields({ form, onChange }: FixedEventFormFieldsProps) {
+  return (
+    <>
+      <label>
+        <span>Title</span>
+        <input
+          value={form.title}
+          onChange={(event) =>
+            onChange((currentForm) => ({ ...currentForm, title: event.target.value }))
+          }
+          placeholder="Meeting"
+        />
+      </label>
+      <label>
+        <span>Type</span>
+        <input
+          value={form.eventType}
+          onChange={(event) =>
+            onChange((currentForm) => ({ ...currentForm, eventType: event.target.value }))
+          }
+          placeholder="meeting"
+        />
+      </label>
+      <div className="form-grid two-column">
+        <label>
+          <span>Start</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={5}
+            pattern="^([01]\d|2[0-3]):[0-5]\d$"
+            placeholder="16:00"
+            value={form.startTime}
+            onChange={(event) =>
+              onChange((currentForm) => ({ ...currentForm, startTime: event.target.value }))
+            }
+          />
+        </label>
+        <label>
+          <span>End</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={5}
+            pattern="^([01]\d|2[0-3]):[0-5]\d$"
+            placeholder="17:00"
+            value={form.endTime}
+            onChange={(event) =>
+              onChange((currentForm) => ({ ...currentForm, endTime: event.target.value }))
+            }
+          />
+        </label>
+      </div>
+    </>
+  );
+}
+
 function getTaskFormError(form: TaskFormState): string | null {
   if (form.title.trim().length === 0) {
     return "Task title is required";
@@ -348,6 +417,30 @@ function getTaskFormError(form: TaskFormState): string | null {
   return null;
 }
 
+function getFixedEventFormError(form: FixedEventFormState): string | null {
+  if (form.title.trim().length === 0) {
+    return "Fixed event title is required";
+  }
+
+  if (form.eventType.trim().length === 0) {
+    return "Fixed event type is required";
+  }
+
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(form.startTime)) {
+    return "Start time must use HH:MM format";
+  }
+
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(form.endTime)) {
+    return "End time must use HH:MM format";
+  }
+
+  if (form.endTime <= form.startTime) {
+    return "End time must be later than start time";
+  }
+
+  return null;
+}
+
 function buildTaskMutationPayload(form: TaskFormState, selectedDate: string): TaskMutationPayload {
   return {
     title: form.title.trim(),
@@ -360,6 +453,15 @@ function buildTaskMutationPayload(form: TaskFormState, selectedDate: string): Ta
   };
 }
 
+function buildFixedEventMutationPayload(form: FixedEventFormState, selectedDate: string): FixedEventMutationPayload {
+  return {
+    title: form.title.trim(),
+    event_type: form.eventType.trim(),
+    start_time: `${selectedDate}T${form.startTime}:00`,
+    end_time: `${selectedDate}T${form.endTime}:00`,
+  };
+}
+
 function taskFormFromTask(task: ApiTask): TaskFormState {
   return {
     title: task.title,
@@ -369,6 +471,15 @@ function taskFormFromTask(task: ApiTask): TaskFormState {
     difficulty: String(task.difficulty),
     deadlineTime: task.deadline ? task.deadline.slice(11, 16) : emptyTaskForm.deadlineTime,
     requiresFocus: task.requires_focus,
+  };
+}
+
+function fixedEventFormFromEvent(event: ApiFixedEvent): FixedEventFormState {
+  return {
+    title: event.title,
+    eventType: event.event_type ?? emptyFixedEventForm.eventType,
+    startTime: event.start_time.slice(11, 16),
+    endTime: event.end_time.slice(11, 16),
   };
 }
 
@@ -558,6 +669,8 @@ export function App() {
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
   const [editTaskForm, setEditTaskForm] = useState<TaskFormState>(emptyTaskForm);
   const [fixedEventForm, setFixedEventForm] = useState<FixedEventFormState>(emptyFixedEventForm);
+  const [editingFixedEventId, setEditingFixedEventId] = useState<number | null>(null);
+  const [editFixedEventForm, setEditFixedEventForm] = useState<FixedEventFormState>(emptyFixedEventForm);
 
   async function loadDashboardData() {
     setIsLoading(true);
@@ -699,6 +812,7 @@ export function App() {
     setIsTaskFormOpen(false);
     setIsFixedEventFormOpen(false);
     cancelEditingTask();
+    cancelEditingFixedEvent();
   }
 
   function startEditingTask(task: ApiTask) {
@@ -711,6 +825,18 @@ export function App() {
   function cancelEditingTask() {
     setEditingTaskId(null);
     setEditTaskForm(emptyTaskForm);
+  }
+
+  function startEditingFixedEvent(event: ApiFixedEvent) {
+    setError(null);
+    setIsFixedEventFormOpen(false);
+    setEditingFixedEventId(event.id);
+    setEditFixedEventForm(fixedEventFormFromEvent(event));
+  }
+
+  function cancelEditingFixedEvent() {
+    setEditingFixedEventId(null);
+    setEditFixedEventForm(emptyFixedEventForm);
   }
 
   async function generatePlan() {
@@ -800,8 +926,9 @@ export function App() {
   }
 
   async function createFixedEvent() {
-    if (fixedEventForm.title.trim().length === 0) {
-      setError("Fixed event title is required");
+    const formError = getFixedEventFormError(fixedEventForm);
+    if (formError) {
+      setError(formError);
       return;
     }
 
@@ -813,18 +940,59 @@ export function App() {
         method: "POST",
         body: JSON.stringify({
           user_id: DEMO_USER_ID,
-          title: fixedEventForm.title.trim(),
-          event_type: fixedEventForm.eventType.trim(),
-          start_time: `${selectedDate}T${fixedEventForm.startTime}:00`,
-          end_time: `${selectedDate}T${fixedEventForm.endTime}:00`,
+          ...buildFixedEventMutationPayload(fixedEventForm, selectedDate),
         }),
       });
 
       setFixedEventForm(emptyFixedEventForm);
       setIsFixedEventFormOpen(false);
+      cancelEditingFixedEvent();
       await loadDashboardData();
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Unable to create fixed event");
+    } finally {
+      setIsMutating(false);
+    }
+  }
+
+  async function updateFixedEventDetails(fixedEventId: number) {
+    const formError = getFixedEventFormError(editFixedEventForm);
+    if (formError) {
+      setError(formError);
+      return;
+    }
+
+    setIsMutating(true);
+    setError(null);
+
+    try {
+      await requestJson<ApiFixedEvent>(`${API_BASE_URL}/fixed-events/${fixedEventId}`, {
+        method: "PATCH",
+        body: JSON.stringify(buildFixedEventMutationPayload(editFixedEventForm, selectedDate)),
+      });
+
+      cancelEditingFixedEvent();
+      await loadDashboardData();
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Unable to update fixed event");
+    } finally {
+      setIsMutating(false);
+    }
+  }
+
+  async function deleteFixedEvent(fixedEventId: number) {
+    setIsMutating(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/fixed-events/${fixedEventId}`, { method: "DELETE" });
+      if (!response.ok) {
+        throw new Error(`Delete failed with ${response.status}`);
+      }
+
+      await loadDashboardData();
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Unable to delete fixed event");
     } finally {
       setIsMutating(false);
     }
@@ -1230,7 +1398,10 @@ export function App() {
                     <button
                       className="secondary-action"
                       type="button"
-                      onClick={() => setIsFixedEventFormOpen((isOpen) => !isOpen)}
+                      onClick={() => {
+                        setIsFixedEventFormOpen((isOpen) => !isOpen);
+                        cancelEditingFixedEvent();
+                      }}
                     >
                       <Plus size={16} aria-hidden="true" />
                       <span>Add</span>
@@ -1245,38 +1416,7 @@ export function App() {
                         void createFixedEvent();
                       }}
                     >
-                      <label>
-                        <span>Title</span>
-                        <input
-                          value={fixedEventForm.title}
-                          onChange={(event) =>
-                            setFixedEventForm({ ...fixedEventForm, title: event.target.value })
-                          }
-                          placeholder="Meeting"
-                        />
-                      </label>
-                      <div className="form-grid two-column">
-                        <label>
-                          <span>Start</span>
-                          <input
-                            type="time"
-                            value={fixedEventForm.startTime}
-                            onChange={(event) =>
-                              setFixedEventForm({ ...fixedEventForm, startTime: event.target.value })
-                            }
-                          />
-                        </label>
-                        <label>
-                          <span>End</span>
-                          <input
-                            type="time"
-                            value={fixedEventForm.endTime}
-                            onChange={(event) =>
-                              setFixedEventForm({ ...fixedEventForm, endTime: event.target.value })
-                            }
-                          />
-                        </label>
-                      </div>
+                      <FixedEventFormFields form={fixedEventForm} onChange={setFixedEventForm} />
                       <button className="primary-action" type="submit" disabled={isMutating}>
                         <Plus size={16} aria-hidden="true" />
                         <span>Create event</span>
@@ -1286,15 +1426,64 @@ export function App() {
 
                   <div className="fixed-event-list">
                     {fixedEvents.map((event) => (
-                      <article key={event.id} className="fixed-event-row">
-                        <CalendarDays size={17} aria-hidden="true" />
-                        <div>
-                          <strong>{event.title}</strong>
-                          <span>
-                            {formatTime(event.start_time)} - {formatTime(event.end_time)}
-                          </span>
-                        </div>
-                      </article>
+                      <div key={event.id} className="fixed-event-stack">
+                        <article className="fixed-event-row">
+                          <CalendarDays size={17} aria-hidden="true" />
+                          <div>
+                            <strong>{event.title}</strong>
+                            <span>
+                              {formatTime(event.start_time)} - {formatTime(event.end_time)}
+                            </span>
+                          </div>
+                          <div className="row-actions">
+                            <button
+                              className="ghost-button"
+                              type="button"
+                              aria-label={`Edit ${event.title}`}
+                              disabled={isMutating}
+                              onClick={() => startEditingFixedEvent(event)}
+                            >
+                              <Pencil size={16} />
+                            </button>
+                            <button
+                              className="ghost-button danger"
+                              type="button"
+                              aria-label={`Delete ${event.title}`}
+                              disabled={isMutating}
+                              onClick={() => void deleteFixedEvent(event.id)}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </article>
+
+                        {editingFixedEventId === event.id ? (
+                          <form
+                            className="inline-form compact-form fixed-event-edit-form"
+                            aria-label={`Edit ${event.title}`}
+                            onSubmit={(formEvent) => {
+                              formEvent.preventDefault();
+                              void updateFixedEventDetails(event.id);
+                            }}
+                          >
+                            <FixedEventFormFields form={editFixedEventForm} onChange={setEditFixedEventForm} />
+                            <div className="form-actions">
+                              <button className="primary-action" type="submit" disabled={isMutating}>
+                                <CheckCircle2 size={16} aria-hidden="true" />
+                                <span>Save event</span>
+                              </button>
+                              <button
+                                className="ghost-button text-button"
+                                type="button"
+                                disabled={isMutating}
+                                onClick={cancelEditingFixedEvent}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </form>
+                        ) : null}
+                      </div>
                     ))}
                   </div>
                 </div>

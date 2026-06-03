@@ -1,5 +1,39 @@
 # Development Log
 
+## 2026-06-04 - Issue 14 - Fixed Event Editing MVP
+
+Branch:
+
+```text
+feature/issue-14-fixed-event-editing
+```
+
+Scope:
+
+- Add fixed event update and soft delete APIs.
+- Add inline fixed event editing in the dashboard Protected time panel.
+- Add fixed event delete controls backed by soft delete.
+- Validate fixed event title, type, and `HH:MM` time ranges before create and update.
+
+MVP boundaries:
+
+- No recurring fixed events.
+- No drag-and-drop schedule editing.
+- No calendar sync.
+
+Suggested git commit:
+
+```text
+feat(fixed-events): add edit and delete workflows
+```
+
+Verification:
+
+- Fixed event API tests must pass locally.
+- web-dashboard production build must pass.
+- Docker Compose services must remain healthy.
+- Browser smoke must verify fixed event edit and delete.
+
 ## 2026-06-03 - Issue 13 - Task Editing MVP
 
 Branch:

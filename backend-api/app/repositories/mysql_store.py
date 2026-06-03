@@ -140,6 +140,13 @@ class MySqlStore:
                 cursor.execute(query, params)
                 return list(cursor.fetchall())
 
+    def get_fixed_event(self, fixed_event_id: int) -> dict[str, Any] | None:
+        self._ensure_ready()
+        with self._connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT * FROM fixed_events WHERE id=%s AND deleted_at IS NULL", (fixed_event_id,))
+                return cursor.fetchone()
+
     def create_fixed_event(self, payload: dict[str, Any]) -> dict[str, Any]:
         self._ensure_ready()
         now = datetime.now(UTC)
@@ -171,6 +178,40 @@ class MySqlStore:
 
                 cursor.execute("SELECT * FROM fixed_events WHERE id=%s", (fixed_event_id,))
                 return cursor.fetchone()
+
+    def update_fixed_event(self, fixed_event_id: int, payload: dict[str, Any]) -> dict[str, Any] | None:
+        self._ensure_ready()
+        if not payload:
+            return self.get_fixed_event(fixed_event_id)
+
+        updated_payload = {**payload, "updated_at": datetime.now(UTC)}
+        assignments = ", ".join([f"{field}=%s" for field in updated_payload])
+        values = [
+            self._serialize_value(field, value)
+            for field, value in updated_payload.items()
+        ]
+        values.append(fixed_event_id)
+
+        with self._connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    f"UPDATE fixed_events SET {assignments} WHERE id=%s AND deleted_at IS NULL",
+                    values,
+                )
+                if cursor.rowcount == 0:
+                    return None
+        return self.get_fixed_event(fixed_event_id)
+
+    def soft_delete_fixed_event(self, fixed_event_id: int) -> bool:
+        self._ensure_ready()
+        now = datetime.now(UTC)
+        with self._connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE fixed_events SET deleted_at=%s, updated_at=%s WHERE id=%s AND deleted_at IS NULL",
+                    (now, now, fixed_event_id),
+                )
+                return cursor.rowcount > 0
 
     def create_execution_log(self, payload: dict[str, Any]) -> dict[str, Any]:
         self._ensure_ready()

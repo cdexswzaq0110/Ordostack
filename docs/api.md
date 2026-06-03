@@ -49,6 +49,8 @@ Create task example:
 | --- | --- | --- |
 | `GET` | `/fixed-events?user_id=1&target_date=2026-06-03` | List fixed events |
 | `POST` | `/fixed-events` | Create a fixed event |
+| `PATCH` | `/fixed-events/{fixed_event_id}` | Update a fixed event |
+| `DELETE` | `/fixed-events/{fixed_event_id}` | Soft delete a fixed event |
 
 Create fixed event example:
 

@@ -1,6 +1,6 @@
 # QA MVP Test Plan
 
-Scope: Issue 13 Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
+Scope: Issue 14 Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
 
 ## Environment
 
@@ -130,6 +130,20 @@ Expected: output contains `20260603_0001`.
 4. Click `Create event`.
 5. Expected: event appears in Protected time and timeline.
 6. Expected: the created event belongs to the currently selected date.
+
+### Edit Fixed Event
+
+1. Click the edit icon on a fixed event row.
+2. Change title, type, start time, or end time.
+3. Click `Save event`.
+4. Expected: the event row refreshes with the edited values.
+5. Expected: refreshing the dashboard keeps the edited event values.
+
+### Soft Delete Fixed Event
+
+1. Click the delete icon on a fixed event row.
+2. Expected: the event disappears from Protected time.
+3. Expected: the event is not returned by `GET /api/fixed-events`.
 
 ### Invalid Fixed Event
 

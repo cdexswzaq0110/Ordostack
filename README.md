@@ -165,6 +165,13 @@ Covered in Issue 13 MVP:
 - Task form validation runs before create and update requests.
 - Edited tasks are saved through `PATCH /api/tasks/{task_id}`.
 
+Covered in Issue 14 MVP:
+
+- Fixed event update and soft delete APIs.
+- Dashboard inline fixed event editing.
+- Fixed event delete controls use soft delete.
+- Fixed event form validation for title, type, and `HH:MM` time ranges.
+
 Not covered yet:
 
 - Production ML / DL model registry.

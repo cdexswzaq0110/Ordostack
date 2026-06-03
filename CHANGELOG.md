@@ -2,6 +2,18 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.13.0 - 2026-06-04
+
+- Add fixed event update and soft delete APIs.
+- Add dashboard inline fixed event editing and delete controls.
+- Validate fixed event title, type, start time, and end time before create and update requests.
+
+Suggested commit:
+
+```text
+feat(fixed-events): add edit and delete workflows
+```
+
 ## 0.12.0 - 2026-06-03
 
 - Add dashboard task editing for title, category, estimate, priority, difficulty, deadline time, and focus requirement.

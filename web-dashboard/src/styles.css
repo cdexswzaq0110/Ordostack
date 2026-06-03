@@ -741,6 +741,11 @@ h3 {
   gap: 8px;
 }
 
+.fixed-event-stack {
+  display: grid;
+  gap: 8px;
+}
+
 .fixed-event-row {
   display: flex;
   align-items: center;
@@ -753,9 +758,18 @@ h3 {
   background: #f6f2ff;
 }
 
+.fixed-event-row > div:not(.row-actions) {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .fixed-event-row strong,
 .fixed-event-row span {
   display: block;
+}
+
+.fixed-event-edit-form {
+  background: #fbfaff;
 }
 
 .fixed-event-row strong {
