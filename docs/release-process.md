@@ -5,7 +5,7 @@ OrdoStack uses MVP issue releases until production deployment exists.
 ## Current Version
 
 ```text
-0.10.1
+0.11.0
 ```
 
 ## Release Types

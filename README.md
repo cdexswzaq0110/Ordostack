@@ -151,6 +151,13 @@ Covered in Issue 11 MVP:
 - Release process documentation.
 - Baseline commit checklist for future branch-based development.
 
+Covered in Issue 12 MVP:
+
+- Dashboard selected date state.
+- Previous day and next day navigation.
+- Tasks, fixed events, analytics, duration predictions, and latest schedule reload by selected date.
+- New task and fixed event forms create records on the currently selected date.
+
 Not covered yet:
 
 - Production ML / DL model registry.

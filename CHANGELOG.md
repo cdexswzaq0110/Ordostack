@@ -2,6 +2,18 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.11.0 - 2026-06-03
+
+- Add dashboard previous day and next day navigation.
+- Reload tasks, fixed events, analytics, duration predictions, and latest saved schedule by selected date.
+- Create tasks and fixed events against the currently selected date.
+
+Suggested commit:
+
+```text
+feat(dashboard): add date navigation
+```
+
 ## 0.10.1 - 2026-06-03
 
 - Add `VERSION` file for release tracking.

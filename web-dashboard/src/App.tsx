@@ -176,7 +176,7 @@ type FixedEventFormState = {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api";
 const DEMO_USER_ID = 1;
-const SELECTED_DATE = "2026-06-03";
+const DEFAULT_SELECTED_DATE = "2026-06-03";
 
 const navigationItems: NavigationItem[] = [
   { label: "Today", icon: LayoutDashboard, isActive: true },
@@ -245,6 +245,15 @@ function formatWeekday(value: string): string {
   return new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(new Date(`${value}T00:00:00`));
 }
 
+function shiftDate(value: string, days: number): string {
+  const date = new Date(`${value}T00:00:00`);
+  date.setDate(date.getDate() + days);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function addMinutes(dateTime: Date, minutes: number): Date {
   return new Date(dateTime.getTime() + minutes * 60_000);
 }
@@ -284,7 +293,7 @@ function taskStateLabel(status: TaskStatus): string {
   return labels[status];
 }
 
-function buildTimeline(tasks: ApiTask[], fixedEvents: ApiFixedEvent[]): TimelineItem[] {
+function buildTimeline(tasks: ApiTask[], fixedEvents: ApiFixedEvent[], selectedDate: string): TimelineItem[] {
   const taskStarts = ["09:00", "10:45", "13:30", "15:00"];
   const pendingTasks = tasks
     .filter((task) => task.status !== "completed" && task.status !== "skipped")
@@ -292,7 +301,7 @@ function buildTimeline(tasks: ApiTask[], fixedEvents: ApiFixedEvent[]): Timeline
     .slice(0, taskStarts.length);
 
   const taskBlocks = pendingTasks.map((task, index) => {
-    const start = new Date(`${SELECTED_DATE}T${taskStarts[index]}:00`);
+    const start = new Date(`${selectedDate}T${taskStarts[index]}:00`);
     const end = addMinutes(start, task.estimated_minutes);
     return {
       start: toTimeLabel(start),
@@ -365,6 +374,7 @@ async function requestOptionalJson<T>(url: string, options?: RequestInit): Promi
 }
 
 export function App() {
+  const [selectedDate, setSelectedDate] = useState(DEFAULT_SELECTED_DATE);
   const [tasks, setTasks] = useState<ApiTask[]>([]);
   const [fixedEvents, setFixedEvents] = useState<ApiFixedEvent[]>([]);
   const [schedule, setSchedule] = useState<ApiScheduleResponse | null>(null);
@@ -388,19 +398,19 @@ export function App() {
     try {
       const [nextTasks, nextFixedEvents, nextAnalytics, nextDurationPredictions, latestSchedule] = await Promise.all([
         requestJson<ApiTask[]>(
-          `${API_BASE_URL}/tasks?user_id=${DEMO_USER_ID}&target_date=${SELECTED_DATE}`,
+          `${API_BASE_URL}/tasks?user_id=${DEMO_USER_ID}&target_date=${selectedDate}`,
         ),
         requestJson<ApiFixedEvent[]>(
-          `${API_BASE_URL}/fixed-events?user_id=${DEMO_USER_ID}&target_date=${SELECTED_DATE}`,
+          `${API_BASE_URL}/fixed-events?user_id=${DEMO_USER_ID}&target_date=${selectedDate}`,
         ),
         requestJson<ApiDailyAnalytics>(
-          `${API_BASE_URL}/analytics/daily?user_id=${DEMO_USER_ID}&target_date=${SELECTED_DATE}`,
+          `${API_BASE_URL}/analytics/daily?user_id=${DEMO_USER_ID}&target_date=${selectedDate}`,
         ),
         requestJson<ApiDurationPredictionResponse>(
-          `${API_BASE_URL}/ml/duration-predictions?user_id=${DEMO_USER_ID}&target_date=${SELECTED_DATE}`,
+          `${API_BASE_URL}/ml/duration-predictions?user_id=${DEMO_USER_ID}&target_date=${selectedDate}`,
         ),
         requestOptionalJson<ApiScheduleResponse>(
-          `${API_BASE_URL}/schedules/latest?user_id=${DEMO_USER_ID}&target_date=${SELECTED_DATE}`,
+          `${API_BASE_URL}/schedules/latest?user_id=${DEMO_USER_ID}&target_date=${selectedDate}`,
         ),
       ]);
 
@@ -419,7 +429,7 @@ export function App() {
 
   useEffect(() => {
     void loadDashboardData();
-  }, []);
+  }, [selectedDate]);
 
   const filteredTasks = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -436,8 +446,8 @@ export function App() {
   }, [query, tasks]);
 
   const timelineItems = useMemo(
-    () => (schedule ? buildTimelineFromSchedule(schedule.items) : buildTimeline(tasks, fixedEvents)),
-    [fixedEvents, schedule, tasks],
+    () => (schedule ? buildTimelineFromSchedule(schedule.items) : buildTimeline(tasks, fixedEvents, selectedDate)),
+    [fixedEvents, schedule, selectedDate, tasks],
   );
   const analyticsByTask = useMemo(() => {
     return new Map((analytics?.task_summaries ?? []).map((summary) => [summary.task_id, summary]));
@@ -515,6 +525,13 @@ export function App() {
         },
       ];
 
+  function changeSelectedDate(days: number) {
+    setSelectedDate((currentDate) => shiftDate(currentDate, days));
+    setQuery("");
+    setIsTaskFormOpen(false);
+    setIsFixedEventFormOpen(false);
+  }
+
   async function generatePlan() {
     setIsGenerating(true);
     setError(null);
@@ -524,7 +541,7 @@ export function App() {
         method: "POST",
         body: JSON.stringify({
           user_id: DEMO_USER_ID,
-          target_date: SELECTED_DATE,
+          target_date: selectedDate,
           planning_mode: "balanced",
           start_hour: 9,
           end_hour: 23,
@@ -562,7 +579,7 @@ export function App() {
           estimated_minutes: Number(taskForm.estimatedMinutes),
           priority: Number(taskForm.priority),
           difficulty: Number(taskForm.difficulty),
-          deadline: `${SELECTED_DATE}T${taskForm.deadlineTime}:00`,
+          deadline: `${selectedDate}T${taskForm.deadlineTime}:00`,
           requires_focus: taskForm.requiresFocus,
           is_fixed: false,
           is_splittable: false,
@@ -596,8 +613,8 @@ export function App() {
           user_id: DEMO_USER_ID,
           title: fixedEventForm.title.trim(),
           event_type: fixedEventForm.eventType.trim(),
-          start_time: `${SELECTED_DATE}T${fixedEventForm.startTime}:00`,
-          end_time: `${SELECTED_DATE}T${fixedEventForm.endTime}:00`,
+          start_time: `${selectedDate}T${fixedEventForm.startTime}:00`,
+          end_time: `${selectedDate}T${fixedEventForm.endTime}:00`,
         }),
       });
 
@@ -707,15 +724,27 @@ export function App() {
       <main className="workspace" aria-labelledby="page-title">
         <header className="topbar">
           <div className="date-control" aria-label="Selected date">
-            <button className="icon-button" type="button" aria-label="Previous day" disabled>
-              <ChevronLeft size={18} />
+            <button
+              className="icon-button"
+              type="button"
+              aria-label="Previous day"
+              disabled={isLoading}
+              onClick={() => changeSelectedDate(-1)}
+            >
+              <ChevronLeft size={18} aria-hidden="true" />
             </button>
             <div>
-              <span>{formatWeekday(SELECTED_DATE)}</span>
-              <strong>{formatSelectedDate(SELECTED_DATE)}</strong>
+              <span>{formatWeekday(selectedDate)}</span>
+              <strong>{formatSelectedDate(selectedDate)}</strong>
             </div>
-            <button className="icon-button" type="button" aria-label="Next day" disabled>
-              <ChevronRight size={18} />
+            <button
+              className="icon-button"
+              type="button"
+              aria-label="Next day"
+              disabled={isLoading}
+              onClick={() => changeSelectedDate(1)}
+            >
+              <ChevronRight size={18} aria-hidden="true" />
             </button>
           </div>
 

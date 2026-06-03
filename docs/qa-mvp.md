@@ -1,6 +1,6 @@
 # QA MVP Test Plan
 
-Scope: Issue 9 Task, Fixed Event, Scheduler, Persisted Schedule, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
+Scope: Issue 12 Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
 
 ## Environment
 
@@ -53,8 +53,23 @@ docker compose exec backend-api alembic current
 ```
 
 Expected: output contains `20260603_0001`.
+15. Click `Next day`.
+16. Expected: the date changes to June 4, 2026 and dashboard data reloads.
+17. Click `Previous day`.
+18. Expected: the date changes back to June 3, 2026 and saved schedule data reloads.
 
 ## Task Tests
+
+### Date Navigation
+
+1. Open `http://localhost:5173`.
+2. Confirm the top date shows June 3, 2026.
+3. Click `Next day`.
+4. Expected: the top date shows June 4, 2026.
+5. Expected: task queue and analytics reload for June 4, 2026.
+6. Click `Previous day`.
+7. Expected: the top date shows June 3, 2026.
+8. Expected: latest saved schedule can appear again for June 3, 2026.
 
 ### Create Task
 
@@ -63,6 +78,7 @@ Expected: output contains `20260603_0001`.
 3. Keep minutes greater than `0`.
 4. Click `Create task`.
 5. Expected: new task appears in Task queue and timeline.
+6. Expected: the created task belongs to the currently selected date.
 
 ### Complete Task
 
@@ -104,6 +120,7 @@ Expected: output contains `20260603_0001`.
 3. Set start time earlier than end time.
 4. Click `Create event`.
 5. Expected: event appears in Protected time and timeline.
+6. Expected: the created event belongs to the currently selected date.
 
 ### Invalid Fixed Event
 

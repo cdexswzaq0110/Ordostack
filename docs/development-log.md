@@ -1,5 +1,39 @@
 # Development Log
 
+## 2026-06-03 - Issue 12 - Date Navigation MVP
+
+Branch:
+
+```text
+feature/issue-12-date-navigation
+```
+
+Scope:
+
+- Replace hard-coded dashboard date usage with selected date state.
+- Enable previous day and next day navigation.
+- Reload date-scoped API data when selected date changes.
+- Ensure task and fixed event creation uses the selected date.
+
+MVP boundaries:
+
+- No week or month calendar view.
+- No arbitrary date picker yet.
+- No cross-day recurring events.
+
+Suggested git commit:
+
+```text
+feat(dashboard): add date navigation
+```
+
+Verification:
+
+- Python service tests must pass locally.
+- `docker compose config` must pass locally.
+- web-dashboard production build must pass.
+- Browser smoke must verify previous and next day navigation.
+
 ## 2026-06-03 - Issue 11 - Repository Baseline And Release Process
 
 Branch:
