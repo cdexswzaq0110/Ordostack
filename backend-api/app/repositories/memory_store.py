@@ -240,6 +240,13 @@ class InMemoryStore:
             "schedule": deepcopy(schedule),
         }
 
+    def reset_demo_data(self, user_id: int = DEMO_USER_ID) -> dict[str, int]:
+        self.reset()
+        return {
+            "seeded_tasks": len(self.list_tasks(user_id=user_id)),
+            "seeded_fixed_events": len(self.list_fixed_events(user_id=user_id)),
+        }
+
     def _seed_demo_data(self) -> None:
         task_seed = [
             {

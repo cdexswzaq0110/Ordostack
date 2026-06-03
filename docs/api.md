@@ -14,6 +14,14 @@ http://localhost:8000/api
 | scheduler-service | `GET /health` |
 | ml-service | `GET /health` |
 
+## Demo MVP
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `POST` | `/demo/reset?user_id=1` | Reset the bundled local demo user dataset |
+
+This is a demo-only endpoint for local QA and customer demos. It is not a production account-management API.
+
 ## Tasks MVP
 
 | Method | Endpoint | Purpose |

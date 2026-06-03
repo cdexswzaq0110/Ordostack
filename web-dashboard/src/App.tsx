@@ -1066,6 +1066,32 @@ export function App() {
     }
   }
 
+  async function resetDemoData() {
+    const shouldReset = window.confirm("Reset demo data for user 1? This clears demo tasks, events, logs, and schedules.");
+    if (!shouldReset) {
+      return;
+    }
+
+    setIsMutating(true);
+    setError(null);
+
+    try {
+      await requestJson(`${API_BASE_URL}/demo/reset?user_id=${DEMO_USER_ID}`, {
+        method: "POST",
+      });
+      closeDateScopedEditors();
+      if (selectedDate === DEFAULT_SELECTED_DATE) {
+        await loadDashboardData();
+      } else {
+        setSelectedDate(DEFAULT_SELECTED_DATE);
+      }
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Unable to reset demo data");
+    } finally {
+      setIsMutating(false);
+    }
+  }
+
   async function recordExecutionEvent(taskId: number, eventType: "start" | "pause" | "complete" | "skip") {
     setIsMutating(true);
     setError(null);
@@ -1156,6 +1182,15 @@ export function App() {
               <strong>ok</strong>
             </div>
           ))}
+          <button
+            className="demo-reset-button"
+            type="button"
+            disabled={isMutating || isLoading}
+            onClick={() => void resetDemoData()}
+          >
+            <RotateCcw size={15} aria-hidden="true" />
+            <span>Reset demo</span>
+          </button>
         </div>
       </aside>
 

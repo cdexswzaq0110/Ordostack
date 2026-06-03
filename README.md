@@ -190,6 +190,12 @@ Covered in Issue 17 MVP:
 - Retry action in the error banner.
 - Compact empty-state styling for demo usability.
 
+Covered in Issue 18 MVP:
+
+- Demo-only reset API for the bundled demo user.
+- Dashboard Reset demo control with confirmation.
+- Backend test coverage for restoring seeded demo data.
+
 Not covered yet:
 
 - Production ML / DL model registry.

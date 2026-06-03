@@ -2,6 +2,18 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.17.0 - 2026-06-04
+
+- Add demo reset API for the bundled demo user.
+- Add dashboard Reset demo control with confirmation.
+- Add backend test coverage for restoring seeded demo data.
+
+Suggested commit:
+
+```text
+feat(demo): add demo data reset control
+```
+
 ## 0.16.0 - 2026-06-04
 
 - Add dashboard empty states for timeline, schedule history, and fixed events.

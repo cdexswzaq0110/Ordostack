@@ -161,6 +161,26 @@ a {
   color: #95d5a4;
 }
 
+.demo-reset-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 36px;
+  margin-top: 8px;
+  color: #dce3ea;
+  font-weight: 700;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  background: #1a2230;
+}
+
+.demo-reset-button:hover:not(:disabled) {
+  border-color: #58708f;
+  background: #202b3a;
+}
+
 .health-dot {
   width: 7px;
   height: 7px;

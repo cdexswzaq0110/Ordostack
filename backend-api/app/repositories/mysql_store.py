@@ -395,6 +395,50 @@ class MySqlStore:
 
         return history_items
 
+    def reset_demo_data(self, user_id: int = DEMO_USER_ID) -> dict[str, int]:
+        self._ensure_ready()
+        with self._connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT id FROM schedule_runs WHERE user_id=%s", (user_id,))
+                schedule_run_ids = [row["id"] for row in cursor.fetchall()]
+                if schedule_run_ids:
+                    placeholders = ", ".join(["%s"] * len(schedule_run_ids))
+                    cursor.execute(
+                        f"DELETE FROM schedule_items WHERE schedule_run_id IN ({placeholders})",
+                        schedule_run_ids,
+                    )
+                cursor.execute("DELETE FROM schedule_runs WHERE user_id=%s", (user_id,))
+                cursor.execute("DELETE FROM execution_logs WHERE user_id=%s", (user_id,))
+                cursor.execute("DELETE FROM tasks WHERE user_id=%s", (user_id,))
+                cursor.execute("DELETE FROM fixed_events WHERE user_id=%s", (user_id,))
+
+        created_tasks = [self.create_task(task) for task in demo_task_seed()]
+        completed_task = created_tasks[2]
+        self.update_task(completed_task["id"], {"status": "completed"})
+        self.create_execution_log(
+            {
+                "user_id": user_id,
+                "task_id": completed_task["id"],
+                "event_type": "start",
+                "occurred_at": datetime(2026, 6, 3, 14, 0),
+            }
+        )
+        self.create_execution_log(
+            {
+                "user_id": user_id,
+                "task_id": completed_task["id"],
+                "event_type": "complete",
+                "occurred_at": datetime(2026, 6, 3, 14, 47),
+            }
+        )
+        for fixed_event in demo_fixed_event_seed():
+            self.create_fixed_event(fixed_event)
+
+        return {
+            "seeded_tasks": len(created_tasks),
+            "seeded_fixed_events": len(demo_fixed_event_seed()),
+        }
+
     def _ensure_ready(self) -> None:
         if self._is_ready:
             return

@@ -1,6 +1,6 @@
 # QA MVP Test Plan
 
-Scope: Issue 17 Dashboard UX Polish, Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
+Scope: Issue 18 Demo Seed And Reset Control, Dashboard UX Polish, Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
 
 ## Environment
 
@@ -326,6 +326,7 @@ docker compose exec backend-api alembic current
 ## API Checks
 
 ```powershell
+Invoke-RestMethod -Method Post -Uri "http://localhost:8000/api/demo/reset?user_id=1"
 Invoke-RestMethod -Uri "http://localhost:8000/api/tasks?user_id=1&target_date=2026-06-03"
 Invoke-RestMethod -Uri "http://localhost:8000/api/fixed-events?user_id=1&target_date=2026-06-03"
 Invoke-RestMethod -Uri "http://localhost:8000/api/task-execution-logs?user_id=1&target_date=2026-06-03"
@@ -337,7 +338,8 @@ Invoke-RestMethod -Uri "http://localhost:8200/model/info"
 
 ## Known Limitations
 
-- Schedule history is persisted, but only the latest schedule is exposed through the API.
+- Demo reset is for local demo user data only and is not a production data restore feature.
+- Schedule history is exposed, but diff, naming, and deletion are not implemented yet.
 - Active timers only affect actual minutes after pause, complete, or skip closes an interval.
 - Task splitting is not implemented yet.
 - Duration prediction uses a local JSON training artifact, not a production model registry.

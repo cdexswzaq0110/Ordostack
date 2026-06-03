@@ -1,5 +1,37 @@
 # Development Log
 
+## 2026-06-04 - Issue 18 - Demo Seed And Reset Control MVP
+
+Branch:
+
+```text
+feature/issue-18-demo-reset
+```
+
+Scope:
+
+- Add demo-only reset API for the bundled demo user.
+- Add dashboard Reset demo control with confirmation.
+- Restore seeded tasks, fixed events, and execution sample data.
+
+MVP boundaries:
+
+- Demo reset is not a production user-data feature.
+- No per-tenant data retention policy.
+- No cloud backup restore flow.
+
+Suggested git commit:
+
+```text
+feat(demo): add demo data reset control
+```
+
+Verification:
+
+- Demo API tests must pass locally.
+- web-dashboard production build must pass.
+- Browser smoke should verify the Reset demo button renders and prompts for confirmation.
+
 ## 2026-06-04 - Issue 17 - Dashboard UX Polish MVP
 
 Branch:

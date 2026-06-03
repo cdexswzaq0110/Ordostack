@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.analytics import router as analytics_router
+from app.api.demo import router as demo_router
 from app.api.execution_logs import router as execution_logs_router
 from app.api.fixed_events import router as fixed_events_router
 from app.api.predictions import router as predictions_router
@@ -27,6 +28,7 @@ app.include_router(schedules_router)
 app.include_router(execution_logs_router)
 app.include_router(analytics_router)
 app.include_router(predictions_router)
+app.include_router(demo_router)
 
 
 def build_health_payload() -> dict[str, str]:
