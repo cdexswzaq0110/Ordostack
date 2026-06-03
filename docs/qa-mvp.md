@@ -1,6 +1,6 @@
 # QA MVP Test Plan
 
-Scope: Issue 18 Demo Seed And Reset Control, Dashboard UX Polish, Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
+Scope: Issue 19 E2E Smoke Workflow, Demo Seed And Reset Control, Dashboard UX Polish, Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
 
 ## Environment
 
@@ -59,6 +59,26 @@ Expected: output contains `20260603_0001`.
 18. Expected: the date changes back to June 3, 2026 and saved schedule data reloads.
 19. Select a date without demo data.
 20. Expected: timeline, history, and fixed event areas show coherent empty states.
+
+## E2E Smoke Script
+
+Windows PowerShell:
+
+```powershell
+python scripts\e2e_smoke.py
+```
+
+Linux / WSL:
+
+```bash
+python scripts/e2e_smoke.py
+```
+
+Expected:
+
+- Console output contains `"status": "ok"`.
+- Script exits with status code `0`.
+- Local smoke task and fixed event records are created for traceability.
 
 ## Task Tests
 

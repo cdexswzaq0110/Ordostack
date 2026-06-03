@@ -196,6 +196,11 @@ Covered in Issue 18 MVP:
 - Dashboard Reset demo control with confirmation.
 - Backend test coverage for restoring seeded demo data.
 
+Covered in Issue 19 MVP:
+
+- Local E2E smoke script for Docker Compose demo verification.
+- Smoke coverage for health, dashboard HTML, task edit, fixed event edit, schedule generation, and schedule history.
+
 Not covered yet:
 
 - Production ML / DL model registry.
@@ -210,6 +215,12 @@ Do not commit `.env`, API keys, ClearML credentials, AWS credentials, database p
 ## QA MVP
 
 Manual QA instructions are in [docs/qa-mvp.md](docs/qa-mvp.md).
+
+Local E2E smoke after Docker Compose is running:
+
+```powershell
+python scripts\e2e_smoke.py
+```
 
 ## Development Process
 

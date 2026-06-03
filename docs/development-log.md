@@ -1,5 +1,36 @@
 # Development Log
 
+## 2026-06-04 - Issue 19 - E2E Smoke Workflow MVP
+
+Branch:
+
+```text
+feature/issue-19-e2e-smoke
+```
+
+Scope:
+
+- Add local E2E smoke script for Docker Compose demo verification.
+- Verify service health, dashboard HTML, task edit, fixed event edit, schedule generation, and schedule history.
+- Document smoke script usage.
+
+MVP boundaries:
+
+- No headless browser screenshot test yet.
+- No GitHub Actions Docker runtime E2E yet.
+- Smoke script creates local test records and does not clean them up.
+
+Suggested git commit:
+
+```text
+test(e2e): add local smoke workflow
+```
+
+Verification:
+
+- Run after `docker compose up --build -d`.
+- Script must exit with status code `0`.
+
 ## 2026-06-04 - Issue 18 - Demo Seed And Reset Control MVP
 
 Branch:

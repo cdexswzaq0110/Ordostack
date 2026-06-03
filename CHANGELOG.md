@@ -2,6 +2,18 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.18.0 - 2026-06-04
+
+- Add local E2E smoke script for Docker Compose demo verification.
+- Cover health checks, dashboard HTML, task edit, fixed event edit, schedule generation, and schedule history.
+- Document the local E2E smoke workflow.
+
+Suggested commit:
+
+```text
+test(e2e): add local smoke workflow
+```
+
 ## 0.17.0 - 2026-06-04
 
 - Add demo reset API for the bundled demo user.
