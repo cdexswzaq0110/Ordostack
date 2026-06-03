@@ -1,0 +1,139 @@
+# Changelog
+
+All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
+
+## 0.10.1 - 2026-06-03
+
+- Add `VERSION` file for release tracking.
+- Add release process and baseline commit checklist.
+- Establish the repository baseline plan for real branch-based development.
+
+Suggested commit:
+
+```text
+chore(repo): establish ordostack mvp baseline
+```
+
+## 0.10.0 - 2026-06-03
+
+- Add GitHub Actions CI workflow for Python services, web-dashboard build, and Docker Compose config validation.
+- Add pull request template with verification checklist.
+- Document branch naming and pull request flow.
+- Update development rulebook with branch and CI expectations.
+
+Suggested commit:
+
+```text
+ci(github): add quality gate workflow
+```
+
+## 0.9.0 - 2026-06-03
+
+- Add Alembic migration baseline for the current MySQL schema.
+- Run `alembic upgrade head` before backend-api starts in Docker.
+- Keep non-destructive fallback schema bootstrap for local compatibility.
+- Document migration commands and current migration revision.
+
+Suggested commit:
+
+```text
+chore(db): add alembic migration baseline
+```
+
+## 0.8.0 - 2026-06-03
+
+- Persist generated schedule runs and schedule items in MySQL.
+- Add `GET /api/schedules/latest` for the latest saved daily plan.
+- Load latest saved schedule in the dashboard on startup.
+- Add version history and development log records.
+
+Suggested commit:
+
+```text
+feat(schedule): persist generated schedule runs
+```
+
+## 0.7.0 - 2026-06-03
+
+- Add Docker Compose MySQL service.
+- Add backend store selector for memory and MySQL.
+- Persist tasks, fixed events, and execution logs in Docker.
+- Add local database schema documentation.
+
+Suggested commit:
+
+```text
+feat(storage): add mysql persistence for mvp data
+```
+
+## 0.6.0 - 2026-06-03
+
+- Add local duration training dataset.
+- Add training script and bundled JSON model artifact.
+- Load `local-duration-regressor` in ml-service.
+
+Suggested commit:
+
+```text
+feat(ml): add local duration training artifact
+```
+
+## 0.5.0 - 2026-06-02
+
+- Add duration prediction endpoint.
+- Wire backend duration predictions into schedule generation.
+- Show estimated, predicted, and actual minutes in dashboard task rows.
+
+Suggested commit:
+
+```text
+feat(ml): add duration prediction mvp
+```
+
+## 0.4.0 - 2026-06-02
+
+- Add task execution start, pause, complete, and skip endpoints.
+- Add execution logs and daily analytics.
+- Add dashboard execution controls and actual-time metrics.
+
+Suggested commit:
+
+```text
+feat(analytics): track task execution logs
+```
+
+## 0.3.0 - 2026-06-02
+
+- Add scheduler-service schedule generation endpoint.
+- Add backend schedule proxy endpoint.
+- Render generated schedules in dashboard.
+
+Suggested commit:
+
+```text
+feat(schedule): generate daily plans
+```
+
+## 0.2.0 - 2026-06-02
+
+- Add task and fixed event APIs.
+- Add seeded in-memory repository.
+- Wire dashboard task and fixed event workflows.
+
+Suggested commit:
+
+```text
+feat(tasks): add task and fixed event mvp
+```
+
+## 0.1.0 - 2026-06-02
+
+- Initialize repository structure.
+- Add service skeletons and health endpoints.
+- Add Docker Compose skeleton and dashboard landing page.
+
+Suggested commit:
+
+```text
+chore(repo): initialize ordostack skeleton
+```

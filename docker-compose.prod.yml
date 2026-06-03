@@ -1,0 +1,10 @@
+name: ordostack-prod
+
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    profiles:
+      - production
+    ports:
+      - "80:80"
+

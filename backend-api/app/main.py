@@ -1,0 +1,47 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.api.analytics import router as analytics_router
+from app.api.execution_logs import router as execution_logs_router
+from app.api.fixed_events import router as fixed_events_router
+from app.api.predictions import router as predictions_router
+from app.api.schedules import router as schedules_router
+from app.api.tasks import router as tasks_router
+
+SERVICE_NAME = "backend-api"
+VERSION = "0.1.0"
+
+app = FastAPI(title="OrdoStack Backend API", version=VERSION)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(tasks_router)
+app.include_router(fixed_events_router)
+app.include_router(schedules_router)
+app.include_router(execution_logs_router)
+app.include_router(analytics_router)
+app.include_router(predictions_router)
+
+
+def build_health_payload() -> dict[str, str]:
+    return {
+        "status": "ok",
+        "service": SERVICE_NAME,
+        "version": VERSION,
+    }
+
+
+@app.get("/api/health", tags=["health"])
+def api_health_check() -> dict[str, str]:
+    return build_health_payload()
+
+
+@app.get("/health", include_in_schema=False)
+def health_check() -> dict[str, str]:
+    return build_health_payload()
