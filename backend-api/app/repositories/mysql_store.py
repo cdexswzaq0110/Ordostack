@@ -363,6 +363,38 @@ class MySqlStore:
 
         return self._normalize_schedule(schedule_run, schedule_items)
 
+    def list_generated_schedules(self, user_id: int, target_date: date, limit: int = 5) -> list[dict[str, Any]]:
+        self._ensure_ready()
+        with self._connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT *
+                    FROM schedule_runs
+                    WHERE user_id=%s AND schedule_date=%s
+                    ORDER BY id DESC
+                    LIMIT %s
+                    """,
+                    (user_id, target_date, limit),
+                )
+                schedule_runs = cursor.fetchall()
+
+                history_items: list[dict[str, Any]] = []
+                for schedule_run in schedule_runs:
+                    cursor.execute(
+                        """
+                        SELECT *
+                        FROM schedule_items
+                        WHERE schedule_run_id=%s
+                        ORDER BY order_index ASC, id ASC
+                        """,
+                        (schedule_run["id"],),
+                    )
+                    schedule_items = cursor.fetchall()
+                    history_items.append(self._normalize_schedule_history_item(schedule_run, schedule_items))
+
+        return history_items
+
     def _ensure_ready(self) -> None:
         if self._is_ready:
             return
@@ -446,6 +478,22 @@ class MySqlStore:
             "planning_mode": schedule_run["planning_mode"],
             "items": [self._normalize_schedule_item(item) for item in schedule_items],
             "algorithm_summary": self._deserialize_json(schedule_run.get("algorithm_summary"), {}),
+        }
+
+    def _normalize_schedule_history_item(
+        self,
+        schedule_run: dict[str, Any],
+        schedule_items: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        schedule = self._normalize_schedule(schedule_run, schedule_items)
+        algorithm_summary = schedule["algorithm_summary"]
+        return {
+            "id": schedule_run["id"],
+            "created_at": schedule_run["created_at"],
+            "planning_mode": schedule["planning_mode"],
+            "scheduled_task_count": algorithm_summary.get("scheduled_task_count", 0),
+            "item_count": len(schedule["items"]),
+            "schedule": schedule,
         }
 
     def _normalize_schedule_item(self, row: dict[str, Any]) -> dict[str, Any]:

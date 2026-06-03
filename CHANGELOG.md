@@ -2,6 +2,18 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.15.0 - 2026-06-04
+
+- Add schedule history API for recent generated plans.
+- Add dashboard schedule history panel with selectable generated runs.
+- Refresh schedule history after plan generation and date changes.
+
+Suggested commit:
+
+```text
+feat(schedule): add schedule history view
+```
+
 ## 0.14.0 - 2026-06-04
 
 - Add dashboard date picker for arbitrary date selection.

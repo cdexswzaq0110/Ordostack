@@ -6,7 +6,7 @@ import httpx
 from fastapi import HTTPException, status
 
 from app.repositories.store import get_store
-from app.schemas.schedules import ScheduleGenerateRequest, ScheduleGenerateResponse
+from app.schemas.schedules import ScheduleGenerateRequest, ScheduleGenerateResponse, ScheduleHistoryItem
 from app.services import fixed_events as fixed_event_service
 from app.services import predictions as prediction_service
 from app.services import tasks as task_service
@@ -79,6 +79,11 @@ def get_latest_schedule(user_id: int, target_date: date) -> ScheduleGenerateResp
     if schedule is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Generated schedule not found")
     return schedule
+
+
+def list_schedule_history(user_id: int, target_date: date, limit: int = 5) -> list[ScheduleHistoryItem]:
+    schedules = get_store().list_generated_schedules(user_id=user_id, target_date=target_date, limit=limit)
+    return [ScheduleHistoryItem.model_validate(schedule) for schedule in schedules]
 
 
 def extract_scheduler_error(response: httpx.Response) -> Any:

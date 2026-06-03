@@ -1,6 +1,6 @@
 # QA MVP Test Plan
 
-Scope: Issue 15 Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
+Scope: Issue 16 Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
 
 ## Environment
 
@@ -199,6 +199,23 @@ Expected:
 - Response shape matches the schedule generation response.
 - `items` contains the latest persisted schedule blocks.
 - `algorithm_summary.scheduled_task_count` matches the latest generated plan.
+
+### Schedule History
+
+1. Click `Generate Plan` at least twice.
+2. Expected: `Recent generated plans` appears below the timeline.
+3. Click an older history row.
+4. Expected: the timeline switches to the selected generated plan.
+5. Call:
+
+```powershell
+Invoke-RestMethod -Uri "http://localhost:8000/api/schedules/history?user_id=1&target_date=2026-06-03&limit=5"
+```
+
+Expected:
+
+- Response contains recent generated schedule runs.
+- First item is the newest run.
 
 ## ML Duration Prediction Tests
 

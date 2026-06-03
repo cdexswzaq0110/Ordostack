@@ -216,6 +216,30 @@ class InMemoryStore:
             latest_schedule = max(schedules, key=lambda schedule_run: schedule_run["id"])
             return deepcopy(latest_schedule["schedule"])
 
+    def list_generated_schedules(self, user_id: int, target_date: date, limit: int = 5) -> list[dict[str, Any]]:
+        with self._lock:
+            schedule_runs = [
+                deepcopy(schedule_run)
+                for schedule_run in self._schedule_runs.values()
+                if schedule_run["user_id"] == user_id and schedule_run["schedule_date"] == target_date
+            ]
+
+        ordered_runs = sorted(schedule_runs, key=lambda schedule_run: schedule_run["id"], reverse=True)[:limit]
+        return [self._build_schedule_history_item(schedule_run) for schedule_run in ordered_runs]
+
+    def _build_schedule_history_item(self, schedule_run: dict[str, Any]) -> dict[str, Any]:
+        schedule = schedule_run["schedule"]
+        algorithm_summary = schedule.get("algorithm_summary", {})
+        items = schedule.get("items", [])
+        return {
+            "id": schedule_run["id"],
+            "created_at": schedule_run["created_at"],
+            "planning_mode": schedule.get("planning_mode", schedule_run["request_payload"].get("planning_mode", "balanced")),
+            "scheduled_task_count": algorithm_summary.get("scheduled_task_count", 0),
+            "item_count": len(items),
+            "schedule": deepcopy(schedule),
+        }
+
     def _seed_demo_data(self) -> None:
         task_seed = [
             {

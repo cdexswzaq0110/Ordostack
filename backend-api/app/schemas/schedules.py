@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -15,3 +15,12 @@ class ScheduleGenerateRequest(BaseModel):
 
 
 ScheduleGenerateResponse = dict[str, Any]
+
+
+class ScheduleHistoryItem(BaseModel):
+    id: int
+    created_at: datetime
+    planning_mode: str
+    scheduled_task_count: int
+    item_count: int
+    schedule: ScheduleGenerateResponse

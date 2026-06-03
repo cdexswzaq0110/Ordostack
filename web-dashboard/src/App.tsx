@@ -103,7 +103,16 @@ type ApiScheduleResponse = {
   algorithm_summary: ApiAlgorithmSummary;
 };
 
-type ScheduleSource = "none" | "saved" | "generated";
+type ApiScheduleHistoryItem = {
+  id: number;
+  created_at: string;
+  planning_mode: string;
+  scheduled_task_count: number;
+  item_count: number;
+  schedule: ApiScheduleResponse;
+};
+
+type ScheduleSource = "none" | "saved" | "generated" | "history";
 
 type ApiTaskExecutionSummary = {
   task_id: number;
@@ -664,6 +673,8 @@ export function App() {
   const [fixedEvents, setFixedEvents] = useState<ApiFixedEvent[]>([]);
   const [schedule, setSchedule] = useState<ApiScheduleResponse | null>(null);
   const [scheduleSource, setScheduleSource] = useState<ScheduleSource>("none");
+  const [scheduleHistory, setScheduleHistory] = useState<ApiScheduleHistoryItem[]>([]);
+  const [selectedScheduleRunId, setSelectedScheduleRunId] = useState<number | null>(null);
   const [analytics, setAnalytics] = useState<ApiDailyAnalytics | null>(null);
   const [durationPredictions, setDurationPredictions] = useState<ApiDurationPredictionResponse | null>(null);
   const [query, setQuery] = useState("");
@@ -685,7 +696,14 @@ export function App() {
     setError(null);
 
     try {
-      const [nextTasks, nextFixedEvents, nextAnalytics, nextDurationPredictions, latestSchedule] = await Promise.all([
+      const [
+        nextTasks,
+        nextFixedEvents,
+        nextAnalytics,
+        nextDurationPredictions,
+        latestSchedule,
+        nextScheduleHistory,
+      ] = await Promise.all([
         requestJson<ApiTask[]>(
           `${API_BASE_URL}/tasks?user_id=${DEMO_USER_ID}&target_date=${selectedDate}`,
         ),
@@ -701,6 +719,9 @@ export function App() {
         requestOptionalJson<ApiScheduleResponse>(
           `${API_BASE_URL}/schedules/latest?user_id=${DEMO_USER_ID}&target_date=${selectedDate}`,
         ),
+        requestJson<ApiScheduleHistoryItem[]>(
+          `${API_BASE_URL}/schedules/history?user_id=${DEMO_USER_ID}&target_date=${selectedDate}&limit=5`,
+        ),
       ]);
 
       setTasks(nextTasks);
@@ -708,6 +729,8 @@ export function App() {
       setAnalytics(nextAnalytics);
       setDurationPredictions(nextDurationPredictions);
       setSchedule(latestSchedule);
+      setScheduleHistory(nextScheduleHistory);
+      setSelectedScheduleRunId(latestSchedule ? nextScheduleHistory[0]?.id ?? null : null);
       setScheduleSource(latestSchedule ? "saved" : "none");
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Unable to load dashboard data");
@@ -765,13 +788,21 @@ export function App() {
       .reduce((total, task) => total + task.estimated_minutes, 0);
   const algorithmSummary = schedule?.algorithm_summary ?? null;
   const scheduleKicker =
-    scheduleSource === "saved" ? "Saved schedule" : scheduleSource === "generated" ? "Generated schedule" : "Today planner";
+    scheduleSource === "saved"
+      ? "Saved schedule"
+      : scheduleSource === "generated"
+        ? "Generated schedule"
+        : scheduleSource === "history"
+          ? "Schedule history"
+          : "Today planner";
   const plannedTimeDetail =
     scheduleSource === "saved"
       ? "from latest saved schedule"
       : scheduleSource === "generated"
         ? "from generated schedule"
-        : "from backend tasks";
+        : scheduleSource === "history"
+          ? "from selected history run"
+          : "from backend tasks";
   const planScore = algorithmSummary
     ? Math.max(0, Math.min(98, 82 + algorithmSummary.scheduled_task_count * 4 - algorithmSummary.skipped_task_count * 6))
     : Math.min(98, completionRate + 24);
@@ -860,6 +891,20 @@ export function App() {
     setEditFixedEventForm(emptyFixedEventForm);
   }
 
+  async function refreshScheduleHistory() {
+    const nextScheduleHistory = await requestJson<ApiScheduleHistoryItem[]>(
+      `${API_BASE_URL}/schedules/history?user_id=${DEMO_USER_ID}&target_date=${selectedDate}&limit=5`,
+    );
+    setScheduleHistory(nextScheduleHistory);
+    return nextScheduleHistory;
+  }
+
+  function selectScheduleHistoryItem(historyItem: ApiScheduleHistoryItem) {
+    setSchedule(historyItem.schedule);
+    setScheduleSource("history");
+    setSelectedScheduleRunId(historyItem.id);
+  }
+
   async function generatePlan() {
     setIsGenerating(true);
     setError(null);
@@ -880,6 +925,8 @@ export function App() {
 
       setSchedule(nextSchedule);
       setScheduleSource("generated");
+      const nextScheduleHistory = await refreshScheduleHistory();
+      setSelectedScheduleRunId(nextScheduleHistory[0]?.id ?? null);
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Unable to generate plan");
     } finally {
@@ -1279,6 +1326,35 @@ export function App() {
                     </article>
                   ))}
                 </div>
+
+                {scheduleHistory.length > 0 ? (
+                  <section className="schedule-history-panel" aria-label="Schedule history">
+                    <div>
+                      <p className="section-kicker">Schedule history</p>
+                      <h2>Recent generated plans</h2>
+                    </div>
+                    <div className="schedule-history-list">
+                      {scheduleHistory.map((historyItem) => (
+                        <button
+                          key={historyItem.id}
+                          className={
+                            selectedScheduleRunId === historyItem.id
+                              ? "schedule-history-row active"
+                              : "schedule-history-row"
+                          }
+                          type="button"
+                          onClick={() => selectScheduleHistoryItem(historyItem)}
+                        >
+                          <span>{formatTime(historyItem.created_at)}</span>
+                          <strong>{historyItem.planning_mode}</strong>
+                          <em>
+                            {historyItem.scheduled_task_count} tasks | {historyItem.item_count} blocks
+                          </em>
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                ) : null}
               </section>
 
               <section className="queue-surface" aria-labelledby="queue-title">

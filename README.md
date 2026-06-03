@@ -178,6 +178,12 @@ Covered in Issue 15 MVP:
 - Today shortcut in the date control.
 - Open create/edit forms close when changing date.
 
+Covered in Issue 16 MVP:
+
+- `GET /api/schedules/history` for recent generated plans.
+- Dashboard schedule history panel.
+- Users can switch the timeline to a previous generated plan.
+
 Not covered yet:
 
 - Production ML / DL model registry.

@@ -103,3 +103,50 @@ def test_latest_schedule_returns_404_when_missing() -> None:
     )
 
     assert response.status_code == 404
+
+
+def test_schedule_history_returns_recent_generated_runs(monkeypatch) -> None:
+    store.reset()
+
+    def fake_post(url: str, json: dict[str, Any], timeout: float) -> FakeSchedulerResponse:
+        return FakeSchedulerResponse()
+
+    def fake_predict_for_tasks(user_id, target_date, tasks) -> DurationPredictionResponse:
+        return DurationPredictionResponse(
+            user_id=user_id,
+            target_date=target_date,
+            model_name="heuristic-duration",
+            model_version="0.1.0",
+            predictions=[],
+        )
+
+    monkeypatch.setattr(schedule_service.httpx, "post", fake_post)
+    monkeypatch.setattr(schedule_service.prediction_service, "predict_for_tasks", fake_predict_for_tasks)
+    client = TestClient(app)
+
+    for _ in range(2):
+        response = client.post(
+            "/api/schedules/generate",
+            json={
+                "user_id": 1,
+                "target_date": "2026-06-03",
+                "planning_mode": "balanced",
+                "start_hour": 9,
+                "end_hour": 23,
+                "buffer_minutes": 10,
+                "include_fixed_events": True,
+            },
+        )
+        assert response.status_code == 200
+
+    history_response = client.get(
+        "/api/schedules/history",
+        params={"user_id": 1, "target_date": "2026-06-03", "limit": 5},
+    )
+
+    assert history_response.status_code == 200
+    history = history_response.json()
+    assert len(history) == 2
+    assert history[0]["id"] > history[1]["id"]
+    assert history[0]["scheduled_task_count"] == 1
+    assert history[0]["schedule"]["schedule_date"] == "2026-06-03"

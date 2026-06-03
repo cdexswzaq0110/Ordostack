@@ -1,5 +1,38 @@
 # Development Log
 
+## 2026-06-04 - Issue 16 - Schedule History Management MVP
+
+Branch:
+
+```text
+feature/issue-16-schedule-history
+```
+
+Scope:
+
+- Add schedule history API for recent generated schedule runs.
+- Add dashboard schedule history panel.
+- Allow users to switch the timeline to a previous generated plan.
+- Refresh history after plan generation and date changes.
+
+MVP boundaries:
+
+- No schedule diff view.
+- No schedule deletion.
+- No named schedule versions.
+
+Suggested git commit:
+
+```text
+feat(schedule): add schedule history view
+```
+
+Verification:
+
+- Schedule API tests must pass locally.
+- web-dashboard production build must pass.
+- Browser smoke must verify generating multiple plans and selecting a history row.
+
 ## 2026-06-04 - Issue 15 - Date Picker Navigation MVP
 
 Branch:
