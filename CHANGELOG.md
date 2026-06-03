@@ -2,6 +2,18 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.16.0 - 2026-06-04
+
+- Add dashboard empty states for timeline, schedule history, and fixed events.
+- Add Retry action to the error banner.
+- Improve compact empty-state styling for demo usability.
+
+Suggested commit:
+
+```text
+feat(dashboard): polish demo empty states
+```
+
 ## 0.15.0 - 2026-06-04
 
 - Add schedule history API for recent generated plans.

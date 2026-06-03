@@ -1,5 +1,36 @@
 # Development Log
 
+## 2026-06-04 - Issue 17 - Dashboard UX Polish MVP
+
+Branch:
+
+```text
+feature/issue-17-dashboard-ux-polish
+```
+
+Scope:
+
+- Add empty states for timeline, schedule history, and fixed events.
+- Add Retry action to the dashboard error banner.
+- Improve compact empty-state styling for demo usability.
+
+MVP boundaries:
+
+- No full redesign.
+- No new design system package.
+- No animation-heavy marketing UI.
+
+Suggested git commit:
+
+```text
+feat(dashboard): polish demo empty states
+```
+
+Verification:
+
+- web-dashboard production build must pass.
+- Browser smoke should verify no-data dates render coherent empty states.
+
 ## 2026-06-04 - Issue 16 - Schedule History Management MVP
 
 Branch:

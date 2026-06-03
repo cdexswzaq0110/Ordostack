@@ -1236,6 +1236,9 @@ export function App() {
           <div className="alert-banner" role="alert">
             <AlertCircle size={18} aria-hidden="true" />
             <span>{error}</span>
+            <button className="ghost-button text-button" type="button" onClick={() => void loadDashboardData()}>
+              Retry
+            </button>
           </div>
         ) : null}
 
@@ -1307,32 +1310,39 @@ export function App() {
                   </form>
                 ) : null}
 
-                <div className="timeline">
-                  {timelineItems.map((item) => (
-                    <article key={`${item.start}-${item.title}`} className={`timeline-item ${item.type}`}>
-                      <div className="time-range">
-                        <strong>{item.start}</strong>
-                        <span>{item.end}</span>
-                      </div>
-                      <div className="timeline-block">
-                        <div>
-                          <h2>{item.title}</h2>
-                          <p>{item.meta}</p>
+                {timelineItems.length > 0 ? (
+                  <div className="timeline">
+                    {timelineItems.map((item) => (
+                      <article key={`${item.start}-${item.title}`} className={`timeline-item ${item.type}`}>
+                        <div className="time-range">
+                          <strong>{item.start}</strong>
+                          <span>{item.end}</span>
                         </div>
-                        <button className="ghost-button" type="button" aria-label={`More options for ${item.title}`}>
-                          <MoreHorizontal size={18} />
-                        </button>
-                      </div>
-                    </article>
-                  ))}
-                </div>
+                        <div className="timeline-block">
+                          <div>
+                            <h2>{item.title}</h2>
+                            <p>{item.meta}</p>
+                          </div>
+                          <button className="ghost-button" type="button" aria-label={`More options for ${item.title}`}>
+                            <MoreHorizontal size={18} />
+                          </button>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="empty-state tall-state">
+                    <strong>No schedule blocks</strong>
+                    <span>Add tasks or fixed events, then generate a plan.</span>
+                  </div>
+                )}
 
-                {scheduleHistory.length > 0 ? (
-                  <section className="schedule-history-panel" aria-label="Schedule history">
-                    <div>
-                      <p className="section-kicker">Schedule history</p>
-                      <h2>Recent generated plans</h2>
-                    </div>
+                <section className="schedule-history-panel" aria-label="Schedule history">
+                  <div>
+                    <p className="section-kicker">Schedule history</p>
+                    <h2>Recent generated plans</h2>
+                  </div>
+                  {scheduleHistory.length > 0 ? (
                     <div className="schedule-history-list">
                       {scheduleHistory.map((historyItem) => (
                         <button
@@ -1353,8 +1363,10 @@ export function App() {
                         </button>
                       ))}
                     </div>
-                  </section>
-                ) : null}
+                  ) : (
+                    <div className="empty-state compact-state">Generate a plan to create the first saved run.</div>
+                  )}
+                </section>
               </section>
 
               <section className="queue-surface" aria-labelledby="queue-title">
@@ -1538,68 +1550,72 @@ export function App() {
                     </form>
                   ) : null}
 
-                  <div className="fixed-event-list">
-                    {fixedEvents.map((event) => (
-                      <div key={event.id} className="fixed-event-stack">
-                        <article className="fixed-event-row">
-                          <CalendarDays size={17} aria-hidden="true" />
-                          <div>
-                            <strong>{event.title}</strong>
-                            <span>
-                              {formatTime(event.start_time)} - {formatTime(event.end_time)}
-                            </span>
-                          </div>
-                          <div className="row-actions">
-                            <button
-                              className="ghost-button"
-                              type="button"
-                              aria-label={`Edit ${event.title}`}
-                              disabled={isMutating}
-                              onClick={() => startEditingFixedEvent(event)}
-                            >
-                              <Pencil size={16} />
-                            </button>
-                            <button
-                              className="ghost-button danger"
-                              type="button"
-                              aria-label={`Delete ${event.title}`}
-                              disabled={isMutating}
-                              onClick={() => void deleteFixedEvent(event.id)}
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </article>
-
-                        {editingFixedEventId === event.id ? (
-                          <form
-                            className="inline-form compact-form fixed-event-edit-form"
-                            aria-label={`Edit ${event.title}`}
-                            onSubmit={(formEvent) => {
-                              formEvent.preventDefault();
-                              void updateFixedEventDetails(event.id);
-                            }}
-                          >
-                            <FixedEventFormFields form={editFixedEventForm} onChange={setEditFixedEventForm} />
-                            <div className="form-actions">
-                              <button className="primary-action" type="submit" disabled={isMutating}>
-                                <CheckCircle2 size={16} aria-hidden="true" />
-                                <span>Save event</span>
+                  {fixedEvents.length > 0 ? (
+                    <div className="fixed-event-list">
+                      {fixedEvents.map((event) => (
+                        <div key={event.id} className="fixed-event-stack">
+                          <article className="fixed-event-row">
+                            <CalendarDays size={17} aria-hidden="true" />
+                            <div>
+                              <strong>{event.title}</strong>
+                              <span>
+                                {formatTime(event.start_time)} - {formatTime(event.end_time)}
+                              </span>
+                            </div>
+                            <div className="row-actions">
+                              <button
+                                className="ghost-button"
+                                type="button"
+                                aria-label={`Edit ${event.title}`}
+                                disabled={isMutating}
+                                onClick={() => startEditingFixedEvent(event)}
+                              >
+                                <Pencil size={16} />
                               </button>
                               <button
-                                className="ghost-button text-button"
+                                className="ghost-button danger"
                                 type="button"
+                                aria-label={`Delete ${event.title}`}
                                 disabled={isMutating}
-                                onClick={cancelEditingFixedEvent}
+                                onClick={() => void deleteFixedEvent(event.id)}
                               >
-                                Cancel
+                                <Trash2 size={16} />
                               </button>
                             </div>
-                          </form>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
+                          </article>
+
+                          {editingFixedEventId === event.id ? (
+                            <form
+                              className="inline-form compact-form fixed-event-edit-form"
+                              aria-label={`Edit ${event.title}`}
+                              onSubmit={(formEvent) => {
+                                formEvent.preventDefault();
+                                void updateFixedEventDetails(event.id);
+                              }}
+                            >
+                              <FixedEventFormFields form={editFixedEventForm} onChange={setEditFixedEventForm} />
+                              <div className="form-actions">
+                                <button className="primary-action" type="submit" disabled={isMutating}>
+                                  <CheckCircle2 size={16} aria-hidden="true" />
+                                  <span>Save event</span>
+                                </button>
+                                <button
+                                  className="ghost-button text-button"
+                                  type="button"
+                                  disabled={isMutating}
+                                  onClick={cancelEditingFixedEvent}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </form>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="empty-state compact-state">No fixed events on this date.</div>
+                  )}
                 </div>
               </section>
 

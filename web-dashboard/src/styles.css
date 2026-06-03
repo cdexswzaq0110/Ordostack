@@ -327,9 +327,14 @@ input:focus-visible {
 }
 
 .alert-banner {
+  justify-content: space-between;
   color: #8f2d24;
   border: 1px solid #f0c8c1;
   background: #fff1ef;
+}
+
+.alert-banner span {
+  flex: 1 1 auto;
 }
 
 .loading-panel {
@@ -860,11 +865,31 @@ h3 {
 .empty-state {
   display: grid;
   place-items: center;
+  gap: 4px;
   min-height: 88px;
   color: #68717e;
   border: 1px dashed #cfd5dd;
   border-radius: 8px;
   background: #f7f8fa;
+}
+
+.empty-state strong {
+  color: #29313c;
+  font-size: 0.9rem;
+}
+
+.empty-state span {
+  font-size: 0.78rem;
+}
+
+.tall-state {
+  min-height: 180px;
+}
+
+.compact-state {
+  min-height: 54px;
+  padding: 10px;
+  font-size: 0.78rem;
 }
 
 .model-panel div {

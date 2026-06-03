@@ -1,6 +1,6 @@
 # QA MVP Test Plan
 
-Scope: Issue 16 Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
+Scope: Issue 17 Dashboard UX Polish, Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
 
 ## Environment
 
@@ -57,6 +57,8 @@ Expected: output contains `20260603_0001`.
 16. Expected: the date changes to June 4, 2026 and dashboard data reloads.
 17. Click `Previous day`.
 18. Expected: the date changes back to June 3, 2026 and saved schedule data reloads.
+19. Select a date without demo data.
+20. Expected: timeline, history, and fixed event areas show coherent empty states.
 
 ## Task Tests
 

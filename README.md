@@ -184,6 +184,12 @@ Covered in Issue 16 MVP:
 - Dashboard schedule history panel.
 - Users can switch the timeline to a previous generated plan.
 
+Covered in Issue 17 MVP:
+
+- Dashboard empty states for timeline, schedule history, and fixed events.
+- Retry action in the error banner.
+- Compact empty-state styling for demo usability.
+
 Not covered yet:
 
 - Production ML / DL model registry.
