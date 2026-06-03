@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import {
   Activity,
   AlertCircle,
@@ -16,6 +17,7 @@ import {
   Loader2,
   MoreHorizontal,
   Pause,
+  Pencil,
   Play,
   Plus,
   RotateCcw,
@@ -206,6 +208,170 @@ const emptyFixedEventForm: FixedEventFormState = {
 
 const serviceHealth = ["backend-api", "scheduler-service", "ml-service"];
 
+type TaskMutationPayload = {
+  title: string;
+  category: string;
+  estimated_minutes: number;
+  priority: number;
+  difficulty: number;
+  deadline: string;
+  requires_focus: boolean;
+};
+
+type TaskFormFieldsProps = {
+  form: TaskFormState;
+  onChange: Dispatch<SetStateAction<TaskFormState>>;
+};
+
+function TaskFormFields({ form, onChange }: TaskFormFieldsProps) {
+  return (
+    <>
+      <div className="form-grid">
+        <label>
+          <span>Title</span>
+          <input
+            value={form.title}
+            onChange={(event) =>
+              onChange((currentForm) => ({ ...currentForm, title: event.target.value }))
+            }
+            placeholder="Task title"
+          />
+        </label>
+        <label>
+          <span>Category</span>
+          <input
+            value={form.category}
+            onChange={(event) =>
+              onChange((currentForm) => ({ ...currentForm, category: event.target.value }))
+            }
+          />
+        </label>
+        <label>
+          <span>Minutes</span>
+          <input
+            type="number"
+            min="1"
+            step="1"
+            value={form.estimatedMinutes}
+            onChange={(event) =>
+              onChange((currentForm) => ({ ...currentForm, estimatedMinutes: event.target.value }))
+            }
+          />
+        </label>
+        <label>
+          <span>Priority</span>
+          <input
+            type="number"
+            min="1"
+            max="5"
+            step="1"
+            value={form.priority}
+            onChange={(event) =>
+              onChange((currentForm) => ({ ...currentForm, priority: event.target.value }))
+            }
+          />
+        </label>
+        <label>
+          <span>Difficulty</span>
+          <input
+            type="number"
+            min="1"
+            max="5"
+            step="1"
+            value={form.difficulty}
+            onChange={(event) =>
+              onChange((currentForm) => ({ ...currentForm, difficulty: event.target.value }))
+            }
+          />
+        </label>
+        <label>
+          <span>Deadline</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={5}
+            pattern="^([01]\d|2[0-3]):[0-5]\d$"
+            placeholder="18:00"
+            value={form.deadlineTime}
+            onChange={(event) =>
+              onChange((currentForm) => ({ ...currentForm, deadlineTime: event.target.value }))
+            }
+          />
+        </label>
+      </div>
+      <label className="checkbox-row">
+        <input
+          type="checkbox"
+          checked={form.requiresFocus}
+          onChange={(event) =>
+            onChange((currentForm) => ({ ...currentForm, requiresFocus: event.target.checked }))
+          }
+        />
+        <span>Requires focus block</span>
+      </label>
+    </>
+  );
+}
+
+function getTaskFormError(form: TaskFormState): string | null {
+  if (form.title.trim().length === 0) {
+    return "Task title is required";
+  }
+
+  if (form.category.trim().length === 0) {
+    return "Task category is required";
+  }
+
+  const estimatedMinutes = Number(form.estimatedMinutes);
+  if (!Number.isInteger(estimatedMinutes) || estimatedMinutes < 1) {
+    return "Estimated minutes must be a whole number greater than 0";
+  }
+
+  const priority = Number(form.priority);
+  if (!Number.isInteger(priority) || priority < 1 || priority > 5) {
+    return "Priority must be a whole number from 1 to 5";
+  }
+
+  const difficulty = Number(form.difficulty);
+  if (!Number.isInteger(difficulty) || difficulty < 1 || difficulty > 5) {
+    return "Difficulty must be a whole number from 1 to 5";
+  }
+
+  if (form.deadlineTime.length === 0) {
+    return "Deadline time is required";
+  }
+
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(form.deadlineTime)) {
+    return "Deadline time must use HH:MM format";
+  }
+
+  return null;
+}
+
+function buildTaskMutationPayload(form: TaskFormState, selectedDate: string): TaskMutationPayload {
+  return {
+    title: form.title.trim(),
+    category: form.category.trim(),
+    estimated_minutes: Number(form.estimatedMinutes),
+    priority: Number(form.priority),
+    difficulty: Number(form.difficulty),
+    deadline: `${selectedDate}T${form.deadlineTime}:00`,
+    requires_focus: form.requiresFocus,
+  };
+}
+
+function taskFormFromTask(task: ApiTask): TaskFormState {
+  return {
+    title: task.title,
+    category: task.category,
+    estimatedMinutes: String(task.estimated_minutes),
+    priority: String(task.priority),
+    difficulty: String(task.difficulty),
+    deadlineTime: task.deadline ? task.deadline.slice(11, 16) : emptyTaskForm.deadlineTime,
+    requiresFocus: task.requires_focus,
+  };
+}
+
 function formatMinutes(totalMinutes: number): string {
   if (totalMinutes < 60) {
     return `${totalMinutes}m`;
@@ -389,6 +555,8 @@ export function App() {
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [isFixedEventFormOpen, setIsFixedEventFormOpen] = useState(false);
   const [taskForm, setTaskForm] = useState<TaskFormState>(emptyTaskForm);
+  const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
+  const [editTaskForm, setEditTaskForm] = useState<TaskFormState>(emptyTaskForm);
   const [fixedEventForm, setFixedEventForm] = useState<FixedEventFormState>(emptyFixedEventForm);
 
   async function loadDashboardData() {
@@ -530,6 +698,19 @@ export function App() {
     setQuery("");
     setIsTaskFormOpen(false);
     setIsFixedEventFormOpen(false);
+    cancelEditingTask();
+  }
+
+  function startEditingTask(task: ApiTask) {
+    setError(null);
+    setIsTaskFormOpen(false);
+    setEditingTaskId(task.id);
+    setEditTaskForm(taskFormFromTask(task));
+  }
+
+  function cancelEditingTask() {
+    setEditingTaskId(null);
+    setEditTaskForm(emptyTaskForm);
   }
 
   async function generatePlan() {
@@ -560,8 +741,9 @@ export function App() {
   }
 
   async function createTask() {
-    if (taskForm.title.trim().length === 0) {
-      setError("Task title is required");
+    const formError = getTaskFormError(taskForm);
+    if (formError) {
+      setError(formError);
       return;
     }
 
@@ -573,14 +755,8 @@ export function App() {
         method: "POST",
         body: JSON.stringify({
           user_id: DEMO_USER_ID,
-          title: taskForm.title.trim(),
           description: "",
-          category: taskForm.category.trim(),
-          estimated_minutes: Number(taskForm.estimatedMinutes),
-          priority: Number(taskForm.priority),
-          difficulty: Number(taskForm.difficulty),
-          deadline: `${selectedDate}T${taskForm.deadlineTime}:00`,
-          requires_focus: taskForm.requiresFocus,
+          ...buildTaskMutationPayload(taskForm, selectedDate),
           is_fixed: false,
           is_splittable: false,
           dependency_ids: [],
@@ -589,9 +765,35 @@ export function App() {
 
       setTaskForm(emptyTaskForm);
       setIsTaskFormOpen(false);
+      cancelEditingTask();
       await loadDashboardData();
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Unable to create task");
+    } finally {
+      setIsMutating(false);
+    }
+  }
+
+  async function updateTaskDetails(taskId: number) {
+    const formError = getTaskFormError(editTaskForm);
+    if (formError) {
+      setError(formError);
+      return;
+    }
+
+    setIsMutating(true);
+    setError(null);
+
+    try {
+      await requestJson<ApiTask>(`${API_BASE_URL}/tasks/${taskId}`, {
+        method: "PATCH",
+        body: JSON.stringify(buildTaskMutationPayload(editTaskForm, selectedDate)),
+      });
+
+      cancelEditingTask();
+      await loadDashboardData();
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Unable to update task");
     } finally {
       setIsMutating(false);
     }
@@ -826,7 +1028,10 @@ export function App() {
                   <button
                     className="secondary-action"
                     type="button"
-                    onClick={() => setIsTaskFormOpen((isOpen) => !isOpen)}
+                    onClick={() => {
+                      setIsTaskFormOpen((isOpen) => !isOpen);
+                      cancelEditingTask();
+                    }}
                   >
                     <Plus size={17} aria-hidden="true" />
                     <span>Add task</span>
@@ -841,70 +1046,7 @@ export function App() {
                       void createTask();
                     }}
                   >
-                    <div className="form-grid">
-                      <label>
-                        <span>Title</span>
-                        <input
-                          value={taskForm.title}
-                          onChange={(event) => setTaskForm({ ...taskForm, title: event.target.value })}
-                          placeholder="Task title"
-                        />
-                      </label>
-                      <label>
-                        <span>Category</span>
-                        <input
-                          value={taskForm.category}
-                          onChange={(event) => setTaskForm({ ...taskForm, category: event.target.value })}
-                        />
-                      </label>
-                      <label>
-                        <span>Minutes</span>
-                        <input
-                          type="number"
-                          min="1"
-                          value={taskForm.estimatedMinutes}
-                          onChange={(event) =>
-                            setTaskForm({ ...taskForm, estimatedMinutes: event.target.value })
-                          }
-                        />
-                      </label>
-                      <label>
-                        <span>Priority</span>
-                        <input
-                          type="number"
-                          min="1"
-                          max="5"
-                          value={taskForm.priority}
-                          onChange={(event) => setTaskForm({ ...taskForm, priority: event.target.value })}
-                        />
-                      </label>
-                      <label>
-                        <span>Difficulty</span>
-                        <input
-                          type="number"
-                          min="1"
-                          max="5"
-                          value={taskForm.difficulty}
-                          onChange={(event) => setTaskForm({ ...taskForm, difficulty: event.target.value })}
-                        />
-                      </label>
-                      <label>
-                        <span>Deadline</span>
-                        <input
-                          type="time"
-                          value={taskForm.deadlineTime}
-                          onChange={(event) => setTaskForm({ ...taskForm, deadlineTime: event.target.value })}
-                        />
-                      </label>
-                    </div>
-                    <label className="checkbox-row">
-                      <input
-                        type="checkbox"
-                        checked={taskForm.requiresFocus}
-                        onChange={(event) => setTaskForm({ ...taskForm, requiresFocus: event.target.checked })}
-                      />
-                      <span>Requires focus block</span>
-                    </label>
+                    <TaskFormFields form={taskForm} onChange={setTaskForm} />
                     <button className="primary-action" type="submit" disabled={isMutating}>
                       <Plus size={17} aria-hidden="true" />
                       <span>Create task</span>
@@ -952,86 +1094,128 @@ export function App() {
                       const taskExecutionSummary = analyticsByTask.get(task.id);
                       const taskPrediction = predictionsByTask.get(task.id);
                       return (
-                      <article key={task.id} className="task-row">
-                        <button
-                          className="task-check"
-                          type="button"
-                          aria-label={`Mark ${task.title} completed`}
-                          disabled={isMutating || task.status === "completed" || task.status === "skipped"}
-                          onClick={() => void recordExecutionEvent(task.id, "complete")}
-                        >
-                          <CheckCircle2 size={18} />
-                        </button>
-                        <div className="task-copy">
-                          <h3>{task.title}</h3>
-                          <p>
-                            {task.category} | estimate {formatMinutes(task.estimated_minutes)} | predicted{" "}
-                            {formatMinutes(taskPrediction?.predicted_minutes ?? task.predicted_minutes ?? task.estimated_minutes)} | actual{" "}
-                            {formatMinutes(taskExecutionSummary?.actual_minutes ?? 0)}
-                          </p>
+                        <div key={task.id} className="task-stack">
+                          <article className="task-row">
+                            <button
+                              className="task-check"
+                              type="button"
+                              aria-label={`Mark ${task.title} completed`}
+                              disabled={isMutating || task.status === "completed" || task.status === "skipped"}
+                              onClick={() => void recordExecutionEvent(task.id, "complete")}
+                            >
+                              <CheckCircle2 size={18} />
+                            </button>
+                            <div className="task-copy">
+                              <h3>{task.title}</h3>
+                              <p>
+                                {task.category} | estimate {formatMinutes(task.estimated_minutes)} | predicted{" "}
+                                {formatMinutes(
+                                  taskPrediction?.predicted_minutes ??
+                                    task.predicted_minutes ??
+                                    task.estimated_minutes,
+                                )}{" "}
+                                | actual {formatMinutes(taskExecutionSummary?.actual_minutes ?? 0)}
+                              </p>
+                            </div>
+                            <div className="task-meta">
+                              <span className={`priority ${priorityClass(task.priority)}`}>
+                                {priorityLabel(task.priority)}
+                              </span>
+                              <strong>{taskStateLabel(task.status)}</strong>
+                            </div>
+                            <div className="row-actions">
+                              <button
+                                className="ghost-button"
+                                type="button"
+                                aria-label={`Edit ${task.title}`}
+                                disabled={isMutating}
+                                onClick={() => startEditingTask(task)}
+                              >
+                                <Pencil size={17} />
+                              </button>
+                              {task.status === "pending" ? (
+                                <button
+                                  className="ghost-button"
+                                  type="button"
+                                  aria-label={`Start ${task.title}`}
+                                  disabled={isMutating}
+                                  onClick={() => void recordExecutionEvent(task.id, "start")}
+                                >
+                                  <Play size={17} />
+                                </button>
+                              ) : null}
+                              {task.status === "in_progress" ? (
+                                <button
+                                  className="ghost-button"
+                                  type="button"
+                                  aria-label={`Pause ${task.title}`}
+                                  disabled={isMutating}
+                                  onClick={() => void recordExecutionEvent(task.id, "pause")}
+                                >
+                                  <Pause size={17} />
+                                </button>
+                              ) : null}
+                              {task.status === "pending" || task.status === "in_progress" ? (
+                                <button
+                                  className="ghost-button"
+                                  type="button"
+                                  aria-label={`Skip ${task.title}`}
+                                  disabled={isMutating}
+                                  onClick={() => void recordExecutionEvent(task.id, "skip")}
+                                >
+                                  <SkipForward size={17} />
+                                </button>
+                              ) : null}
+                              {task.status === "completed" || task.status === "skipped" ? (
+                                <button
+                                  className="ghost-button"
+                                  type="button"
+                                  aria-label={`Reopen ${task.title}`}
+                                  disabled={isMutating}
+                                  onClick={() => void updateTaskStatus(task.id, "pending")}
+                                >
+                                  <RotateCcw size={17} />
+                                </button>
+                              ) : null}
+                              <button
+                                className="ghost-button danger"
+                                type="button"
+                                aria-label={`Delete ${task.title}`}
+                                disabled={isMutating}
+                                onClick={() => void deleteTask(task.id)}
+                              >
+                                <Trash2 size={17} />
+                              </button>
+                            </div>
+                          </article>
+
+                          {editingTaskId === task.id ? (
+                            <form
+                              className="inline-form task-edit-form"
+                              aria-label={`Edit ${task.title}`}
+                              onSubmit={(event) => {
+                                event.preventDefault();
+                                void updateTaskDetails(task.id);
+                              }}
+                            >
+                              <TaskFormFields form={editTaskForm} onChange={setEditTaskForm} />
+                              <div className="form-actions">
+                                <button className="primary-action" type="submit" disabled={isMutating}>
+                                  <CheckCircle2 size={17} aria-hidden="true" />
+                                  <span>Save changes</span>
+                                </button>
+                                <button
+                                  className="ghost-button text-button"
+                                  type="button"
+                                  disabled={isMutating}
+                                  onClick={cancelEditingTask}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </form>
+                          ) : null}
                         </div>
-                        <div className="task-meta">
-                          <span className={`priority ${priorityClass(task.priority)}`}>
-                            {priorityLabel(task.priority)}
-                          </span>
-                          <strong>{taskStateLabel(task.status)}</strong>
-                        </div>
-                        <div className="row-actions">
-                          {task.status === "pending" ? (
-                            <button
-                              className="ghost-button"
-                              type="button"
-                              aria-label={`Start ${task.title}`}
-                              disabled={isMutating}
-                              onClick={() => void recordExecutionEvent(task.id, "start")}
-                            >
-                              <Play size={17} />
-                            </button>
-                          ) : null}
-                          {task.status === "in_progress" ? (
-                            <button
-                              className="ghost-button"
-                              type="button"
-                              aria-label={`Pause ${task.title}`}
-                              disabled={isMutating}
-                              onClick={() => void recordExecutionEvent(task.id, "pause")}
-                            >
-                              <Pause size={17} />
-                            </button>
-                          ) : null}
-                          {task.status === "pending" || task.status === "in_progress" ? (
-                            <button
-                              className="ghost-button"
-                              type="button"
-                              aria-label={`Skip ${task.title}`}
-                              disabled={isMutating}
-                              onClick={() => void recordExecutionEvent(task.id, "skip")}
-                            >
-                              <SkipForward size={17} />
-                            </button>
-                          ) : null}
-                          {task.status === "completed" || task.status === "skipped" ? (
-                            <button
-                              className="ghost-button"
-                              type="button"
-                              aria-label={`Reopen ${task.title}`}
-                              disabled={isMutating}
-                              onClick={() => void updateTaskStatus(task.id, "pending")}
-                            >
-                              <RotateCcw size={17} />
-                            </button>
-                          ) : null}
-                          <button
-                            className="ghost-button danger"
-                            type="button"
-                            aria-label={`Delete ${task.title}`}
-                            disabled={isMutating}
-                            onClick={() => void deleteTask(task.id)}
-                          >
-                            <Trash2 size={17} />
-                          </button>
-                        </div>
-                      </article>
                       );
                     })
                   )}

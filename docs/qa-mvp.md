@@ -1,6 +1,6 @@
 # QA MVP Test Plan
 
-Scope: Issue 12 Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
+Scope: Issue 13 Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
 
 ## Environment
 
@@ -79,6 +79,15 @@ Expected: output contains `20260603_0001`.
 4. Click `Create task`.
 5. Expected: new task appears in Task queue and timeline.
 6. Expected: the created task belongs to the currently selected date.
+
+### Edit Task
+
+1. Click the edit icon on a task row.
+2. Change title, category, minutes, priority, difficulty, deadline time, or focus requirement.
+3. Click `Save changes`.
+4. Expected: the task row refreshes with the edited values.
+5. Expected: the edit form closes after a successful save.
+6. Expected: refreshing the dashboard keeps the edited task values.
 
 ### Complete Task
 

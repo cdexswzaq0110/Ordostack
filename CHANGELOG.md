@@ -2,6 +2,19 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.12.0 - 2026-06-03
+
+- Add dashboard task editing for title, category, estimate, priority, difficulty, deadline time, and focus requirement.
+- Reuse a shared task form component for create and edit flows.
+- Add task form validation before create and update requests.
+- Add inline edit controls in Task queue backed by `PATCH /api/tasks/{task_id}`.
+
+Suggested commit:
+
+```text
+feat(tasks): add dashboard task editing
+```
+
 ## 0.11.0 - 2026-06-03
 
 - Add dashboard previous day and next day navigation.

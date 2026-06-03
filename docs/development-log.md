@@ -1,5 +1,40 @@
 # Development Log
 
+## 2026-06-03 - Issue 13 - Task Editing MVP
+
+Branch:
+
+```text
+feature/issue-13-task-editing
+```
+
+Scope:
+
+- Add inline task editing in the dashboard Task queue.
+- Support editing title, category, estimate, priority, difficulty, deadline time, and focus requirement.
+- Reuse a shared task form field component for create and edit flows.
+- Save edits through the existing backend `PATCH /api/tasks/{task_id}` endpoint.
+
+MVP boundaries:
+
+- No drag-and-drop ordering.
+- No batch edit.
+- No recurring task edit workflow.
+- No arbitrary date picker.
+
+Suggested git commit:
+
+```text
+feat(tasks): add dashboard task editing
+```
+
+Verification:
+
+- Python service tests must pass locally.
+- `docker compose config` must pass locally.
+- web-dashboard production build must pass.
+- Browser smoke must verify task edit, save, and visible refresh.
+
 ## 2026-06-03 - Issue 12 - Date Navigation MVP
 
 Branch:

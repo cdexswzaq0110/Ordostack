@@ -158,6 +158,13 @@ Covered in Issue 12 MVP:
 - Tasks, fixed events, analytics, duration predictions, and latest schedule reload by selected date.
 - New task and fixed event forms create records on the currently selected date.
 
+Covered in Issue 13 MVP:
+
+- Dashboard inline task editing.
+- Task create and edit flows share the same field component.
+- Task form validation runs before create and update requests.
+- Edited tasks are saved through `PATCH /api/tasks/{task_id}`.
+
 Not covered yet:
 
 - Production ML / DL model registry.
