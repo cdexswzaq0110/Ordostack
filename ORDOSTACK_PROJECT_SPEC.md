@@ -2,12 +2,12 @@
 
 Source document: `C:\Users\HUANG\Desktop\OrdoStack Project Specification.docx`
 
-This markdown file records the implementation baseline used by Codex for the repository. The project is developed incrementally by issue. As of Issue 29, the repository is a local Customer Demo MVP with authentication and user-scoped planner data, not a production launch build.
+This markdown file records the implementation baseline used by Codex for the repository. The project is developed incrementally by issue. As of Issue 30, the repository is a local Customer Demo MVP with authentication, user-scoped planner data, and deployment baseline documentation, not a production launch build.
 
 ## Current Baseline
 
 ```text
-Version: 0.28.0
+Version: 0.29.0
 Stage: Customer Demo MVP
 Runtime: Local Docker Compose
 Primary UI: web-dashboard
@@ -52,7 +52,7 @@ OrdoStack is an AI daily planning product that lets users capture tasks and fixe
 - No complex permission system.
 - No chatbot replacing the scheduling algorithm core.
 
-## Implemented Through Issue 29
+## Implemented Through Issue 30
 
 | Area | Current implementation |
 | --- | --- |
@@ -68,6 +68,7 @@ OrdoStack is an AI daily planning product that lets users capture tasks and fixe
 | ML duration prediction | Local duration prediction API with bundled training artifact and heuristic fallback |
 | Storage | Docker MySQL persistence with Alembic migration baseline and local compatibility bootstrap |
 | Auth | Local register, login, current-user API, PBKDF2 password hashes, HMAC bearer tokens, demo account, user-scoped planner APIs |
+| Deployment | Production env template, Nginx reverse-proxy skeleton, single-node deployment guide, hosted smoke checklist |
 | Demo support | Seeded demo data and demo-only reset control |
 | Quality gates | Python service tests, web-dashboard build, Docker Compose config, environment validation, local E2E smoke script, browser screenshot smoke, GitHub Actions baseline |
 | Documentation | API docs, QA plan, release process, branching strategy, development log, changelog, PM status report, environment configuration guide |
@@ -192,7 +193,7 @@ Before a release tag:
 - Production-grade authentication and authorization.
 - Real onboarding, user settings, timezone handling, and profile data.
 - Production-grade migration policy, backup, restore, and data retention.
-- Hosted deployment with HTTPS, domain, reverse proxy, observability, and incident playbook.
+- Hosted deployment execution with HTTPS, domain, observability, and incident playbook.
 - Mobile app implementation.
 - ClearML experiment tracking, model registry, agent execution, and deployment workflow.
 - DL completion-rate / focus-score service.
@@ -204,7 +205,7 @@ Before a release tag:
 
 ## Planned Phases
 
-1. Local Customer Demo MVP: complete through Issue 29.
+1. Local Customer Demo MVP: complete through Issue 30.
 2. Beta Hardening: auth, user isolation, deployment, observability, backup, a11y, and browser regression tests.
 3. MLOps Expansion: ClearML tracking, model registry, scheduled retraining, and model promotion.
 4. Intelligence Expansion: DL completion-rate or focus-score service.

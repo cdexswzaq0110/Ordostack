@@ -1,17 +1,17 @@
 # OrdoStack Project Status Report
 
 Date: 2026-06-04
-Version: 0.28.0
+Version: 0.29.0
 Report role: PM / project management
 
 ## Executive Summary
 
-OrdoStack is currently a local Customer Demo MVP with authentication and user-scoped planner data. It is suitable for internal QA and customer reference demos on a developer machine through Docker Compose. It is not ready for public launch because production deployment, observability, backup, security review, mobile app, ClearML production workflow, and production model governance are not implemented yet.
+OrdoStack is currently a local Customer Demo MVP with authentication, user-scoped planner data, and deployment baseline documentation. It is suitable for internal QA and customer reference demos on a developer machine through Docker Compose. It is not ready for public launch because hosted deployment execution, observability, backup, security review, mobile app, ClearML production workflow, and production model governance are not implemented yet.
 
 Current evidence:
 
-- Previous release tag before user isolation: `v0.27.0`.
-- Current product stage after Issue 29: user-scoped Customer Demo MVP `v0.28.0`.
+- Previous release tag before deployment baseline: `v0.28.0`.
+- Current product stage after Issue 30: deployment-baseline Customer Demo MVP `v0.29.0`.
 - Main runnable entrypoint: `http://localhost:5173`.
 - Runtime: local Docker Compose.
 - Database: local MySQL container.

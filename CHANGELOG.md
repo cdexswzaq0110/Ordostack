@@ -2,6 +2,19 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.29.0 - 2026-06-04
+
+- Add production environment template with blank secret values.
+- Add Nginx reverse-proxy skeleton for future single-node deployment.
+- Expand deployment documentation with account requirements, HTTPS plan, validation commands, and hosted smoke checklist.
+- Keep Issue 30 deployment baseline account-free and local-verifiable.
+
+Suggested commit:
+
+```text
+docs(deploy): add deployment baseline
+```
+
 ## 0.28.0 - 2026-06-04
 
 - Scope core planner APIs to the authenticated bearer-token user.

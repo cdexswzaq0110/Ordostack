@@ -1,5 +1,38 @@
 # Development Log
 
+## 2026-06-04 - Issue 30 - Deployment Baseline MVP
+
+Branch:
+
+```text
+codex/issue-30-deployment-baseline
+```
+
+Scope:
+
+- Add `.env.production.example` with blank production values.
+- Add Nginx reverse-proxy skeleton.
+- Expand deployment documentation for a future single-node Linux deployment.
+- Document account requirements and hosted smoke checklist.
+
+MVP boundaries:
+
+- No AWS resources are created.
+- No domain, TLS certificate, or hosted server is provisioned.
+- No production secrets are committed.
+
+Suggested git commit:
+
+```text
+docs(deploy): add deployment baseline
+```
+
+Verification:
+
+- `docker compose config` must pass.
+- Production overlay config must render with the production profile.
+- Secrets scan must find no committed credentials.
+
 ## 2026-06-04 - Issue 29 - User Isolation MVP
 
 Branch:

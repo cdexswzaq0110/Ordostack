@@ -2,6 +2,8 @@
 
 Issue 27 defines the local environment contract for OrdoStack.
 
+Issue 30 adds `.env.production.example` as a hosted deployment template. Copy it to `.env.production` on the target server and keep the filled file out of Git.
+
 ## Supported Environments
 
 | Value | Purpose |

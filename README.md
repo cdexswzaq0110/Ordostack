@@ -2,7 +2,7 @@
 
 OrdoStack is an AI daily planning MVP for task capture, protected calendar blocks, persisted generated schedules, execution analytics, local duration prediction, and MySQL-backed persistence.
 
-This version is a local Customer Demo MVP: it implements task/fixed-event APIs, a scheduler-service MVP, persisted generated schedules, execution logs, daily analytics, local ML duration prediction, MySQL persistence in Docker, Alembic baseline migrations, a React dashboard, demo reset, local auth foundation, user-scoped planner APIs, and local E2E smoke verification. Production-grade auth hardening, ClearML agent execution, mobile app implementation, and AWS deployment are not implemented yet.
+This version is a local Customer Demo MVP: it implements task/fixed-event APIs, a scheduler-service MVP, persisted generated schedules, execution logs, daily analytics, local ML duration prediction, MySQL persistence in Docker, Alembic baseline migrations, a React dashboard, demo reset, local auth foundation, user-scoped planner APIs, deployment baseline docs, and local E2E smoke verification. Production-grade auth hardening, ClearML agent execution, mobile app implementation, and AWS deployment are not implemented yet.
 
 ## Quick Start
 
@@ -265,6 +265,13 @@ Covered in Issue 29 MVP:
 - Tasks, fixed events, execution logs, analytics, predictions, and schedule history are scoped to `current_user.id`.
 - Cross-user tests cover tasks, fixed events, execution events, and schedule history export.
 - Dashboard and E2E smoke script authenticate with the demo account before planner API calls.
+
+Covered in Issue 30 MVP:
+
+- Production environment template with blank secret values.
+- Nginx reverse-proxy skeleton for future single-node deployment.
+- Deployment guide with account requirements, HTTPS plan, validation commands, and hosted smoke checklist.
+- No AWS resources or external accounts are required for this issue.
 
 Not covered yet:
 

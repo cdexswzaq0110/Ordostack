@@ -1,6 +1,6 @@
 # QA MVP Test Plan
 
-Scope: Issue 29 User Isolation, Issue 28 Authentication Foundation, Issue 27 Environment Configuration Hardening, Issue 25 Browser Screenshot Smoke, Issue 24 Schedule Export, Issue 23 Schedule Diff, Issue 22 Schedule History Actions, Issue 21 Task Filter And Sort, Issue 20 Demo MVP Documentation Baseline, Issue 19 E2E Smoke Workflow, Demo Seed And Reset Control, Dashboard UX Polish, Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
+Scope: Issue 30 Deployment Baseline, Issue 29 User Isolation, Issue 28 Authentication Foundation, Issue 27 Environment Configuration Hardening, Issue 25 Browser Screenshot Smoke, Issue 24 Schedule Export, Issue 23 Schedule Diff, Issue 22 Schedule History Actions, Issue 21 Task Filter And Sort, Issue 20 Demo MVP Documentation Baseline, Issue 19 E2E Smoke Workflow, Demo Seed And Reset Control, Dashboard UX Polish, Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
 
 ## Environment
 
@@ -109,6 +109,19 @@ Expected:
 4. Expected: config validation tests pass.
 5. Confirm production MySQL mode rejects an empty `DB_PASSWORD`.
 6. Confirm production mode requires explicit `AUTH_TOKEN_SECRET`.
+
+## Deployment Baseline Checks
+
+1. Confirm `.env.production.example` exists.
+2. Confirm all secret-like values in `.env.production.example` are blank.
+3. Confirm `infra/nginx/ordostack.conf` proxies `/api/` to backend-api and `/` to web-dashboard.
+4. Run:
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile production config
+```
+
+5. Expected: config renders without creating AWS, domain, TLS, or paid-service resources.
 
 ## Auth Foundation Checks
 
