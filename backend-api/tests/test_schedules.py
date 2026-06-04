@@ -6,6 +6,7 @@ from app.main import app
 from app.repositories.memory_store import store
 from app.schemas.predictions import DurationPredictionResponse
 from app.services import schedules as schedule_service
+from tests.helpers import auth_headers
 
 
 class FakeSchedulerResponse:
@@ -75,6 +76,7 @@ def test_generate_schedule_forwards_tasks_and_fixed_events(monkeypatch) -> None:
     monkeypatch.setattr(schedule_service.httpx, "post", fake_post)
     monkeypatch.setattr(schedule_service.prediction_service, "predict_for_tasks", fake_predict_for_tasks)
     client = TestClient(app)
+    client.headers.update(auth_headers(client))
 
     response = client.post(
         "/api/schedules/generate",
@@ -208,6 +210,7 @@ def test_schedule_history_diff_compares_two_runs(monkeypatch) -> None:
     monkeypatch.setattr(schedule_service.httpx, "post", fake_post)
     monkeypatch.setattr(schedule_service.prediction_service, "predict_for_tasks", fake_predict_for_tasks)
     client = TestClient(app)
+    client.headers.update(auth_headers(client))
 
     for _ in range(2):
         response = client.post(
@@ -249,6 +252,7 @@ def test_schedule_history_diff_compares_two_runs(monkeypatch) -> None:
 def test_latest_schedule_returns_404_when_missing() -> None:
     store.reset()
     client = TestClient(app)
+    client.headers.update(auth_headers(client))
 
     response = client.get(
         "/api/schedules/latest",
@@ -276,6 +280,7 @@ def test_schedule_history_returns_recent_generated_runs(monkeypatch) -> None:
     monkeypatch.setattr(schedule_service.httpx, "post", fake_post)
     monkeypatch.setattr(schedule_service.prediction_service, "predict_for_tasks", fake_predict_for_tasks)
     client = TestClient(app)
+    client.headers.update(auth_headers(client))
 
     for _ in range(2):
         response = client.post(
@@ -324,6 +329,7 @@ def test_schedule_history_export_returns_markdown_and_csv(monkeypatch) -> None:
     monkeypatch.setattr(schedule_service.httpx, "post", fake_post)
     monkeypatch.setattr(schedule_service.prediction_service, "predict_for_tasks", fake_predict_for_tasks)
     client = TestClient(app)
+    client.headers.update(auth_headers(client))
 
     generate_response = client.post(
         "/api/schedules/generate",
@@ -382,6 +388,7 @@ def test_schedule_history_title_update_and_soft_delete(monkeypatch) -> None:
     monkeypatch.setattr(schedule_service.httpx, "post", fake_post)
     monkeypatch.setattr(schedule_service.prediction_service, "predict_for_tasks", fake_predict_for_tasks)
     client = TestClient(app)
+    client.headers.update(auth_headers(client))
 
     for _ in range(2):
         response = client.post(

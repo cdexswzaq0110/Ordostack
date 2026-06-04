@@ -22,16 +22,18 @@ def list_tasks(
     return [TaskRead.model_validate(task) for task in tasks]
 
 
-def create_task(payload: TaskCreate) -> TaskRead:
+def create_task(user_id: int, payload: TaskCreate) -> TaskRead:
     store = get_store()
-    task = store.create_task(payload.model_dump())
+    task_payload = payload.model_dump()
+    task_payload["user_id"] = user_id
+    task = store.create_task(task_payload)
     return TaskRead.model_validate(task)
 
 
-def update_task(task_id: int, payload: TaskUpdate) -> TaskRead:
+def update_task(user_id: int, task_id: int, payload: TaskUpdate) -> TaskRead:
     store = get_store()
     current_task = store.get_task(task_id)
-    if current_task is None:
+    if current_task is None or current_task["user_id"] != user_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
 
     update_payload = payload.model_dump(exclude_unset=True)
@@ -48,10 +50,10 @@ def update_task(task_id: int, payload: TaskUpdate) -> TaskRead:
     return TaskRead.model_validate(updated_task)
 
 
-def reopen_task(task_id: int) -> TaskRead:
+def reopen_task(user_id: int, task_id: int) -> TaskRead:
     store = get_store()
     current_task = store.get_task(task_id)
-    if current_task is None:
+    if current_task is None or current_task["user_id"] != user_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
 
     updated_task = store.update_task(task_id, {"status": "pending"})
@@ -61,7 +63,10 @@ def reopen_task(task_id: int) -> TaskRead:
     return TaskRead.model_validate(updated_task)
 
 
-def delete_task(task_id: int) -> None:
+def delete_task(user_id: int, task_id: int) -> None:
     store = get_store()
+    current_task = store.get_task(task_id)
+    if current_task is None or current_task["user_id"] != user_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
     if not store.soft_delete_task(task_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")

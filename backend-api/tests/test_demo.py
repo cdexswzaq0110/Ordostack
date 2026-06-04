@@ -2,16 +2,18 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.repositories.memory_store import store
+from tests.helpers import auth_headers
 
 
 def test_demo_reset_restores_seed_data() -> None:
     store.reset()
     client = TestClient(app)
+    headers = auth_headers(client)
 
     create_response = client.post(
         "/api/tasks",
+        headers=headers,
         json={
-            "user_id": 1,
             "title": "Temporary demo pollution",
             "description": "",
             "category": "qa",
@@ -37,6 +39,7 @@ def test_demo_reset_restores_seed_data() -> None:
 
     task_response = client.get(
         "/api/tasks",
+        headers=headers,
         params={"user_id": 1, "target_date": "2026-06-03"},
     )
     titles = [task["title"] for task in task_response.json()]

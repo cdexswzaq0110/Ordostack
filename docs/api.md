@@ -6,6 +6,14 @@ Base URL:
 http://localhost:8000/api
 ```
 
+Core planner endpoints require:
+
+```text
+Authorization: Bearer <access_token>
+```
+
+Get a local token with `/auth/login` or `/auth/register`.
+
 ## Health
 
 | Service | Endpoint |
@@ -68,7 +76,7 @@ This is a demo-only endpoint for local QA and customer demos. It is not a produc
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
-| `GET` | `/tasks?user_id=1&target_date=2026-06-03` | List non-deleted tasks |
+| `GET` | `/tasks?target_date=2026-06-03` | List non-deleted tasks for the authenticated user |
 | `POST` | `/tasks` | Create a task |
 | `PATCH` | `/tasks/{task_id}` | Update task fields or status |
 | `POST` | `/tasks/{task_id}/reopen` | Reopen a completed task |
@@ -78,7 +86,6 @@ Create task example:
 
 ```json
 {
-  "user_id": 1,
   "title": "Draft QA cases",
   "description": "Prepare manual test checklist.",
   "category": "qa",
@@ -97,7 +104,7 @@ Create task example:
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
-| `GET` | `/fixed-events?user_id=1&target_date=2026-06-03` | List fixed events |
+| `GET` | `/fixed-events?target_date=2026-06-03` | List fixed events for the authenticated user |
 | `POST` | `/fixed-events` | Create a fixed event |
 | `PATCH` | `/fixed-events/{fixed_event_id}` | Update a fixed event |
 | `DELETE` | `/fixed-events/{fixed_event_id}` | Soft delete a fixed event |
@@ -106,7 +113,6 @@ Create fixed event example:
 
 ```json
 {
-  "user_id": 1,
   "title": "Gym",
   "start_time": "2026-06-03T17:30:00",
   "end_time": "2026-06-03T18:15:00",
@@ -121,18 +127,17 @@ Backend entrypoint:
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
 | `POST` | `/schedules/generate` | Generate a daily schedule from backend tasks and fixed events |
-| `GET` | `/schedules/latest?user_id=1&target_date=2026-06-03` | Load the latest persisted generated schedule |
-| `GET` | `/schedules/history?user_id=1&target_date=2026-06-03&limit=5` | Load recent persisted generated schedules |
-| `PATCH` | `/schedules/history/{schedule_run_id}?user_id=1` | Rename a schedule history item |
-| `DELETE` | `/schedules/history/{schedule_run_id}?user_id=1` | Soft delete a schedule history item |
-| `GET` | `/schedules/history/{schedule_run_id}/diff?user_id=1&against_run_id=1` | Compare two schedule history items |
-| `GET` | `/schedules/history/{schedule_run_id}/export?user_id=1&format=markdown` | Export a schedule history item as Markdown or CSV text |
+| `GET` | `/schedules/latest?target_date=2026-06-03` | Load the latest persisted generated schedule |
+| `GET` | `/schedules/history?target_date=2026-06-03&limit=5` | Load recent persisted generated schedules |
+| `PATCH` | `/schedules/history/{schedule_run_id}` | Rename a schedule history item |
+| `DELETE` | `/schedules/history/{schedule_run_id}` | Soft delete a schedule history item |
+| `GET` | `/schedules/history/{schedule_run_id}/diff?against_run_id=1` | Compare two schedule history items |
+| `GET` | `/schedules/history/{schedule_run_id}/export?format=markdown` | Export a schedule history item as Markdown or CSV text |
 
 Request example:
 
 ```json
 {
-  "user_id": 1,
   "target_date": "2026-06-03",
   "planning_mode": "balanced",
   "start_hour": 9,
@@ -192,8 +197,8 @@ The scheduler endpoint accepts the same schedule request plus explicit `tasks` a
 Generated schedule persistence:
 
 - `POST /schedules/generate` stores the generated schedule after scheduler-service returns successfully.
-- `GET /schedules/latest` returns the latest generated schedule for the given `user_id` and `target_date`.
-- `GET /schedules/history` returns recent non-deleted generated schedules for the given `user_id` and `target_date`, newest first.
+- `GET /schedules/latest` returns the latest generated schedule for the authenticated user and `target_date`.
+- `GET /schedules/history` returns recent non-deleted generated schedules for the authenticated user and `target_date`, newest first.
 - `PATCH /schedules/history/{schedule_run_id}` updates the history item title.
 - `DELETE /schedules/history/{schedule_run_id}` soft deletes the history item.
 - `GET /schedules/history/{schedule_run_id}/diff` compares a selected generated run against another run.
@@ -204,7 +209,7 @@ Generated schedule persistence:
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
-| `GET` | `/task-execution-logs?user_id=1&target_date=2026-06-03` | List execution events |
+| `GET` | `/task-execution-logs?target_date=2026-06-03` | List execution events for the authenticated user |
 | `POST` | `/tasks/{task_id}/execution/start` | Mark task as in progress |
 | `POST` | `/tasks/{task_id}/execution/pause` | Pause an in-progress task |
 | `POST` | `/tasks/{task_id}/execution/complete` | Complete a task and close any active interval |
@@ -214,7 +219,6 @@ Execution event request:
 
 ```json
 {
-  "user_id": 1,
   "occurred_at": "2026-06-03T09:00:00"
 }
 ```
@@ -225,7 +229,7 @@ Execution event request:
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
-| `GET` | `/analytics/daily?user_id=1&target_date=2026-06-03` | Daily execution summary |
+| `GET` | `/analytics/daily?target_date=2026-06-03` | Daily execution summary for the authenticated user |
 
 Response shape:
 
@@ -261,7 +265,7 @@ Backend entrypoint:
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
-| `GET` | `/ml/duration-predictions?user_id=1&target_date=2026-06-03` | Predict task duration for dashboard and scheduler |
+| `GET` | `/ml/duration-predictions?target_date=2026-06-03` | Predict task duration for dashboard and scheduler |
 
 Response shape:
 

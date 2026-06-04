@@ -901,7 +901,26 @@ export function App() {
     setAuthStatus("Signed out.");
   }
 
+  function buildAuthHeaders(): Record<string, string> {
+    return authToken ? { Authorization: `Bearer ${authToken}` } : {};
+  }
+
   async function loadDashboardData() {
+    if (!authToken) {
+      setTasks([]);
+      setFixedEvents([]);
+      setAnalytics(null);
+      setDurationPredictions(null);
+      setSchedule(null);
+      setScheduleHistory([]);
+      setSelectedScheduleRunId(null);
+      setScheduleSource("none");
+      setScheduleDiff(null);
+      setIsLoading(false);
+      setError(null);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -915,22 +934,28 @@ export function App() {
         nextScheduleHistory,
       ] = await Promise.all([
         requestJson<ApiTask[]>(
-          `${API_BASE_URL}/tasks?user_id=${DEMO_USER_ID}&target_date=${selectedDate}`,
+          `${API_BASE_URL}/tasks?target_date=${selectedDate}`,
+          { headers: buildAuthHeaders() },
         ),
         requestJson<ApiFixedEvent[]>(
-          `${API_BASE_URL}/fixed-events?user_id=${DEMO_USER_ID}&target_date=${selectedDate}`,
+          `${API_BASE_URL}/fixed-events?target_date=${selectedDate}`,
+          { headers: buildAuthHeaders() },
         ),
         requestJson<ApiDailyAnalytics>(
-          `${API_BASE_URL}/analytics/daily?user_id=${DEMO_USER_ID}&target_date=${selectedDate}`,
+          `${API_BASE_URL}/analytics/daily?target_date=${selectedDate}`,
+          { headers: buildAuthHeaders() },
         ),
         requestJson<ApiDurationPredictionResponse>(
-          `${API_BASE_URL}/ml/duration-predictions?user_id=${DEMO_USER_ID}&target_date=${selectedDate}`,
+          `${API_BASE_URL}/ml/duration-predictions?target_date=${selectedDate}`,
+          { headers: buildAuthHeaders() },
         ),
         requestOptionalJson<ApiScheduleResponse>(
-          `${API_BASE_URL}/schedules/latest?user_id=${DEMO_USER_ID}&target_date=${selectedDate}`,
+          `${API_BASE_URL}/schedules/latest?target_date=${selectedDate}`,
+          { headers: buildAuthHeaders() },
         ),
         requestJson<ApiScheduleHistoryItem[]>(
-          `${API_BASE_URL}/schedules/history?user_id=${DEMO_USER_ID}&target_date=${selectedDate}&limit=5`,
+          `${API_BASE_URL}/schedules/history?target_date=${selectedDate}&limit=5`,
+          { headers: buildAuthHeaders() },
         ),
       ]);
 
@@ -952,7 +977,7 @@ export function App() {
 
   useEffect(() => {
     void loadDashboardData();
-  }, [selectedDate]);
+  }, [authToken, selectedDate]);
 
   useEffect(() => {
     if (!authToken) {
@@ -1159,7 +1184,8 @@ export function App() {
 
   async function refreshScheduleHistory() {
     const nextScheduleHistory = await requestJson<ApiScheduleHistoryItem[]>(
-      `${API_BASE_URL}/schedules/history?user_id=${DEMO_USER_ID}&target_date=${selectedDate}&limit=5`,
+      `${API_BASE_URL}/schedules/history?target_date=${selectedDate}&limit=5`,
+      { headers: buildAuthHeaders() },
     );
     setScheduleHistory(nextScheduleHistory);
     return nextScheduleHistory;
@@ -1183,7 +1209,8 @@ export function App() {
 
     try {
       const nextScheduleDiff = await requestJson<ApiScheduleDiffResponse>(
-        `${API_BASE_URL}/schedules/history/${selectedScheduleRunId}/diff?user_id=${DEMO_USER_ID}&against_run_id=${previousScheduleHistoryItem.id}`,
+        `${API_BASE_URL}/schedules/history/${selectedScheduleRunId}/diff?against_run_id=${previousScheduleHistoryItem.id}`,
+        { headers: buildAuthHeaders() },
       );
       setScheduleDiff(nextScheduleDiff);
     } catch (caughtError) {
@@ -1204,7 +1231,8 @@ export function App() {
 
     try {
       const exportedSchedule = await requestJson<ApiScheduleExportResponse>(
-        `${API_BASE_URL}/schedules/history/${selectedScheduleRunId}/export?user_id=${DEMO_USER_ID}&format=${exportFormat}`,
+        `${API_BASE_URL}/schedules/history/${selectedScheduleRunId}/export?format=${exportFormat}`,
+        { headers: buildAuthHeaders() },
       );
       downloadTextFile(exportedSchedule.filename, exportedSchedule.content, exportedSchedule.content_type);
     } catch (caughtError) {
@@ -1226,9 +1254,10 @@ export function App() {
 
     try {
       const updatedScheduleRun = await requestJson<ApiScheduleHistoryItem>(
-        `${API_BASE_URL}/schedules/history/${scheduleRunId}?user_id=${DEMO_USER_ID}`,
+        `${API_BASE_URL}/schedules/history/${scheduleRunId}`,
         {
           method: "PATCH",
+          headers: buildAuthHeaders(),
           body: JSON.stringify({ title }),
         },
       );
@@ -1257,8 +1286,8 @@ export function App() {
 
     try {
       await requestJson<{ deleted: boolean }>(
-        `${API_BASE_URL}/schedules/history/${scheduleRunId}?user_id=${DEMO_USER_ID}`,
-        { method: "DELETE" },
+        `${API_BASE_URL}/schedules/history/${scheduleRunId}`,
+        { method: "DELETE", headers: buildAuthHeaders() },
       );
       const nextScheduleHistory = await refreshScheduleHistory();
       if (selectedScheduleRunId === scheduleRunId) {
@@ -1285,8 +1314,8 @@ export function App() {
     try {
       const nextSchedule = await requestJson<ApiScheduleResponse>(`${API_BASE_URL}/schedules/generate`, {
         method: "POST",
+        headers: buildAuthHeaders(),
         body: JSON.stringify({
-          user_id: DEMO_USER_ID,
           target_date: selectedDate,
           planning_mode: "balanced",
           start_hour: 9,
@@ -1321,8 +1350,8 @@ export function App() {
     try {
       await requestJson<ApiTask>(`${API_BASE_URL}/tasks`, {
         method: "POST",
+        headers: buildAuthHeaders(),
         body: JSON.stringify({
-          user_id: DEMO_USER_ID,
           description: "",
           ...buildTaskMutationPayload(taskForm, selectedDate),
           is_fixed: false,
@@ -1355,6 +1384,7 @@ export function App() {
     try {
       await requestJson<ApiTask>(`${API_BASE_URL}/tasks/${taskId}`, {
         method: "PATCH",
+        headers: buildAuthHeaders(),
         body: JSON.stringify(buildTaskMutationPayload(editTaskForm, selectedDate)),
       });
 
@@ -1380,8 +1410,8 @@ export function App() {
     try {
       await requestJson<ApiFixedEvent>(`${API_BASE_URL}/fixed-events`, {
         method: "POST",
+        headers: buildAuthHeaders(),
         body: JSON.stringify({
-          user_id: DEMO_USER_ID,
           ...buildFixedEventMutationPayload(fixedEventForm, selectedDate),
         }),
       });
@@ -1410,6 +1440,7 @@ export function App() {
     try {
       await requestJson<ApiFixedEvent>(`${API_BASE_URL}/fixed-events/${fixedEventId}`, {
         method: "PATCH",
+        headers: buildAuthHeaders(),
         body: JSON.stringify(buildFixedEventMutationPayload(editFixedEventForm, selectedDate)),
       });
 
@@ -1427,7 +1458,10 @@ export function App() {
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/fixed-events/${fixedEventId}`, { method: "DELETE" });
+      const response = await fetch(`${API_BASE_URL}/fixed-events/${fixedEventId}`, {
+        method: "DELETE",
+        headers: buildAuthHeaders(),
+      });
       if (!response.ok) {
         throw new Error(`Delete failed with ${response.status}`);
       }
@@ -1473,7 +1507,8 @@ export function App() {
     try {
       await requestJson(`${API_BASE_URL}/tasks/${taskId}/execution/${eventType}`, {
         method: "POST",
-        body: JSON.stringify({ user_id: DEMO_USER_ID }),
+        headers: buildAuthHeaders(),
+        body: JSON.stringify({}),
       });
       await loadDashboardData();
     } catch (caughtError) {
@@ -1494,6 +1529,7 @@ export function App() {
           : `${API_BASE_URL}/tasks/${taskId}`;
       await requestJson<ApiTask>(endpoint, {
         method: status === "pending" ? "POST" : "PATCH",
+        headers: buildAuthHeaders(),
         body: status === "pending" ? undefined : JSON.stringify({ status }),
       });
       await loadDashboardData();
@@ -1509,7 +1545,10 @@ export function App() {
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, { method: "DELETE" });
+      const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
+        method: "DELETE",
+        headers: buildAuthHeaders(),
+      });
       if (!response.ok) {
         throw new Error(`Delete failed with ${response.status}`);
       }
@@ -1724,7 +1763,7 @@ export function App() {
             <button
               className="primary-action"
               type="button"
-              disabled={isGenerating || isLoading || isMutating}
+              disabled={!authToken || isGenerating || isLoading || isMutating}
               onClick={() => void generatePlan()}
             >
               {isGenerating ? (
@@ -1786,12 +1825,13 @@ export function App() {
                     <p className="section-kicker">{scheduleKicker}</p>
                     <h1 id="page-title">Focused schedule</h1>
                   </div>
-                  <button
-                    className="secondary-action"
-                    type="button"
-                    onClick={() => {
-                      setIsTaskFormOpen((isOpen) => !isOpen);
-                      cancelEditingTask();
+                <button
+                  className="secondary-action"
+                  type="button"
+                  disabled={!authToken || isMutating}
+                  onClick={() => {
+                    setIsTaskFormOpen((isOpen) => !isOpen);
+                    cancelEditingTask();
                     }}
                   >
                     <Plus size={17} aria-hidden="true" />
@@ -1928,7 +1968,7 @@ export function App() {
                         <button
                           className="secondary-action"
                           type="button"
-                          disabled={isComparing || previousScheduleHistoryItem === null}
+                          disabled={!authToken || isComparing || previousScheduleHistoryItem === null}
                           onClick={() => void compareScheduleWithPrevious()}
                         >
                           {isComparing ? (
@@ -1941,7 +1981,7 @@ export function App() {
                         <button
                           className="secondary-action"
                           type="button"
-                          disabled={isExportingSchedule || selectedScheduleRunId === null}
+                          disabled={!authToken || isExportingSchedule || selectedScheduleRunId === null}
                           onClick={() => void exportSelectedSchedule("markdown")}
                         >
                           {isExportingSchedule ? (
@@ -2199,6 +2239,7 @@ export function App() {
                     <button
                       className="secondary-action"
                       type="button"
+                      disabled={!authToken || isMutating}
                       onClick={() => {
                         setIsFixedEventFormOpen((isOpen) => !isOpen);
                         cancelEditingFixedEvent();

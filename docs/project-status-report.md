@@ -1,17 +1,17 @@
 # OrdoStack Project Status Report
 
 Date: 2026-06-04
-Version: 0.27.0
+Version: 0.28.0
 Report role: PM / project management
 
 ## Executive Summary
 
-OrdoStack is currently a local Customer Demo MVP with an authentication foundation. It is suitable for internal QA and customer reference demos on a developer machine through Docker Compose. It is not ready for public launch because user isolation, production deployment, observability, backup, security review, mobile app, ClearML production workflow, and production model governance are not implemented yet.
+OrdoStack is currently a local Customer Demo MVP with authentication and user-scoped planner data. It is suitable for internal QA and customer reference demos on a developer machine through Docker Compose. It is not ready for public launch because production deployment, observability, backup, security review, mobile app, ClearML production workflow, and production model governance are not implemented yet.
 
 Current evidence:
 
-- Previous release tag before auth foundation: `v0.26.0`.
-- Current product stage after Issue 28: auth-foundation Customer Demo MVP `v0.27.0`.
+- Previous release tag before user isolation: `v0.27.0`.
+- Current product stage after Issue 29: user-scoped Customer Demo MVP `v0.28.0`.
 - Main runnable entrypoint: `http://localhost:5173`.
 - Runtime: local Docker Compose.
 - Database: local MySQL container.
@@ -62,6 +62,7 @@ Product capabilities already implemented:
 - Schedule history rename, soft delete, diff, Markdown/CSV export.
 - Demo reset for bundled local demo user.
 - Local auth foundation with demo account, register, login, and current-user API.
+- User-scoped planner APIs for authenticated local users.
 - Dashboard empty states and retry behavior.
 - Local E2E smoke test.
 - Browser screenshot smoke test.
@@ -73,7 +74,6 @@ Product capabilities already implemented:
 Launch-critical gaps:
 
 - Production-grade authentication and authorization.
-- User isolation beyond demo `user_id=1`.
 - Real onboarding and user profile settings.
 - Timezone and locale settings.
 - Production deployment with HTTPS, domain, reverse proxy, environment separation.
@@ -99,24 +99,13 @@ Product gaps from the original specification:
 
 ## Known Weak Points
 
-- The dashboard is demo-oriented and uses `user_id=1`; this is not production-safe.
+- The dashboard now uses local bearer auth, but it is still a demo-oriented web client.
 - The demo reset endpoint restores local demo data and is not a production account recovery feature.
 - Browser smoke verifies a nonblank PNG but does not detect visual regressions pixel-by-pixel.
 - The ML model is a local JSON artifact, not an operationally managed model.
 - Current CI validates build/test/config but does not run full Docker runtime E2E in GitHub Actions.
 
 ## Recommended Next Issues
-
-Issue 28: Authentication foundation
-
-- Add local auth model and session/JWT boundary.
-- Keep demo mode available but clearly isolated.
-- Update API to avoid implicit `user_id=1` in production paths.
-
-Issue 29: User isolation pass
-
-- Ensure every persisted entity is scoped to authenticated user context.
-- Add tests that one user cannot access another user's data.
 
 Issue 30: Deployment baseline
 

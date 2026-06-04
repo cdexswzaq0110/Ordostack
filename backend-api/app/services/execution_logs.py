@@ -21,13 +21,14 @@ def list_execution_logs(
 
 
 def record_execution_event(
+    user_id: int,
     task_id: int,
     event_type: ExecutionEventType,
     payload: TaskExecutionEventRequest,
 ) -> TaskExecutionLogRead:
     store = get_store()
     task = store.get_task(task_id)
-    if task is None or task["user_id"] != payload.user_id:
+    if task is None or task["user_id"] != user_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
 
     validate_execution_transition(task, event_type)
@@ -35,7 +36,7 @@ def record_execution_event(
     occurred_at = payload.occurred_at or datetime.now(UTC)
     execution_log = store.create_execution_log(
         {
-            "user_id": payload.user_id,
+            "user_id": user_id,
             "task_id": task_id,
             "event_type": event_type,
             "occurred_at": occurred_at,

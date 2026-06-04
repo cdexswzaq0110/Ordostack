@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.repositories.memory_store import store
 from app.services import predictions as prediction_service
+from tests.helpers import auth_headers
 
 
 class FakeMlResponse:
@@ -56,6 +57,7 @@ def test_duration_predictions_calls_ml_service(monkeypatch) -> None:
 
     monkeypatch.setattr(prediction_service.httpx, "post", fake_post)
     client = TestClient(app)
+    client.headers.update(auth_headers(client))
 
     response = client.get(
         "/api/ml/duration-predictions",
@@ -77,6 +79,7 @@ def test_duration_predictions_falls_back_when_ml_service_is_unavailable(monkeypa
 
     monkeypatch.setattr(prediction_service.httpx, "post", fake_post)
     client = TestClient(app)
+    client.headers.update(auth_headers(client))
 
     response = client.get(
         "/api/ml/duration-predictions",

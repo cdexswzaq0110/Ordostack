@@ -2,7 +2,7 @@
 
 OrdoStack is an AI daily planning MVP for task capture, protected calendar blocks, persisted generated schedules, execution analytics, local duration prediction, and MySQL-backed persistence.
 
-This version is a local Customer Demo MVP: it implements task/fixed-event APIs, a scheduler-service MVP, persisted generated schedules, execution logs, daily analytics, local ML duration prediction, MySQL persistence in Docker, Alembic baseline migrations, a React dashboard, demo reset, local auth foundation, and local E2E smoke verification. Production-grade auth, user isolation, ClearML agent execution, mobile app implementation, and AWS deployment are not implemented yet.
+This version is a local Customer Demo MVP: it implements task/fixed-event APIs, a scheduler-service MVP, persisted generated schedules, execution logs, daily analytics, local ML duration prediction, MySQL persistence in Docker, Alembic baseline migrations, a React dashboard, demo reset, local auth foundation, user-scoped planner APIs, and local E2E smoke verification. Production-grade auth hardening, ClearML agent execution, mobile app implementation, and AWS deployment are not implemented yet.
 
 ## Quick Start
 
@@ -259,13 +259,20 @@ Covered in Issue 28 MVP:
 - MySQL `users` table through Alembic revision `20260604_0003`.
 - Dashboard account controls for demo login, register, login, and sign out.
 
+Covered in Issue 29 MVP:
+
+- Core planner APIs use the authenticated bearer-token user instead of implicit `user_id=1`.
+- Tasks, fixed events, execution logs, analytics, predictions, and schedule history are scoped to `current_user.id`.
+- Cross-user tests cover tasks, fixed events, execution events, and schedule history export.
+- Dashboard and E2E smoke script authenticate with the demo account before planner API calls.
+
 Not covered yet:
 
 - Production ML / DL model registry.
 - ClearML agent execution.
 - Mobile app implementation.
 - AWS deployment.
-- Production-grade authentication and user isolation.
+- Production-grade auth hardening and authorization.
 
 ## No Secrets Policy
 

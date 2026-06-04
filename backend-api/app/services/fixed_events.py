@@ -12,16 +12,18 @@ def list_fixed_events(user_id: int, target_date: date | None = None) -> list[Fix
     return [FixedEventRead.model_validate(fixed_event) for fixed_event in fixed_events]
 
 
-def create_fixed_event(payload: FixedEventCreate) -> FixedEventRead:
+def create_fixed_event(user_id: int, payload: FixedEventCreate) -> FixedEventRead:
     store = get_store()
-    fixed_event = store.create_fixed_event(payload.model_dump())
+    fixed_event_payload = payload.model_dump()
+    fixed_event_payload["user_id"] = user_id
+    fixed_event = store.create_fixed_event(fixed_event_payload)
     return FixedEventRead.model_validate(fixed_event)
 
 
-def update_fixed_event(fixed_event_id: int, payload: FixedEventUpdate) -> FixedEventRead:
+def update_fixed_event(user_id: int, fixed_event_id: int, payload: FixedEventUpdate) -> FixedEventRead:
     store = get_store()
     current_fixed_event = store.get_fixed_event(fixed_event_id)
-    if current_fixed_event is None:
+    if current_fixed_event is None or current_fixed_event["user_id"] != user_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Fixed event not found")
 
     update_payload = payload.model_dump(exclude_unset=True)
@@ -40,7 +42,10 @@ def update_fixed_event(fixed_event_id: int, payload: FixedEventUpdate) -> FixedE
     return FixedEventRead.model_validate(updated_fixed_event)
 
 
-def delete_fixed_event(fixed_event_id: int) -> None:
+def delete_fixed_event(user_id: int, fixed_event_id: int) -> None:
     store = get_store()
+    current_fixed_event = store.get_fixed_event(fixed_event_id)
+    if current_fixed_event is None or current_fixed_event["user_id"] != user_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Fixed event not found")
     if not store.soft_delete_fixed_event(fixed_event_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Fixed event not found")

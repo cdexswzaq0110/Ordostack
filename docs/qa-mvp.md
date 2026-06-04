@@ -1,6 +1,6 @@
 # QA MVP Test Plan
 
-Scope: Issue 28 Authentication Foundation, Issue 27 Environment Configuration Hardening, Issue 25 Browser Screenshot Smoke, Issue 24 Schedule Export, Issue 23 Schedule Diff, Issue 22 Schedule History Actions, Issue 21 Task Filter And Sort, Issue 20 Demo MVP Documentation Baseline, Issue 19 E2E Smoke Workflow, Demo Seed And Reset Control, Dashboard UX Polish, Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
+Scope: Issue 29 User Isolation, Issue 28 Authentication Foundation, Issue 27 Environment Configuration Hardening, Issue 25 Browser Screenshot Smoke, Issue 24 Schedule Export, Issue 23 Schedule Diff, Issue 22 Schedule History Actions, Issue 21 Task Filter And Sort, Issue 20 Demo MVP Documentation Baseline, Issue 19 E2E Smoke Workflow, Demo Seed And Reset Control, Dashboard UX Polish, Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
 
 ## Environment
 
@@ -121,6 +121,13 @@ Expected:
 7. Expected: account is created and account summary appears.
 8. Call `/api/auth/me` with the returned bearer token if testing through API.
 9. Expected: response returns the current local user.
+
+For PowerShell API snippets below, create auth headers first:
+
+```powershell
+$login = Invoke-RestMethod -Method Post -Uri "http://localhost:8000/api/auth/login" -ContentType "application/json" -Body '{"email":"demo@ordostack.local","password":"ordostack-demo"}'
+$headers = @{ Authorization = "Bearer $($login.access_token)" }
+```
 
 ## Task Tests
 
@@ -269,7 +276,7 @@ Expected:
 After generating a schedule, call:
 
 ```powershell
-Invoke-RestMethod -Uri "http://localhost:8000/api/schedules/latest?user_id=1&target_date=2026-06-03"
+Invoke-RestMethod -Uri "http://localhost:8000/api/schedules/latest?target_date=2026-06-03" -Headers $headers
 ```
 
 Expected:
@@ -297,7 +304,7 @@ Expected:
 15. Call:
 
 ```powershell
-Invoke-RestMethod -Uri "http://localhost:8000/api/schedules/history?user_id=1&target_date=2026-06-03&limit=5"
+Invoke-RestMethod -Uri "http://localhost:8000/api/schedules/history?target_date=2026-06-03&limit=5" -Headers $headers
 ```
 
 Expected:
@@ -318,7 +325,7 @@ Expected:
 ### Prediction API
 
 ```powershell
-Invoke-RestMethod -Uri "http://localhost:8000/api/ml/duration-predictions?user_id=1&target_date=2026-06-03"
+Invoke-RestMethod -Uri "http://localhost:8000/api/ml/duration-predictions?target_date=2026-06-03" -Headers $headers
 ```
 
 Expected:
@@ -376,7 +383,7 @@ docker compose restart backend-api
 3. Call:
 
 ```powershell
-Invoke-RestMethod -Uri "http://localhost:8000/api/task-execution-logs?user_id=1&target_date=2026-06-03"
+Invoke-RestMethod -Uri "http://localhost:8000/api/task-execution-logs?target_date=2026-06-03" -Headers $headers
 ```
 
 4. Expected: start and complete events remain available.
@@ -415,12 +422,14 @@ docker compose exec backend-api alembic current
 
 ```powershell
 Invoke-RestMethod -Method Post -Uri "http://localhost:8000/api/demo/reset?user_id=1"
-Invoke-RestMethod -Uri "http://localhost:8000/api/tasks?user_id=1&target_date=2026-06-03"
-Invoke-RestMethod -Uri "http://localhost:8000/api/fixed-events?user_id=1&target_date=2026-06-03"
-Invoke-RestMethod -Uri "http://localhost:8000/api/task-execution-logs?user_id=1&target_date=2026-06-03"
-Invoke-RestMethod -Uri "http://localhost:8000/api/analytics/daily?user_id=1&target_date=2026-06-03"
-Invoke-RestMethod -Uri "http://localhost:8000/api/ml/duration-predictions?user_id=1&target_date=2026-06-03"
-Invoke-RestMethod -Uri "http://localhost:8000/api/schedules/latest?user_id=1&target_date=2026-06-03"
+$login = Invoke-RestMethod -Method Post -Uri "http://localhost:8000/api/auth/login" -ContentType "application/json" -Body '{"email":"demo@ordostack.local","password":"ordostack-demo"}'
+$headers = @{ Authorization = "Bearer $($login.access_token)" }
+Invoke-RestMethod -Uri "http://localhost:8000/api/tasks?target_date=2026-06-03" -Headers $headers
+Invoke-RestMethod -Uri "http://localhost:8000/api/fixed-events?target_date=2026-06-03" -Headers $headers
+Invoke-RestMethod -Uri "http://localhost:8000/api/task-execution-logs?target_date=2026-06-03" -Headers $headers
+Invoke-RestMethod -Uri "http://localhost:8000/api/analytics/daily?target_date=2026-06-03" -Headers $headers
+Invoke-RestMethod -Uri "http://localhost:8000/api/ml/duration-predictions?target_date=2026-06-03" -Headers $headers
+Invoke-RestMethod -Uri "http://localhost:8000/api/schedules/latest?target_date=2026-06-03" -Headers $headers
 Invoke-RestMethod -Uri "http://localhost:8200/model/info"
 ```
 
@@ -431,7 +440,7 @@ Invoke-RestMethod -Uri "http://localhost:8200/model/info"
 - Active timers only affect actual minutes after pause, complete, or skip closes an interval.
 - Task splitting is not implemented yet.
 - Duration prediction uses a local JSON training artifact, not a production model registry.
-- There is no authentication; MVP uses `user_id=1`.
+- Core planner APIs require local bearer authentication and scope data to the current user.
 - ML metrics are local sample metrics until a production model registry exists.
 - Schema bootstrap remains as a compatibility fallback; Alembic is the Docker startup path.
 - MySQL uses local development settings and no production credential management.

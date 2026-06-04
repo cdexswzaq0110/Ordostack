@@ -1,5 +1,39 @@
 # Development Log
 
+## 2026-06-04 - Issue 29 - User Isolation MVP
+
+Branch:
+
+```text
+codex/issue-29-user-isolation
+```
+
+Scope:
+
+- Require bearer authentication for core planner APIs.
+- Scope task, fixed event, execution log, analytics, prediction, and schedule routes to `current_user.id`.
+- Override request-body `user_id` with authenticated user context.
+- Add tests that another user cannot read or mutate demo user planner data.
+- Update dashboard and E2E smoke script to send bearer tokens.
+
+MVP boundaries:
+
+- No OAuth or external identity provider.
+- No complex team/tenant permission model.
+- Demo reset remains a local demo-only endpoint.
+
+Suggested git commit:
+
+```text
+feat(auth): scope planner data to current user
+```
+
+Verification:
+
+- backend-api tests must pass locally.
+- web-dashboard production build must pass.
+- E2E smoke must login with the demo account.
+
 ## 2026-06-04 - Issue 28 - Authentication Foundation MVP
 
 Branch:

@@ -13,17 +13,26 @@ BACKEND_API_URL = "http://localhost:8000/api"
 SCHEDULER_URL = "http://localhost:8100"
 ML_URL = "http://localhost:8200"
 DASHBOARD_URL = "http://localhost:5173"
-DEMO_USER_ID = 1
+DEMO_AUTH_EMAIL = "demo@ordostack.local"
+DEMO_AUTH_PASSWORD = "ordostack-demo"
 TARGET_DATE = "2026-06-03"
 
 
-def request_json(url: str, method: str = "GET", payload: dict[str, Any] | None = None) -> Any:
+def request_json(
+    url: str,
+    method: str = "GET",
+    payload: dict[str, Any] | None = None,
+    token: str | None = None,
+) -> Any:
     body = None if payload is None else json.dumps(payload).encode("utf-8")
+    headers = {"Content-Type": "application/json"}
+    if token is not None:
+        headers["Authorization"] = f"Bearer {token}"
     request = Request(
         url,
         data=body,
         method=method,
-        headers={"Content-Type": "application/json"},
+        headers=headers,
     )
     with urlopen(request, timeout=10) as response:
         content = response.read().decode("utf-8")
@@ -65,11 +74,18 @@ def main() -> int:
         assert_equal(ml_health["status"], "ok", "ml-service health")
         assert_true("OrdoStack" in dashboard_html, "dashboard HTML contains OrdoStack")
 
+        auth_payload = request_json(
+            f"{BACKEND_API_URL}/auth/login",
+            method="POST",
+            payload={"email": DEMO_AUTH_EMAIL, "password": DEMO_AUTH_PASSWORD},
+        )
+        access_token = auth_payload["access_token"]
+
         created_task = request_json(
             f"{BACKEND_API_URL}/tasks",
             method="POST",
+            token=access_token,
             payload={
-                "user_id": DEMO_USER_ID,
                 "title": task_title,
                 "description": "",
                 "category": "e2e",
@@ -86,6 +102,7 @@ def main() -> int:
         updated_task = request_json(
             f"{BACKEND_API_URL}/tasks/{created_task['id']}",
             method="PATCH",
+            token=access_token,
             payload={"title": edited_task_title, "estimated_minutes": 35},
         )
         assert_equal(updated_task["title"], edited_task_title, "task edit title")
@@ -94,8 +111,8 @@ def main() -> int:
         created_event = request_json(
             f"{BACKEND_API_URL}/fixed-events",
             method="POST",
+            token=access_token,
             payload={
-                "user_id": DEMO_USER_ID,
                 "title": event_title,
                 "event_type": "e2e",
                 "start_time": f"{TARGET_DATE}T15:00:00",
@@ -105,6 +122,7 @@ def main() -> int:
         updated_event = request_json(
             f"{BACKEND_API_URL}/fixed-events/{created_event['id']}",
             method="PATCH",
+            token=access_token,
             payload={
                 "title": edited_event_title,
                 "event_type": "e2e-edited",
@@ -118,8 +136,8 @@ def main() -> int:
         schedule = request_json(
             f"{BACKEND_API_URL}/schedules/generate",
             method="POST",
+            token=access_token,
             payload={
-                "user_id": DEMO_USER_ID,
                 "target_date": TARGET_DATE,
                 "planning_mode": "balanced",
                 "start_hour": 9,
@@ -133,8 +151,8 @@ def main() -> int:
         second_schedule = request_json(
             f"{BACKEND_API_URL}/schedules/generate",
             method="POST",
+            token=access_token,
             payload={
-                "user_id": DEMO_USER_ID,
                 "target_date": TARGET_DATE,
                 "planning_mode": "balanced",
                 "start_hour": 9,
@@ -145,25 +163,31 @@ def main() -> int:
         )
         assert_true(len(second_schedule["items"]) >= 1, "second generated schedule has items")
 
-        history = request_json(f"{BACKEND_API_URL}/schedules/history?user_id=1&target_date={TARGET_DATE}&limit=5")
+        history = request_json(
+            f"{BACKEND_API_URL}/schedules/history?target_date={TARGET_DATE}&limit=5",
+            token=access_token,
+        )
         assert_true(len(history) >= 2, "schedule history has at least two runs")
         assert_equal(history[0]["schedule"]["schedule_date"], TARGET_DATE, "history target date")
 
         renamed_schedule = request_json(
-            f"{BACKEND_API_URL}/schedules/history/{history[0]['id']}?user_id={DEMO_USER_ID}",
+            f"{BACKEND_API_URL}/schedules/history/{history[0]['id']}",
             method="PATCH",
+            token=access_token,
             payload={"title": f"E2E smoke plan {timestamp}"},
         )
         assert_true(renamed_schedule["title"].startswith("E2E smoke plan"), "schedule rename")
 
         schedule_diff = request_json(
-            f"{BACKEND_API_URL}/schedules/history/{history[0]['id']}/diff?user_id={DEMO_USER_ID}&against_run_id={history[1]['id']}",
+            f"{BACKEND_API_URL}/schedules/history/{history[0]['id']}/diff?against_run_id={history[1]['id']}",
+            token=access_token,
         )
         assert_equal(schedule_diff["compare_run_id"], history[0]["id"], "schedule diff compare run")
         assert_equal(schedule_diff["base_run_id"], history[1]["id"], "schedule diff base run")
 
         exported_schedule = request_json(
-            f"{BACKEND_API_URL}/schedules/history/{history[0]['id']}/export?user_id={DEMO_USER_ID}&format=markdown",
+            f"{BACKEND_API_URL}/schedules/history/{history[0]['id']}/export?format=markdown",
+            token=access_token,
         )
         assert_true(exported_schedule["filename"].endswith(".md"), "schedule export filename")
         assert_true(exported_schedule["content"].startswith("# E2E smoke plan"), "schedule export content")

@@ -2,23 +2,28 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.repositories.memory_store import store
+from tests.helpers import auth_headers
 
 
 def test_start_and_pause_task_records_actual_minutes() -> None:
     store.reset()
     client = TestClient(app)
+    headers = auth_headers(client)
 
     start_response = client.post(
         "/api/tasks/1/execution/start",
-        json={"user_id": 1, "occurred_at": "2026-06-03T09:00:00"},
+        headers=headers,
+        json={"occurred_at": "2026-06-03T09:00:00"},
     )
     pause_response = client.post(
         "/api/tasks/1/execution/pause",
-        json={"user_id": 1, "occurred_at": "2026-06-03T09:25:00"},
+        headers=headers,
+        json={"occurred_at": "2026-06-03T09:25:00"},
     )
     analytics_response = client.get(
         "/api/analytics/daily",
-        params={"user_id": 1, "target_date": "2026-06-03"},
+        headers=headers,
+        params={"target_date": "2026-06-03"},
     )
 
     assert start_response.status_code == 200
@@ -37,19 +42,23 @@ def test_start_and_pause_task_records_actual_minutes() -> None:
 def test_complete_task_closes_running_interval_and_updates_status() -> None:
     store.reset()
     client = TestClient(app)
+    headers = auth_headers(client)
 
     client.post(
         "/api/tasks/2/execution/start",
-        json={"user_id": 1, "occurred_at": "2026-06-03T10:00:00"},
+        headers=headers,
+        json={"occurred_at": "2026-06-03T10:00:00"},
     )
     complete_response = client.post(
         "/api/tasks/2/execution/complete",
-        json={"user_id": 1, "occurred_at": "2026-06-03T11:10:00"},
+        headers=headers,
+        json={"occurred_at": "2026-06-03T11:10:00"},
     )
-    tasks_response = client.get("/api/tasks", params={"user_id": 1, "target_date": "2026-06-03"})
+    tasks_response = client.get("/api/tasks", headers=headers, params={"target_date": "2026-06-03"})
     analytics_response = client.get(
         "/api/analytics/daily",
-        params={"user_id": 1, "target_date": "2026-06-03"},
+        headers=headers,
+        params={"target_date": "2026-06-03"},
     )
 
     assert complete_response.status_code == 200
@@ -66,10 +75,12 @@ def test_complete_task_closes_running_interval_and_updates_status() -> None:
 def test_pause_requires_in_progress_task() -> None:
     store.reset()
     client = TestClient(app)
+    headers = auth_headers(client)
 
     response = client.post(
         "/api/tasks/1/execution/pause",
-        json={"user_id": 1, "occurred_at": "2026-06-03T09:25:00"},
+        headers=headers,
+        json={"occurred_at": "2026-06-03T09:25:00"},
     )
 
     assert response.status_code == 409
@@ -78,14 +89,17 @@ def test_pause_requires_in_progress_task() -> None:
 def test_skip_task_updates_status_and_log() -> None:
     store.reset()
     client = TestClient(app)
+    headers = auth_headers(client)
 
     skip_response = client.post(
         "/api/tasks/1/execution/skip",
-        json={"user_id": 1, "occurred_at": "2026-06-03T09:25:00"},
+        headers=headers,
+        json={"occurred_at": "2026-06-03T09:25:00"},
     )
     logs_response = client.get(
         "/api/task-execution-logs",
-        params={"user_id": 1, "target_date": "2026-06-03", "task_id": 1},
+        headers=headers,
+        params={"target_date": "2026-06-03", "task_id": 1},
     )
 
     assert skip_response.status_code == 200
@@ -97,12 +111,14 @@ def test_skip_task_updates_status_and_log() -> None:
 def test_default_occurred_at_can_be_listed_with_seeded_logs() -> None:
     store.reset()
     client = TestClient(app)
+    headers = auth_headers(client)
 
     start_response = client.post(
         "/api/tasks/1/execution/start",
-        json={"user_id": 1},
+        headers=headers,
+        json={},
     )
-    logs_response = client.get("/api/task-execution-logs", params={"user_id": 1})
+    logs_response = client.get("/api/task-execution-logs", headers=headers)
 
     assert start_response.status_code == 200
     assert logs_response.status_code == 200

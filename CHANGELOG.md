@@ -2,6 +2,19 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.28.0 - 2026-06-04
+
+- Scope core planner APIs to the authenticated bearer-token user.
+- Remove implicit `user_id=1` behavior from tasks, fixed events, schedules, execution logs, analytics, and predictions routes.
+- Add cross-user isolation tests for tasks, fixed events, execution events, and schedule history export.
+- Update dashboard and E2E smoke script to use demo bearer authentication.
+
+Suggested commit:
+
+```text
+feat(auth): scope planner data to current user
+```
+
 ## 0.27.0 - 2026-06-04
 
 - Add local authentication foundation with register, login, and current-user APIs.
