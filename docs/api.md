@@ -14,6 +14,48 @@ http://localhost:8000/api
 | scheduler-service | `GET /health` |
 | ml-service | `GET /health` |
 
+## Auth MVP
+
+Issue 28 adds local bearer-token authentication. It does not use AWS, OAuth, email delivery, or paid APIs.
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `POST` | `/auth/register` | Create a local user and return an access token |
+| `POST` | `/auth/login` | Login with email/password and return an access token |
+| `GET` | `/auth/me` | Return the current bearer-token user |
+
+Demo account:
+
+```text
+demo@ordostack.local
+ordostack-demo
+```
+
+Register request:
+
+```json
+{
+  "email": "qa@example.com",
+  "display_name": "QA Tester",
+  "password": "strong-password"
+}
+```
+
+Auth response:
+
+```json
+{
+  "access_token": "local-hmac-token",
+  "token_type": "bearer",
+  "user": {
+    "id": 2,
+    "email": "qa@example.com",
+    "display_name": "QA Tester",
+    "created_at": "2026-06-04T00:00:00"
+  }
+}
+```
+
 ## Demo MVP
 
 | Method | Endpoint | Purpose |

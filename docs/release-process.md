@@ -5,7 +5,7 @@ OrdoStack uses MVP issue releases until production deployment exists.
 ## Current Version
 
 ```text
-0.26.0
+0.27.0
 ```
 
 ## Release Types
@@ -83,7 +83,7 @@ python scripts/browser_smoke.py
 After a clean release commit:
 
 ```bash
-git tag v0.26.0
+git tag v0.27.0
 ```
 
 Tags should point only to commits that passed the release checklist.

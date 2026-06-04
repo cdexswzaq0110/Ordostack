@@ -1,6 +1,6 @@
 # QA MVP Test Plan
 
-Scope: Issue 27 Environment Configuration Hardening, Issue 25 Browser Screenshot Smoke, Issue 24 Schedule Export, Issue 23 Schedule Diff, Issue 22 Schedule History Actions, Issue 21 Task Filter And Sort, Issue 20 Demo MVP Documentation Baseline, Issue 19 E2E Smoke Workflow, Demo Seed And Reset Control, Dashboard UX Polish, Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
+Scope: Issue 28 Authentication Foundation, Issue 27 Environment Configuration Hardening, Issue 25 Browser Screenshot Smoke, Issue 24 Schedule Export, Issue 23 Schedule Diff, Issue 22 Schedule History Actions, Issue 21 Task Filter And Sort, Issue 20 Demo MVP Documentation Baseline, Issue 19 E2E Smoke Workflow, Demo Seed And Reset Control, Dashboard UX Polish, Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
 
 ## Environment
 
@@ -52,7 +52,7 @@ docker compose ps
 docker compose exec backend-api alembic current
 ```
 
-Expected: output contains `20260604_0002`.
+Expected: output contains `20260604_0003`.
 15. Click `Next day`.
 16. Expected: the date changes to June 4, 2026 and dashboard data reloads.
 17. Click `Previous day`.
@@ -108,6 +108,19 @@ Expected:
 3. Run backend-api tests.
 4. Expected: config validation tests pass.
 5. Confirm production MySQL mode rejects an empty `DB_PASSWORD`.
+6. Confirm production mode requires explicit `AUTH_TOKEN_SECRET`.
+
+## Auth Foundation Checks
+
+1. Open `http://localhost:5173`.
+2. In the Account panel, click `Demo`.
+3. Expected: account summary shows `Demo User`.
+4. Click sign out.
+5. Switch to `Register`.
+6. Enter a local email, display name, and password with at least 8 characters.
+7. Expected: account is created and account summary appears.
+8. Call `/api/auth/me` with the returned bearer token if testing through API.
+9. Expected: response returns the current local user.
 
 ## Task Tests
 
@@ -395,7 +408,7 @@ docker compose up --build -d
 docker compose exec backend-api alembic current
 ```
 
-3. Expected: current revision is `20260604_0002`.
+3. Expected: current revision is `20260604_0003`.
 4. Expected: backend health remains `ok`.
 
 ## API Checks

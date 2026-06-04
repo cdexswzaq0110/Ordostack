@@ -10,6 +10,13 @@ def test_default_runtime_config_is_local_memory() -> None:
     assert config.data_store == "memory"
     assert config.scheduler_service_url == "http://scheduler-service:8100"
     assert config.ml_service_url == "http://ml-service:8200"
+    assert config.auth_token_secret
+
+
+def test_blank_local_auth_token_secret_uses_fallback() -> None:
+    config = load_runtime_config({"AUTH_TOKEN_SECRET": ""})
+
+    assert config.auth_token_secret
 
 
 def test_mysql_runtime_config_accepts_local_empty_password() -> None:
@@ -71,6 +78,19 @@ def test_production_mysql_requires_password() -> None:
                 "DB_NAME": "ordostack",
                 "DB_USER": "root",
                 "DB_PASSWORD": "",
+                "SCHEDULER_SERVICE_URL": "http://scheduler-service:8100",
+                "ML_SERVICE_URL": "http://ml-service:8200",
+                "AUTH_TOKEN_SECRET": "production-secret",
+            },
+        )
+
+
+def test_production_requires_auth_token_secret() -> None:
+    with pytest.raises(ConfigurationError, match="AUTH_TOKEN_SECRET"):
+        load_runtime_config(
+            {
+                "ORDOSTACK_ENV": "production",
+                "DATA_STORE": "memory",
                 "SCHEDULER_SERVICE_URL": "http://scheduler-service:8100",
                 "ML_SERVICE_URL": "http://ml-service:8200",
             },

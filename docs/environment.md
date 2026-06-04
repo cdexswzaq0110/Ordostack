@@ -25,8 +25,9 @@ Issue 27 defines the local environment contract for OrdoStack.
 | `DB_PASSWORD` | Production MySQL only | empty | Empty is allowed for local Docker only |
 | `SCHEDULER_SERVICE_URL` | Production explicit | `http://scheduler-service:8100` | Must be `http` or `https` |
 | `ML_SERVICE_URL` | Production explicit | `http://ml-service:8200` | Must be `http` or `https` |
+| `AUTH_TOKEN_SECRET` | Production explicit | local-only fallback | HMAC signing secret for local bearer tokens |
 
-Production mode requires explicit `DATA_STORE`, `SCHEDULER_SERVICE_URL`, and `ML_SERVICE_URL`. If production uses MySQL, `DB_PASSWORD` must not be empty.
+Production mode requires explicit `DATA_STORE`, `SCHEDULER_SERVICE_URL`, `ML_SERVICE_URL`, and `AUTH_TOKEN_SECRET`. If production uses MySQL, `DB_PASSWORD` must not be empty.
 
 ## Web Dashboard Configuration
 
@@ -56,7 +57,7 @@ SCHEDULER_SERVICE_URL=http://scheduler-service:8100
 ML_SERVICE_URL=http://ml-service:8200
 ```
 
-The empty MySQL password is intentionally local-only. Do not reuse it for production.
+The empty MySQL password and fallback auth token secret are intentionally local-only. Do not reuse either behavior for production.
 
 ## Validation
 

@@ -5,7 +5,8 @@ from typing import Any
 
 from app.config import load_runtime_config
 
-from app.repositories.memory_store import DEMO_USER_ID
+from app.repositories.memory_store import DEMO_AUTH_DISPLAY_NAME, DEMO_AUTH_EMAIL, DEMO_AUTH_PASSWORD, DEMO_USER_ID
+from app.security import hash_password
 
 
 class MySqlStore:
@@ -13,6 +14,45 @@ class MySqlStore:
 
     def __init__(self) -> None:
         self._is_ready = False
+
+    def get_user(self, user_id: int) -> dict[str, Any] | None:
+        self._ensure_ready()
+        with self._connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT * FROM users WHERE id=%s", (user_id,))
+                return cursor.fetchone()
+
+    def get_user_by_email(self, email: str) -> dict[str, Any] | None:
+        self._ensure_ready()
+        with self._connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT * FROM users WHERE email=%s", (email.strip().lower(),))
+                return cursor.fetchone()
+
+    def create_user(self, payload: dict[str, Any]) -> dict[str, Any]:
+        self._ensure_ready()
+        now = datetime.now(UTC).replace(tzinfo=None)
+        with self._connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO users (email, display_name, password_hash, created_at, updated_at)
+                    VALUES (%s, %s, %s, %s, %s)
+                    """,
+                    (
+                        str(payload["email"]).strip().lower(),
+                        payload["display_name"],
+                        payload["password_hash"],
+                        now,
+                        None,
+                    ),
+                )
+                user_id = cursor.lastrowid
+
+        user = self.get_user(user_id)
+        if user is None:
+            raise RuntimeError("Created user could not be loaded")
+        return user
 
     def list_tasks(
         self,
@@ -546,6 +586,7 @@ class MySqlStore:
 
             self._create_schema()
             self._is_ready = True
+            self._seed_demo_user_if_missing()
             self._seed_demo_data_if_empty()
 
     def _create_schema(self) -> None:
@@ -553,6 +594,29 @@ class MySqlStore:
             with connection.cursor() as cursor:
                 for statement in SCHEMA_STATEMENTS:
                     cursor.execute(statement)
+
+    def _seed_demo_user_if_missing(self) -> None:
+        with self._connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT id FROM users WHERE id=%s", (DEMO_USER_ID,))
+                if cursor.fetchone() is not None:
+                    return
+
+                now = datetime.now(UTC).replace(tzinfo=None)
+                cursor.execute(
+                    """
+                    INSERT INTO users (id, email, display_name, password_hash, created_at, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    """,
+                    (
+                        DEMO_USER_ID,
+                        DEMO_AUTH_EMAIL,
+                        DEMO_AUTH_DISPLAY_NAME,
+                        hash_password(DEMO_AUTH_PASSWORD),
+                        now,
+                        None,
+                    ),
+                )
 
     def _seed_demo_data_if_empty(self) -> None:
         with self._connect() as connection:
@@ -768,6 +832,17 @@ def demo_fixed_event_seed() -> list[dict[str, Any]]:
 
 
 SCHEMA_STATEMENTS = [
+    """
+    CREATE TABLE IF NOT EXISTS users (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      email VARCHAR(255) NOT NULL,
+      display_name VARCHAR(120) NOT NULL,
+      password_hash VARCHAR(255) NOT NULL,
+      created_at DATETIME(6) NOT NULL,
+      updated_at DATETIME(6) NULL,
+      UNIQUE KEY uq_users_email (email)
+    )
+    """,
     """
     CREATE TABLE IF NOT EXISTS tasks (
       id INT AUTO_INCREMENT PRIMARY KEY,

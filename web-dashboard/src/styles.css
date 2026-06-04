@@ -244,6 +244,106 @@ a {
 
 .topbar-actions {
   gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.auth-panel {
+  display: grid;
+  gap: 4px;
+  max-width: 100%;
+}
+
+.auth-form,
+.auth-summary {
+  display: flex;
+  align-items: end;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px;
+  border: 1px solid #d7dbe1;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.auth-form label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.auth-form label span {
+  color: #68717e;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.auth-form input {
+  width: 138px;
+  min-width: 0;
+  height: 34px;
+  padding: 0 9px;
+  color: #15191f;
+  border: 1px solid #cfd5dd;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.auth-mode {
+  display: inline-flex;
+  height: 34px;
+  padding: 3px;
+  border-radius: 8px;
+  background: #edf0f4;
+}
+
+.auth-mode button {
+  min-width: 62px;
+  color: #68717e;
+  font-size: 0.76rem;
+  font-weight: 800;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+}
+
+.auth-mode button.active {
+  color: #1f5fbc;
+  background: #ffffff;
+}
+
+.auth-summary {
+  align-items: center;
+  min-width: 252px;
+}
+
+.auth-summary > div {
+  display: grid;
+  min-width: 0;
+}
+
+.auth-summary strong,
+.auth-summary span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.auth-summary strong {
+  color: #15191f;
+  font-size: 0.82rem;
+}
+
+.auth-summary span,
+.auth-status {
+  color: #68717e;
+  font-size: 0.74rem;
+}
+
+.auth-status {
+  margin: 0;
+  text-align: right;
 }
 
 .search-box {
@@ -1203,6 +1303,9 @@ h3 {
 
   .topbar-actions,
   .search-box,
+  .auth-panel,
+  .auth-form,
+  .auth-summary,
   .date-control {
     width: 100%;
   }
@@ -1213,6 +1316,22 @@ h3 {
 
   .topbar-actions {
     flex-wrap: wrap;
+  }
+
+  .auth-form {
+    flex-wrap: wrap;
+  }
+
+  .auth-form label {
+    flex: 1 1 140px;
+  }
+
+  .auth-form input {
+    width: 100%;
+  }
+
+  .auth-status {
+    text-align: left;
   }
 
   .search-box {

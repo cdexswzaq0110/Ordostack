@@ -1,6 +1,6 @@
 # OrdoStack Architecture
 
-Issue 26 defines the current local Customer Demo MVP architecture. The system is runnable with Docker Compose and uses service boundaries that can later be hardened for production deployment.
+Issue 28 defines the current local Customer Demo MVP architecture. The system is runnable with Docker Compose and uses service boundaries that can later be hardened for production deployment.
 
 ```mermaid
 flowchart LR
@@ -19,7 +19,7 @@ flowchart LR
 
 - `web-dashboard` is the browser-facing customer demo UI.
 - `backend-api` is the public API gateway for product features.
-- `backend-api` owns task, fixed event, execution log, analytics, schedule persistence, and demo reset workflows.
+- `backend-api` owns auth, task, fixed event, execution log, analytics, schedule persistence, and demo reset workflows.
 - `backend-api` validates runtime environment configuration during startup.
 - `scheduler-service` owns scheduling algorithm internals and returns generated schedule blocks.
 - `ml-service` owns duration prediction behavior and model metadata.
@@ -41,6 +41,7 @@ flowchart LR
 
 Docker Compose uses MySQL for:
 
+- `users`
 - `tasks`
 - `fixed_events`
 - `execution_logs`
@@ -70,7 +71,7 @@ GitHub Actions currently runs test, build, and config checks. Docker runtime E2E
 
 ## Current Limitations
 
-- No production auth or tenant isolation.
+- Local auth foundation exists, but no production-grade auth or tenant isolation.
 - No deployed production infrastructure.
 - No ClearML agent or production model registry.
 - No DL service.

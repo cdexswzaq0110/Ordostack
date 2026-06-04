@@ -2,7 +2,7 @@
 
 OrdoStack is an AI daily planning MVP for task capture, protected calendar blocks, persisted generated schedules, execution analytics, local duration prediction, and MySQL-backed persistence.
 
-This version is a local Customer Demo MVP: it implements task/fixed-event APIs, a scheduler-service MVP, persisted generated schedules, execution logs, daily analytics, local ML duration prediction, MySQL persistence in Docker, Alembic baseline migrations, a React dashboard, demo reset, and local E2E smoke verification. Production authentication, ClearML agent execution, mobile app implementation, and AWS deployment are not implemented yet.
+This version is a local Customer Demo MVP: it implements task/fixed-event APIs, a scheduler-service MVP, persisted generated schedules, execution logs, daily analytics, local ML duration prediction, MySQL persistence in Docker, Alembic baseline migrations, a React dashboard, demo reset, local auth foundation, and local E2E smoke verification. Production-grade auth, user isolation, ClearML agent execution, mobile app implementation, and AWS deployment are not implemented yet.
 
 ## Quick Start
 
@@ -251,13 +251,21 @@ Covered in Issue 27 MVP:
 - Expanded `.env.example` and environment configuration documentation.
 - Explicit local environment setting in Docker Compose.
 
+Covered in Issue 28 MVP:
+
+- Local user registration, login, and current-user APIs.
+- PBKDF2 password hashing and HMAC bearer tokens without external paid services.
+- Seeded demo auth account: `demo@ordostack.local` / `ordostack-demo`.
+- MySQL `users` table through Alembic revision `20260604_0003`.
+- Dashboard account controls for demo login, register, login, and sign out.
+
 Not covered yet:
 
 - Production ML / DL model registry.
 - ClearML agent execution.
 - Mobile app implementation.
 - AWS deployment.
-- Production authentication and user isolation.
+- Production-grade authentication and user isolation.
 
 ## No Secrets Policy
 

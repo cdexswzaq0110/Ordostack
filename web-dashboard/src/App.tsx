@@ -16,6 +16,8 @@ import {
   LayoutDashboard,
   ListFilter,
   ListTodo,
+  LogIn,
+  LogOut,
   Loader2,
   MoreHorizontal,
   Pause,
@@ -30,6 +32,7 @@ import {
   Target,
   Timer,
   Trash2,
+  UserCircle,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -188,6 +191,19 @@ type ApiDurationPredictionResponse = {
   predictions: ApiDurationPrediction[];
 };
 
+type ApiUser = {
+  id: number;
+  email: string;
+  display_name: string;
+  created_at: string;
+};
+
+type ApiAuthToken = {
+  access_token: string;
+  token_type: "bearer";
+  user: ApiUser;
+};
+
 type TimelineItem = {
   start: string;
   end: string;
@@ -219,9 +235,20 @@ type FixedEventFormState = {
   endTime: string;
 };
 
+type AuthFormState = {
+  email: string;
+  displayName: string;
+  password: string;
+};
+
+type AuthMode = "login" | "register";
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api";
 const DEMO_USER_ID = 1;
+const DEMO_AUTH_EMAIL = "demo@ordostack.local";
+const DEMO_AUTH_PASSWORD = "ordostack-demo";
 const DEFAULT_SELECTED_DATE = "2026-06-03";
+const AUTH_TOKEN_STORAGE_KEY = "ordostack.authToken";
 
 const navigationItems: NavigationItem[] = [
   { label: "Today", icon: LayoutDashboard, isActive: true },
@@ -247,6 +274,12 @@ const emptyFixedEventForm: FixedEventFormState = {
   eventType: "meeting",
   startTime: "16:00",
   endTime: "17:00",
+};
+
+const emptyAuthForm: AuthFormState = {
+  email: DEMO_AUTH_EMAIL,
+  displayName: "Demo User",
+  password: DEMO_AUTH_PASSWORD,
 };
 
 const serviceHealth = ["backend-api", "scheduler-service", "ml-service"];
@@ -772,6 +805,101 @@ export function App() {
   const [fixedEventForm, setFixedEventForm] = useState<FixedEventFormState>(emptyFixedEventForm);
   const [editingFixedEventId, setEditingFixedEventId] = useState<number | null>(null);
   const [editFixedEventForm, setEditFixedEventForm] = useState<FixedEventFormState>(emptyFixedEventForm);
+  const [authToken, setAuthToken] = useState(() => localStorage.getItem(AUTH_TOKEN_STORAGE_KEY) ?? "");
+  const [currentUser, setCurrentUser] = useState<ApiUser | null>(null);
+  const [authMode, setAuthMode] = useState<AuthMode>("login");
+  const [authForm, setAuthForm] = useState<AuthFormState>(emptyAuthForm);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [authStatus, setAuthStatus] = useState<string | null>(null);
+
+  async function loadCurrentUser(token: string) {
+    try {
+      const user = await requestJson<ApiUser>(`${API_BASE_URL}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setCurrentUser(user);
+      setAuthStatus(null);
+    } catch {
+      setAuthToken("");
+      setCurrentUser(null);
+      setAuthStatus("Session expired. Please sign in again.");
+    }
+  }
+
+  async function submitAuthForm() {
+    if (authForm.email.trim().length === 0 || authForm.password.length === 0) {
+      setAuthStatus("Email and password are required.");
+      return;
+    }
+
+    if (authMode === "register" && authForm.displayName.trim().length === 0) {
+      setAuthStatus("Display name is required.");
+      return;
+    }
+
+    setIsAuthenticating(true);
+    setAuthStatus(null);
+
+    try {
+      const endpoint = authMode === "register" ? "register" : "login";
+      const payload =
+        authMode === "register"
+          ? {
+              email: authForm.email.trim(),
+              display_name: authForm.displayName.trim(),
+              password: authForm.password,
+            }
+          : {
+              email: authForm.email.trim(),
+              password: authForm.password,
+            };
+      const authPayload = await requestJson<ApiAuthToken>(`${API_BASE_URL}/auth/${endpoint}`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      setAuthToken(authPayload.access_token);
+      setCurrentUser(authPayload.user);
+      setAuthStatus(authMode === "register" ? "Account created." : "Signed in.");
+    } catch (caughtError) {
+      setAuthStatus(caughtError instanceof Error ? caughtError.message : "Authentication failed.");
+    } finally {
+      setIsAuthenticating(false);
+    }
+  }
+
+  async function loginDemoUser() {
+    setAuthForm({
+      email: DEMO_AUTH_EMAIL,
+      displayName: "Demo User",
+      password: DEMO_AUTH_PASSWORD,
+    });
+    setAuthMode("login");
+    setIsAuthenticating(true);
+    setAuthStatus(null);
+
+    try {
+      const authPayload = await requestJson<ApiAuthToken>(`${API_BASE_URL}/auth/login`, {
+        method: "POST",
+        body: JSON.stringify({
+          email: DEMO_AUTH_EMAIL,
+          password: DEMO_AUTH_PASSWORD,
+        }),
+      });
+      setAuthToken(authPayload.access_token);
+      setCurrentUser(authPayload.user);
+      setAuthStatus("Demo account signed in.");
+    } catch (caughtError) {
+      setAuthStatus(caughtError instanceof Error ? caughtError.message : "Unable to sign in demo account.");
+    } finally {
+      setIsAuthenticating(false);
+    }
+  }
+
+  function signOut() {
+    setAuthToken("");
+    setCurrentUser(null);
+    setAuthStatus("Signed out.");
+  }
 
   async function loadDashboardData() {
     setIsLoading(true);
@@ -825,6 +953,17 @@ export function App() {
   useEffect(() => {
     void loadDashboardData();
   }, [selectedDate]);
+
+  useEffect(() => {
+    if (!authToken) {
+      setCurrentUser(null);
+      localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+      return;
+    }
+
+    localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, authToken);
+    void loadCurrentUser(authToken);
+  }, [authToken]);
 
   const filteredTasks = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -1474,6 +1613,102 @@ export function App() {
           </div>
 
           <div className="topbar-actions">
+            <section className="auth-panel" aria-label="Account">
+              {currentUser ? (
+                <div className="auth-summary">
+                  <UserCircle size={18} aria-hidden="true" />
+                  <div>
+                    <strong>{currentUser.display_name}</strong>
+                    <span>{currentUser.email}</span>
+                  </div>
+                  <button
+                    className="ghost-button"
+                    type="button"
+                    aria-label="Sign out"
+                    disabled={isAuthenticating}
+                    onClick={signOut}
+                  >
+                    <LogOut size={16} aria-hidden="true" />
+                  </button>
+                </div>
+              ) : (
+                <form
+                  className="auth-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void submitAuthForm();
+                  }}
+                >
+                  <div className="auth-mode" role="tablist" aria-label="Authentication mode">
+                    <button
+                      className={authMode === "login" ? "active" : ""}
+                      type="button"
+                      role="tab"
+                      aria-selected={authMode === "login"}
+                      onClick={() => setAuthMode("login")}
+                    >
+                      Login
+                    </button>
+                    <button
+                      className={authMode === "register" ? "active" : ""}
+                      type="button"
+                      role="tab"
+                      aria-selected={authMode === "register"}
+                      onClick={() => setAuthMode("register")}
+                    >
+                      Register
+                    </button>
+                  </div>
+                  <label>
+                    <span>Email</span>
+                    <input
+                      type="email"
+                      value={authForm.email}
+                      disabled={isAuthenticating}
+                      onChange={(event) =>
+                        setAuthForm((currentForm) => ({ ...currentForm, email: event.target.value }))
+                      }
+                    />
+                  </label>
+                  {authMode === "register" ? (
+                    <label>
+                      <span>Name</span>
+                      <input
+                        value={authForm.displayName}
+                        disabled={isAuthenticating}
+                        onChange={(event) =>
+                          setAuthForm((currentForm) => ({ ...currentForm, displayName: event.target.value }))
+                        }
+                      />
+                    </label>
+                  ) : null}
+                  <label>
+                    <span>Password</span>
+                    <input
+                      type="password"
+                      value={authForm.password}
+                      disabled={isAuthenticating}
+                      onChange={(event) =>
+                        setAuthForm((currentForm) => ({ ...currentForm, password: event.target.value }))
+                      }
+                    />
+                  </label>
+                  <button className="secondary-action" type="submit" disabled={isAuthenticating}>
+                    <LogIn size={16} aria-hidden="true" />
+                    <span>{authMode === "register" ? "Create" : "Login"}</span>
+                  </button>
+                  <button
+                    className="ghost-button text-button"
+                    type="button"
+                    disabled={isAuthenticating}
+                    onClick={() => void loginDemoUser()}
+                  >
+                    Demo
+                  </button>
+                </form>
+              )}
+              {authStatus ? <p className="auth-status">{authStatus}</p> : null}
+            </section>
             <label className="search-box" aria-label="Search tasks">
               <Search size={17} aria-hidden="true" />
               <input

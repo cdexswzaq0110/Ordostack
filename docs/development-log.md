@@ -1,5 +1,38 @@
 # Development Log
 
+## 2026-06-04 - Issue 28 - Authentication Foundation MVP
+
+Branch:
+
+```text
+codex/issue-28-auth-foundation
+```
+
+Scope:
+
+- Add local user registration, login, and current-user APIs.
+- Store only PBKDF2 password hashes.
+- Sign local bearer tokens with an HMAC secret from runtime configuration.
+- Add users persistence to memory store, MySQL bootstrap, and Alembic revision `20260604_0003`.
+- Add dashboard account controls for demo login, register, login, and sign out.
+
+MVP boundaries:
+
+- No external identity provider.
+- No AWS, OAuth, email verification, payment, or paid API.
+- User isolation across planner data remains Issue 29.
+
+Suggested git commit:
+
+```text
+feat(auth): add local authentication foundation
+```
+
+Verification:
+
+- backend-api tests must pass locally.
+- web-dashboard production build must pass.
+
 ## 2026-06-04 - Issue 27 - Environment Configuration Hardening
 
 Branch:

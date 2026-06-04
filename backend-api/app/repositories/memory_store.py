@@ -3,8 +3,13 @@ from datetime import UTC, date, datetime
 from threading import RLock
 from typing import Any
 
+from app.security import hash_password
+
 DEMO_USER_ID = 1
 DEMO_DATE = date(2026, 6, 3)
+DEMO_AUTH_EMAIL = "demo@ordostack.local"
+DEMO_AUTH_PASSWORD = "ordostack-demo"
+DEMO_AUTH_DISPLAY_NAME = "Demo User"
 
 
 class InMemoryStore:
@@ -14,15 +19,47 @@ class InMemoryStore:
 
     def reset(self) -> None:
         with self._lock:
+            self._next_user_id = 1
             self._next_task_id = 1
             self._next_fixed_event_id = 1
             self._next_execution_log_id = 1
             self._next_schedule_run_id = 1
+            self._users: dict[int, dict[str, Any]] = {}
             self._tasks: dict[int, dict[str, Any]] = {}
             self._fixed_events: dict[int, dict[str, Any]] = {}
             self._execution_logs: dict[int, dict[str, Any]] = {}
             self._schedule_runs: dict[int, dict[str, Any]] = {}
+            self._seed_demo_user()
             self._seed_demo_data()
+
+    def get_user(self, user_id: int) -> dict[str, Any] | None:
+        with self._lock:
+            user = self._users.get(user_id)
+            return deepcopy(user) if user is not None else None
+
+    def get_user_by_email(self, email: str) -> dict[str, Any] | None:
+        normalized_email = email.strip().lower()
+        with self._lock:
+            for user in self._users.values():
+                if user["email"] == normalized_email:
+                    return deepcopy(user)
+        return None
+
+    def create_user(self, payload: dict[str, Any]) -> dict[str, Any]:
+        now = datetime.now(UTC)
+        with self._lock:
+            user_id = self._next_user_id
+            self._next_user_id += 1
+            user = {
+                "id": user_id,
+                "email": str(payload["email"]).strip().lower(),
+                "display_name": payload["display_name"],
+                "password_hash": payload["password_hash"],
+                "created_at": now,
+                "updated_at": None,
+            }
+            self._users[user_id] = user
+            return deepcopy(user)
 
     def list_tasks(
         self,
@@ -405,6 +442,18 @@ class InMemoryStore:
 
         for fixed_event in fixed_event_seed:
             self.create_fixed_event(fixed_event)
+
+    def _seed_demo_user(self) -> None:
+        now = datetime.now(UTC)
+        self._users[DEMO_USER_ID] = {
+            "id": DEMO_USER_ID,
+            "email": DEMO_AUTH_EMAIL,
+            "display_name": DEMO_AUTH_DISPLAY_NAME,
+            "password_hash": hash_password(DEMO_AUTH_PASSWORD),
+            "created_at": now,
+            "updated_at": None,
+        }
+        self._next_user_id = max(self._next_user_id, DEMO_USER_ID + 1)
 
 
 store = InMemoryStore()

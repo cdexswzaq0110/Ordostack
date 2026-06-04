@@ -2,6 +2,20 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.27.0 - 2026-06-04
+
+- Add local authentication foundation with register, login, and current-user APIs.
+- Add PBKDF2 password hashing and HMAC bearer token signing without external paid services.
+- Seed a local demo account for the bundled demo user.
+- Add `users` persistence through memory store, MySQL bootstrap, and Alembic revision `20260604_0003`.
+- Add dashboard account controls for demo login, register, login, and sign out.
+
+Suggested commit:
+
+```text
+feat(auth): add local authentication foundation
+```
+
 ## 0.26.0 - 2026-06-04
 
 - Add backend runtime configuration validation.

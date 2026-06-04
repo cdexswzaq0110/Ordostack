@@ -10,6 +10,7 @@ VALID_ENVIRONMENTS = {"local", "test", "production"}
 VALID_DATA_STORES = {"memory", "mysql"}
 DEFAULT_SCHEDULER_SERVICE_URL = "http://scheduler-service:8100"
 DEFAULT_ML_SERVICE_URL = "http://ml-service:8200"
+DEFAULT_LOCAL_AUTH_TOKEN_SECRET = "ordostack-local-dev-auth-token-secret"
 
 
 class ConfigurationError(RuntimeError):
@@ -27,6 +28,7 @@ class RuntimeConfig:
     db_password: str
     scheduler_service_url: str
     ml_service_url: str
+    auth_token_secret: str
 
 
 def load_runtime_config(environment: Mapping[str, str] | None = None) -> RuntimeConfig:
@@ -51,6 +53,7 @@ def load_runtime_config(environment: Mapping[str, str] | None = None) -> Runtime
         db_password=get_value(values, "DB_PASSWORD", ""),
         scheduler_service_url=normalize_url(scheduler_service_url, "SCHEDULER_SERVICE_URL"),
         ml_service_url=normalize_url(ml_service_url, "ML_SERVICE_URL"),
+        auth_token_secret=get_non_empty_value(values, "AUTH_TOKEN_SECRET", DEFAULT_LOCAL_AUTH_TOKEN_SECRET),
     )
     validate_runtime_config(config=config, explicit_values=values)
     return config
@@ -66,6 +69,7 @@ def validate_runtime_config(config: RuntimeConfig, explicit_values: Mapping[str,
         require_explicit(explicit_values, "DATA_STORE")
         require_explicit(explicit_values, "SCHEDULER_SERVICE_URL")
         require_explicit(explicit_values, "ML_SERVICE_URL")
+        require_explicit(explicit_values, "AUTH_TOKEN_SECRET")
         if config.data_store == "mysql":
             require_non_empty(config.db_password, "DB_PASSWORD")
 
@@ -73,6 +77,11 @@ def validate_runtime_config(config: RuntimeConfig, explicit_values: Mapping[str,
 def get_value(values: Mapping[str, str], key: str, default: str) -> str:
     value = values.get(key, default)
     return value.strip() if isinstance(value, str) else str(value)
+
+
+def get_non_empty_value(values: Mapping[str, str], key: str, default: str) -> str:
+    value = get_value(values, key, default)
+    return default if value == "" else value
 
 
 def require_explicit(values: Mapping[str, str], key: str) -> None:

@@ -2,12 +2,12 @@
 
 Source document: `C:\Users\HUANG\Desktop\OrdoStack Project Specification.docx`
 
-This markdown file records the implementation baseline used by Codex for the repository. The project is developed incrementally by issue. As of Issue 27, the repository is an environment-hardened local Customer Demo MVP, not a production launch build.
+This markdown file records the implementation baseline used by Codex for the repository. The project is developed incrementally by issue. As of Issue 28, the repository is a local Customer Demo MVP with an authentication foundation, not a production launch build.
 
 ## Current Baseline
 
 ```text
-Version: 0.26.0
+Version: 0.27.0
 Stage: Customer Demo MVP
 Runtime: Local Docker Compose
 Primary UI: web-dashboard
@@ -40,7 +40,7 @@ OrdoStack is an AI daily planning product that lets users capture tasks and fixe
 ## Non-goals For Current MVP
 
 - No paid APIs.
-- No production authentication or account management.
+- No production-grade authentication or account management.
 - No native mobile app implementation yet.
 - No app store release.
 - No ClearML agent execution yet.
@@ -52,7 +52,7 @@ OrdoStack is an AI daily planning product that lets users capture tasks and fixe
 - No complex permission system.
 - No chatbot replacing the scheduling algorithm core.
 
-## Implemented Through Issue 27
+## Implemented Through Issue 28
 
 | Area | Current implementation |
 | --- | --- |
@@ -67,6 +67,7 @@ OrdoStack is an AI daily planning product that lets users capture tasks and fixe
 | Analytics | Daily actual minutes, estimate delta, completion rate, focus minutes |
 | ML duration prediction | Local duration prediction API with bundled training artifact and heuristic fallback |
 | Storage | Docker MySQL persistence with Alembic migration baseline and local compatibility bootstrap |
+| Auth | Local register, login, current-user API, PBKDF2 password hashes, HMAC bearer tokens, demo account |
 | Demo support | Seeded demo data and demo-only reset control |
 | Quality gates | Python service tests, web-dashboard build, Docker Compose config, environment validation, local E2E smoke script, browser screenshot smoke, GitHub Actions baseline |
 | Documentation | API docs, QA plan, release process, branching strategy, development log, changelog, PM status report, environment configuration guide |
@@ -128,6 +129,7 @@ Core endpoint groups:
 - Analytics: `GET /analytics/daily`
 - Schedules: `POST /schedules/generate`, `GET /schedules/latest`, `GET /schedules/history`
 - ML predictions: `GET /ml/duration-predictions`
+- Auth: `POST /auth/register`, `POST /auth/login`, `GET /auth/me`
 - Demo: `POST /demo/reset?user_id=1`
 
 Detailed API documentation is maintained in `docs/api.md`.
@@ -187,7 +189,7 @@ Before a release tag:
 
 ## Remaining Gaps Before Public Launch
 
-- Production authentication, authorization, and user isolation.
+- Production-grade authentication, authorization, and user isolation.
 - Real onboarding, user settings, timezone handling, and profile data.
 - Production-grade migration policy, backup, restore, and data retention.
 - Hosted deployment with HTTPS, domain, reverse proxy, observability, and incident playbook.
@@ -202,7 +204,7 @@ Before a release tag:
 
 ## Planned Phases
 
-1. Local Customer Demo MVP: complete through Issue 27.
+1. Local Customer Demo MVP: complete through Issue 28.
 2. Beta Hardening: auth, user isolation, deployment, observability, backup, a11y, and browser regression tests.
 3. MLOps Expansion: ClearML tracking, model registry, scheduled retraining, and model promotion.
 4. Intelligence Expansion: DL completion-rate or focus-score service.

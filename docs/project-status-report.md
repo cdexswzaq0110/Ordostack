@@ -1,17 +1,17 @@
 # OrdoStack Project Status Report
 
 Date: 2026-06-04
-Version: 0.26.0
+Version: 0.27.0
 Report role: PM / project management
 
 ## Executive Summary
 
-OrdoStack is currently a local Customer Demo MVP. It is suitable for internal QA and customer reference demos on a developer machine through Docker Compose. It is not ready for public launch because production authentication, deployment, observability, backup, security review, mobile app, ClearML production workflow, and production model governance are not implemented yet.
+OrdoStack is currently a local Customer Demo MVP with an authentication foundation. It is suitable for internal QA and customer reference demos on a developer machine through Docker Compose. It is not ready for public launch because user isolation, production deployment, observability, backup, security review, mobile app, ClearML production workflow, and production model governance are not implemented yet.
 
 Current evidence:
 
-- Previous release tag before environment hardening: `v0.25.0`.
-- Current release tag after Issue 27: environment-hardened Customer Demo MVP `v0.26.0`.
+- Previous release tag before auth foundation: `v0.26.0`.
+- Current product stage after Issue 28: auth-foundation Customer Demo MVP `v0.27.0`.
 - Main runnable entrypoint: `http://localhost:5173`.
 - Runtime: local Docker Compose.
 - Database: local MySQL container.
@@ -57,10 +57,11 @@ Product capabilities already implemented:
 - Execution logs and daily analytics.
 - Local duration prediction through ml-service.
 - MySQL persistence for Docker runtime.
-- Alembic migrations through revision `20260604_0002`.
+- Alembic migrations through revision `20260604_0003`.
 - Generated schedule latest view and history.
 - Schedule history rename, soft delete, diff, Markdown/CSV export.
 - Demo reset for bundled local demo user.
+- Local auth foundation with demo account, register, login, and current-user API.
 - Dashboard empty states and retry behavior.
 - Local E2E smoke test.
 - Browser screenshot smoke test.
@@ -71,7 +72,7 @@ Product capabilities already implemented:
 
 Launch-critical gaps:
 
-- Production authentication and authorization.
+- Production-grade authentication and authorization.
 - User isolation beyond demo `user_id=1`.
 - Real onboarding and user profile settings.
 - Timezone and locale settings.
