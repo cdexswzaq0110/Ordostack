@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS execution_logs (
 CREATE TABLE IF NOT EXISTS schedule_runs (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
+  title VARCHAR(120) NOT NULL,
   schedule_date DATE NOT NULL,
   planning_mode VARCHAR(50) NOT NULL,
   request_start_hour INT NULL,
@@ -56,7 +57,10 @@ CREATE TABLE IF NOT EXISTS schedule_runs (
   include_fixed_events BOOLEAN NOT NULL,
   algorithm_summary JSON NOT NULL,
   created_at DATETIME(6) NOT NULL,
-  INDEX idx_schedule_runs_user_date (user_id, schedule_date, id)
+  updated_at DATETIME(6) NULL,
+  deleted_at DATETIME(6) NULL,
+  INDEX idx_schedule_runs_user_date (user_id, schedule_date, id),
+  INDEX idx_schedule_runs_user_date_active (user_id, schedule_date, deleted_at, id)
 );
 
 CREATE TABLE IF NOT EXISTS schedule_items (

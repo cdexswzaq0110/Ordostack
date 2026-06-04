@@ -148,5 +148,82 @@ def test_schedule_history_returns_recent_generated_runs(monkeypatch) -> None:
     history = history_response.json()
     assert len(history) == 2
     assert history[0]["id"] > history[1]["id"]
+    assert history[0]["title"].startswith("Balanced plan")
     assert history[0]["scheduled_task_count"] == 1
     assert history[0]["schedule"]["schedule_date"] == "2026-06-03"
+
+
+def test_schedule_history_title_update_and_soft_delete(monkeypatch) -> None:
+    store.reset()
+
+    def fake_post(url: str, json: dict[str, Any], timeout: float) -> FakeSchedulerResponse:
+        return FakeSchedulerResponse()
+
+    def fake_predict_for_tasks(user_id, target_date, tasks) -> DurationPredictionResponse:
+        return DurationPredictionResponse(
+            user_id=user_id,
+            target_date=target_date,
+            model_name="heuristic-duration",
+            model_version="0.1.0",
+            predictions=[],
+        )
+
+    monkeypatch.setattr(schedule_service.httpx, "post", fake_post)
+    monkeypatch.setattr(schedule_service.prediction_service, "predict_for_tasks", fake_predict_for_tasks)
+    client = TestClient(app)
+
+    for _ in range(2):
+        response = client.post(
+            "/api/schedules/generate",
+            json={
+                "user_id": 1,
+                "target_date": "2026-06-03",
+                "planning_mode": "balanced",
+                "start_hour": 9,
+                "end_hour": 23,
+                "buffer_minutes": 10,
+                "include_fixed_events": True,
+            },
+        )
+        assert response.status_code == 200
+
+    history_response = client.get(
+        "/api/schedules/history",
+        params={"user_id": 1, "target_date": "2026-06-03", "limit": 5},
+    )
+    newest_run = history_response.json()[0]
+    older_run = history_response.json()[1]
+
+    rename_response = client.patch(
+        f"/api/schedules/history/{older_run['id']}",
+        params={"user_id": 1},
+        json={"title": "Client review plan"},
+    )
+
+    assert rename_response.status_code == 200
+    assert rename_response.json()["title"] == "Client review plan"
+
+    delete_response = client.delete(
+        f"/api/schedules/history/{newest_run['id']}",
+        params={"user_id": 1},
+    )
+
+    assert delete_response.status_code == 200
+    assert delete_response.json()["deleted"] is True
+
+    next_history_response = client.get(
+        "/api/schedules/history",
+        params={"user_id": 1, "target_date": "2026-06-03", "limit": 5},
+    )
+    next_history = next_history_response.json()
+
+    assert len(next_history) == 1
+    assert next_history[0]["id"] == older_run["id"]
+    assert next_history[0]["title"] == "Client review plan"
+
+    latest_response = client.get(
+        "/api/schedules/latest",
+        params={"user_id": 1, "target_date": "2026-06-03"},
+    )
+
+    assert latest_response.status_code == 200

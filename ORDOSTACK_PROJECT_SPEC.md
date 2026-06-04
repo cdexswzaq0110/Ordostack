@@ -7,7 +7,7 @@ This markdown file records the implementation baseline used by Codex for the rep
 ## Current Baseline
 
 ```text
-Version: 0.20.0
+Version: 0.21.0
 Stage: Customer Demo MVP
 Runtime: Local Docker Compose
 Primary UI: web-dashboard
@@ -62,7 +62,7 @@ OrdoStack is an AI daily planning product that lets users capture tasks and fixe
 | Fixed events | Create, list, edit, soft delete, validation for `HH:MM` time ranges |
 | Date navigation | Previous day, next day, native date picker, Today shortcut |
 | Scheduler | Daily schedule generation with priority score, topological sort, knapsack selection, priority queue ordering, and fixed-event free-slot building |
-| Schedule persistence | Latest generated schedule and recent schedule history |
+| Schedule persistence | Latest generated schedule, recent schedule history, schedule history rename, and soft delete |
 | Execution tracking | Start, pause, complete, skip, execution log listing |
 | Analytics | Daily actual minutes, estimate delta, completion rate, focus minutes |
 | ML duration prediction | Local duration prediction API with bundled training artifact and heuristic fallback |
@@ -150,7 +150,7 @@ Future algorithm work:
 
 - Weighted interval scheduling for richer event conflict scenarios.
 - Manual schedule lock / drag-and-drop adjustment.
-- Schedule diff and named versions.
+- Schedule diff and named schedule templates.
 - Recurring fixed event expansion.
 
 ## Current Data Ownership
@@ -194,7 +194,7 @@ Before a release tag:
 - ClearML experiment tracking, model registry, agent execution, and deployment workflow.
 - DL completion-rate / focus-score service.
 - Calendar integration and recurring event support.
-- Schedule manual editing, schedule diff, named versions, and version deletion.
+- Schedule manual editing, schedule diff, and named schedule templates.
 - Browser-based automated UI regression tests with screenshots.
 - Load, security, and accessibility audits.
 

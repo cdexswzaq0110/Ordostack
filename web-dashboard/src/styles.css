@@ -629,10 +629,10 @@ h3 {
 
 .schedule-history-row {
   display: grid;
-  grid-template-columns: 58px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
-  min-height: 38px;
+  min-height: 48px;
   padding: 8px 10px;
   color: #4d5663;
   text-align: left;
@@ -645,6 +645,21 @@ h3 {
   color: #1f5fbc;
   border-color: #9bbbea;
   background: #eef5ff;
+}
+
+.schedule-history-main {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 3px 8px;
+  min-width: 0;
+  color: inherit;
+  text-align: left;
+  border: 0;
+  background: transparent;
+}
+
+.schedule-history-main em {
+  grid-column: 2;
 }
 
 .schedule-history-row span,
@@ -660,6 +675,30 @@ h3 {
   font-size: 0.82rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.schedule-history-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.schedule-history-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 8px;
+}
+
+.schedule-history-editor input {
+  min-width: 0;
+  height: 38px;
+  padding: 0 10px;
+  color: #15191f;
+  border: 1px solid #cfd5dd;
+  border-radius: 8px;
+  background: #ffffff;
 }
 
 .task-list,
@@ -1171,6 +1210,19 @@ h3 {
 
   .schedule-history-row {
     grid-template-columns: 1fr;
+  }
+
+  .schedule-history-main,
+  .schedule-history-editor {
+    grid-template-columns: 1fr;
+  }
+
+  .schedule-history-main em {
+    grid-column: 1;
+  }
+
+  .schedule-history-actions {
+    justify-content: flex-start;
   }
 }
 

@@ -81,6 +81,8 @@ Backend entrypoint:
 | `POST` | `/schedules/generate` | Generate a daily schedule from backend tasks and fixed events |
 | `GET` | `/schedules/latest?user_id=1&target_date=2026-06-03` | Load the latest persisted generated schedule |
 | `GET` | `/schedules/history?user_id=1&target_date=2026-06-03&limit=5` | Load recent persisted generated schedules |
+| `PATCH` | `/schedules/history/{schedule_run_id}?user_id=1` | Rename a schedule history item |
+| `DELETE` | `/schedules/history/{schedule_run_id}?user_id=1` | Soft delete a schedule history item |
 
 Request example:
 
@@ -147,7 +149,9 @@ Generated schedule persistence:
 
 - `POST /schedules/generate` stores the generated schedule after scheduler-service returns successfully.
 - `GET /schedules/latest` returns the latest generated schedule for the given `user_id` and `target_date`.
-- `GET /schedules/history` returns recent generated schedules for the given `user_id` and `target_date`, newest first.
+- `GET /schedules/history` returns recent non-deleted generated schedules for the given `user_id` and `target_date`, newest first.
+- `PATCH /schedules/history/{schedule_run_id}` updates the history item title.
+- `DELETE /schedules/history/{schedule_run_id}` soft deletes the history item.
 - If no saved schedule exists, `GET /schedules/latest` returns `404`.
 
 ## Execution Logs MVP

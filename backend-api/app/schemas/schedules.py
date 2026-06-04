@@ -19,8 +19,17 @@ ScheduleGenerateResponse = dict[str, Any]
 
 class ScheduleHistoryItem(BaseModel):
     id: int
+    title: str
     created_at: datetime
     planning_mode: str
     scheduled_task_count: int
     item_count: int
     schedule: ScheduleGenerateResponse
+
+
+class ScheduleHistoryUpdate(BaseModel):
+    title: str = Field(min_length=1, max_length=120)
+
+
+class ScheduleHistoryDeleteResponse(BaseModel):
+    deleted: bool

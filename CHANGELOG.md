@@ -2,6 +2,19 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.21.0 - 2026-06-04
+
+- Add schedule history titles for generated plans.
+- Add API and dashboard controls to rename schedule history items.
+- Add soft delete for schedule history items and exclude deleted runs from latest/history queries.
+- Add Alembic migration for schedule history action fields.
+
+Suggested commit:
+
+```text
+feat(schedule): add history rename and delete actions
+```
+
 ## 0.20.0 - 2026-06-04
 
 - Add dashboard task status, category, focus, and sort controls.

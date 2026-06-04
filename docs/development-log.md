@@ -1,5 +1,38 @@
 # Development Log
 
+## 2026-06-04 - Issue 22 - Schedule History Actions MVP
+
+Branch:
+
+```text
+feature/issue-22-schedule-history-actions
+```
+
+Scope:
+
+- Add title metadata to generated schedule runs.
+- Add schedule history rename API and dashboard inline rename control.
+- Add schedule history soft delete API and dashboard delete control.
+- Exclude soft-deleted runs from latest and history queries.
+- Add Alembic migration for `schedule_runs.title`, `updated_at`, and `deleted_at`.
+
+MVP boundaries:
+
+- Soft delete only; no hard delete UI.
+- No schedule diff yet.
+- No named schedule templates.
+
+Suggested git commit:
+
+```text
+feat(schedule): add history rename and delete actions
+```
+
+Verification:
+
+- Schedule API tests must pass locally.
+- web-dashboard production build must pass.
+
 ## 2026-06-04 - Issue 21 - Task Filter And Sort MVP
 
 Branch:

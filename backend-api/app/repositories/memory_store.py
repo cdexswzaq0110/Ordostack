@@ -194,10 +194,13 @@ class InMemoryStore:
             schedule_run = {
                 "id": schedule_run_id,
                 "user_id": user_id,
+                "title": self._default_schedule_title(schedule, now),
                 "schedule_date": target_date,
                 "request_payload": deepcopy(request_payload),
                 "schedule": deepcopy(schedule),
                 "created_at": now,
+                "updated_at": None,
+                "deleted_at": None,
             }
             self._schedule_runs[schedule_run_id] = schedule_run
             return deepcopy(schedule_run["schedule"])
@@ -207,7 +210,9 @@ class InMemoryStore:
             schedules = [
                 schedule_run
                 for schedule_run in self._schedule_runs.values()
-                if schedule_run["user_id"] == user_id and schedule_run["schedule_date"] == target_date
+                if schedule_run["user_id"] == user_id
+                and schedule_run["schedule_date"] == target_date
+                and schedule_run["deleted_at"] is None
             ]
 
             if not schedules:
@@ -221,11 +226,47 @@ class InMemoryStore:
             schedule_runs = [
                 deepcopy(schedule_run)
                 for schedule_run in self._schedule_runs.values()
-                if schedule_run["user_id"] == user_id and schedule_run["schedule_date"] == target_date
+                if schedule_run["user_id"] == user_id
+                and schedule_run["schedule_date"] == target_date
+                and schedule_run["deleted_at"] is None
             ]
 
         ordered_runs = sorted(schedule_runs, key=lambda schedule_run: schedule_run["id"], reverse=True)[:limit]
         return [self._build_schedule_history_item(schedule_run) for schedule_run in ordered_runs]
+
+    def update_generated_schedule_title(
+        self,
+        user_id: int,
+        schedule_run_id: int,
+        title: str,
+    ) -> dict[str, Any] | None:
+        with self._lock:
+            schedule_run = self._schedule_runs.get(schedule_run_id)
+            if (
+                schedule_run is None
+                or schedule_run["user_id"] != user_id
+                or schedule_run["deleted_at"] is not None
+            ):
+                return None
+
+            schedule_run["title"] = title
+            schedule_run["updated_at"] = datetime.now(UTC)
+            return self._build_schedule_history_item(deepcopy(schedule_run))
+
+    def soft_delete_generated_schedule(self, user_id: int, schedule_run_id: int) -> bool:
+        with self._lock:
+            schedule_run = self._schedule_runs.get(schedule_run_id)
+            if (
+                schedule_run is None
+                or schedule_run["user_id"] != user_id
+                or schedule_run["deleted_at"] is not None
+            ):
+                return False
+
+            now = datetime.now(UTC)
+            schedule_run["updated_at"] = now
+            schedule_run["deleted_at"] = now
+            return True
 
     def _build_schedule_history_item(self, schedule_run: dict[str, Any]) -> dict[str, Any]:
         schedule = schedule_run["schedule"]
@@ -233,12 +274,17 @@ class InMemoryStore:
         items = schedule.get("items", [])
         return {
             "id": schedule_run["id"],
+            "title": schedule_run["title"],
             "created_at": schedule_run["created_at"],
             "planning_mode": schedule.get("planning_mode", schedule_run["request_payload"].get("planning_mode", "balanced")),
             "scheduled_task_count": algorithm_summary.get("scheduled_task_count", 0),
             "item_count": len(items),
             "schedule": deepcopy(schedule),
         }
+
+    def _default_schedule_title(self, schedule: dict[str, Any], created_at: datetime) -> str:
+        planning_mode = str(schedule.get("planning_mode", "balanced")).replace("-", " ").title()
+        return f"{planning_mode} plan {created_at.strftime('%H:%M')}"
 
     def reset_demo_data(self, user_id: int = DEMO_USER_ID) -> dict[str, int]:
         self.reset()

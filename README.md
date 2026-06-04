@@ -213,6 +213,13 @@ Covered in Issue 21 MVP:
 - Dashboard task sorting by priority, deadline, estimate, or status.
 - Active filter count and reset action for customer demo triage.
 
+Covered in Issue 22 MVP:
+
+- Schedule history titles for generated plans.
+- Dashboard rename and soft delete controls for schedule history.
+- backend-api schedule history rename/delete endpoints.
+- Alembic migration for schedule history action fields.
+
 Not covered yet:
 
 - Production ML / DL model registry.

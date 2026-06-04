@@ -2,7 +2,13 @@ from datetime import date
 
 from fastapi import APIRouter, Query
 
-from app.schemas.schedules import ScheduleGenerateRequest, ScheduleGenerateResponse, ScheduleHistoryItem
+from app.schemas.schedules import (
+    ScheduleGenerateRequest,
+    ScheduleGenerateResponse,
+    ScheduleHistoryDeleteResponse,
+    ScheduleHistoryItem,
+    ScheduleHistoryUpdate,
+)
 from app.services import schedules as schedule_service
 
 router = APIRouter(prefix="/api/schedules", tags=["schedules"])
@@ -25,3 +31,21 @@ def list_schedule_history(
     limit: int = Query(default=5, ge=1, le=20),
 ) -> list[ScheduleHistoryItem]:
     return schedule_service.list_schedule_history(user_id=user_id, target_date=target_date, limit=limit)
+
+
+@router.patch("/history/{schedule_run_id}", response_model=ScheduleHistoryItem)
+def update_schedule_history_title(
+    schedule_run_id: int,
+    payload: ScheduleHistoryUpdate,
+    user_id: int = 1,
+) -> ScheduleHistoryItem:
+    return schedule_service.update_schedule_history_title(
+        user_id=user_id,
+        schedule_run_id=schedule_run_id,
+        payload=payload,
+    )
+
+
+@router.delete("/history/{schedule_run_id}", response_model=ScheduleHistoryDeleteResponse)
+def delete_schedule_history_item(schedule_run_id: int, user_id: int = 1) -> ScheduleHistoryDeleteResponse:
+    return schedule_service.delete_schedule_history_item(user_id=user_id, schedule_run_id=schedule_run_id)

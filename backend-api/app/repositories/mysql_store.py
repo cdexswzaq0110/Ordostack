@@ -270,6 +270,7 @@ class MySqlStore:
                     """
                     INSERT INTO schedule_runs (
                       user_id,
+                      title,
                       schedule_date,
                       planning_mode,
                       request_start_hour,
@@ -277,12 +278,15 @@ class MySqlStore:
                       request_buffer_minutes,
                       include_fixed_events,
                       algorithm_summary,
-                      created_at
+                      created_at,
+                      updated_at,
+                      deleted_at
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """,
                     (
                         user_id,
+                        self._default_schedule_title(schedule, now),
                         target_date,
                         schedule.get("planning_mode", request_payload.get("planning_mode", "balanced")),
                         request_payload.get("start_hour"),
@@ -291,6 +295,8 @@ class MySqlStore:
                         int(bool(request_payload.get("include_fixed_events", True))),
                         json.dumps(schedule.get("algorithm_summary", {})),
                         now.replace(tzinfo=None),
+                        None,
+                        None,
                     ),
                 )
                 schedule_run_id = cursor.lastrowid
@@ -340,7 +346,7 @@ class MySqlStore:
                     """
                     SELECT *
                     FROM schedule_runs
-                    WHERE user_id=%s AND schedule_date=%s
+                    WHERE user_id=%s AND schedule_date=%s AND deleted_at IS NULL
                     ORDER BY id DESC
                     LIMIT 1
                     """,
@@ -371,7 +377,7 @@ class MySqlStore:
                     """
                     SELECT *
                     FROM schedule_runs
-                    WHERE user_id=%s AND schedule_date=%s
+                    WHERE user_id=%s AND schedule_date=%s AND deleted_at IS NULL
                     ORDER BY id DESC
                     LIMIT %s
                     """,
@@ -394,6 +400,67 @@ class MySqlStore:
                     history_items.append(self._normalize_schedule_history_item(schedule_run, schedule_items))
 
         return history_items
+
+    def update_generated_schedule_title(
+        self,
+        user_id: int,
+        schedule_run_id: int,
+        title: str,
+    ) -> dict[str, Any] | None:
+        self._ensure_ready()
+        now = datetime.now(UTC).replace(tzinfo=None)
+        with self._connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    UPDATE schedule_runs
+                    SET title=%s, updated_at=%s
+                    WHERE id=%s AND user_id=%s AND deleted_at IS NULL
+                    """,
+                    (title, now, schedule_run_id, user_id),
+                )
+                if cursor.rowcount == 0:
+                    return None
+
+                cursor.execute(
+                    """
+                    SELECT *
+                    FROM schedule_runs
+                    WHERE id=%s AND user_id=%s AND deleted_at IS NULL
+                    """,
+                    (schedule_run_id, user_id),
+                )
+                schedule_run = cursor.fetchone()
+                if schedule_run is None:
+                    return None
+
+                cursor.execute(
+                    """
+                    SELECT *
+                    FROM schedule_items
+                    WHERE schedule_run_id=%s
+                    ORDER BY order_index ASC, id ASC
+                    """,
+                    (schedule_run_id,),
+                )
+                schedule_items = cursor.fetchall()
+
+        return self._normalize_schedule_history_item(schedule_run, schedule_items)
+
+    def soft_delete_generated_schedule(self, user_id: int, schedule_run_id: int) -> bool:
+        self._ensure_ready()
+        now = datetime.now(UTC).replace(tzinfo=None)
+        with self._connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    UPDATE schedule_runs
+                    SET deleted_at=%s, updated_at=%s
+                    WHERE id=%s AND user_id=%s AND deleted_at IS NULL
+                    """,
+                    (now, now, schedule_run_id, user_id),
+                )
+                return cursor.rowcount > 0
 
     def reset_demo_data(self, user_id: int = DEMO_USER_ID) -> dict[str, int]:
         self._ensure_ready()
@@ -533,12 +600,17 @@ class MySqlStore:
         algorithm_summary = schedule["algorithm_summary"]
         return {
             "id": schedule_run["id"],
+            "title": schedule_run.get("title") or self._default_schedule_title(schedule, schedule_run["created_at"]),
             "created_at": schedule_run["created_at"],
             "planning_mode": schedule["planning_mode"],
             "scheduled_task_count": algorithm_summary.get("scheduled_task_count", 0),
             "item_count": len(schedule["items"]),
             "schedule": schedule,
         }
+
+    def _default_schedule_title(self, schedule: dict[str, Any], created_at: datetime) -> str:
+        planning_mode = str(schedule.get("planning_mode", "balanced")).replace("-", " ").title()
+        return f"{planning_mode} plan {created_at.strftime('%H:%M')}"
 
     def _normalize_schedule_item(self, row: dict[str, Any]) -> dict[str, Any]:
         return {
@@ -719,6 +791,7 @@ SCHEMA_STATEMENTS = [
     CREATE TABLE IF NOT EXISTS schedule_runs (
       id INT AUTO_INCREMENT PRIMARY KEY,
       user_id INT NOT NULL,
+      title VARCHAR(120) NOT NULL,
       schedule_date DATE NOT NULL,
       planning_mode VARCHAR(50) NOT NULL,
       request_start_hour INT NULL,
@@ -727,7 +800,10 @@ SCHEMA_STATEMENTS = [
       include_fixed_events BOOLEAN NOT NULL,
       algorithm_summary JSON NOT NULL,
       created_at DATETIME(6) NOT NULL,
-      INDEX idx_schedule_runs_user_date (user_id, schedule_date, id)
+      updated_at DATETIME(6) NULL,
+      deleted_at DATETIME(6) NULL,
+      INDEX idx_schedule_runs_user_date (user_id, schedule_date, id),
+      INDEX idx_schedule_runs_user_date_active (user_id, schedule_date, deleted_at, id)
     )
     """,
     """

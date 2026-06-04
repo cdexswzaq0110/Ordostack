@@ -109,6 +109,7 @@ type ApiScheduleResponse = {
 
 type ApiScheduleHistoryItem = {
   id: number;
+  title: string;
   created_at: string;
   planning_mode: string;
   scheduled_task_count: number;
@@ -708,6 +709,8 @@ export function App() {
   const [scheduleSource, setScheduleSource] = useState<ScheduleSource>("none");
   const [scheduleHistory, setScheduleHistory] = useState<ApiScheduleHistoryItem[]>([]);
   const [selectedScheduleRunId, setSelectedScheduleRunId] = useState<number | null>(null);
+  const [editingScheduleRunId, setEditingScheduleRunId] = useState<number | null>(null);
+  const [scheduleRunTitleDraft, setScheduleRunTitleDraft] = useState("");
   const [analytics, setAnalytics] = useState<ApiDailyAnalytics | null>(null);
   const [durationPredictions, setDurationPredictions] = useState<ApiDurationPredictionResponse | null>(null);
   const [query, setQuery] = useState("");
@@ -909,6 +912,7 @@ export function App() {
     setIsFixedEventFormOpen(false);
     cancelEditingTask();
     cancelEditingFixedEvent();
+    cancelRenamingScheduleRun();
   }
 
   function selectDate(nextDate: string) {
@@ -957,6 +961,17 @@ export function App() {
     setEditFixedEventForm(emptyFixedEventForm);
   }
 
+  function startRenamingScheduleRun(historyItem: ApiScheduleHistoryItem) {
+    setError(null);
+    setEditingScheduleRunId(historyItem.id);
+    setScheduleRunTitleDraft(historyItem.title);
+  }
+
+  function cancelRenamingScheduleRun() {
+    setEditingScheduleRunId(null);
+    setScheduleRunTitleDraft("");
+  }
+
   async function refreshScheduleHistory() {
     const nextScheduleHistory = await requestJson<ApiScheduleHistoryItem[]>(
       `${API_BASE_URL}/schedules/history?user_id=${DEMO_USER_ID}&target_date=${selectedDate}&limit=5`,
@@ -969,6 +984,68 @@ export function App() {
     setSchedule(historyItem.schedule);
     setScheduleSource("history");
     setSelectedScheduleRunId(historyItem.id);
+  }
+
+  async function renameScheduleRun(scheduleRunId: number) {
+    const title = scheduleRunTitleDraft.trim();
+    if (title.length === 0) {
+      setError("Schedule title is required");
+      return;
+    }
+
+    setIsMutating(true);
+    setError(null);
+
+    try {
+      const updatedScheduleRun = await requestJson<ApiScheduleHistoryItem>(
+        `${API_BASE_URL}/schedules/history/${scheduleRunId}?user_id=${DEMO_USER_ID}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ title }),
+        },
+      );
+      setScheduleHistory((currentHistory) =>
+        currentHistory.map((historyItem) =>
+          historyItem.id === updatedScheduleRun.id ? updatedScheduleRun : historyItem,
+        ),
+      );
+      cancelRenamingScheduleRun();
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Unable to rename schedule");
+    } finally {
+      setIsMutating(false);
+    }
+  }
+
+  async function deleteScheduleRun(scheduleRunId: number) {
+    const shouldDelete = window.confirm("Remove this generated plan from schedule history?");
+    if (!shouldDelete) {
+      return;
+    }
+
+    setIsMutating(true);
+    setError(null);
+
+    try {
+      await requestJson<{ deleted: boolean }>(
+        `${API_BASE_URL}/schedules/history/${scheduleRunId}?user_id=${DEMO_USER_ID}`,
+        { method: "DELETE" },
+      );
+      const nextScheduleHistory = await refreshScheduleHistory();
+      if (selectedScheduleRunId === scheduleRunId) {
+        const nextSelectedRun = nextScheduleHistory[0] ?? null;
+        setSchedule(nextSelectedRun?.schedule ?? null);
+        setScheduleSource(nextSelectedRun ? "history" : "none");
+        setSelectedScheduleRunId(nextSelectedRun?.id ?? null);
+      }
+      if (editingScheduleRunId === scheduleRunId) {
+        cancelRenamingScheduleRun();
+      }
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Unable to delete schedule");
+    } finally {
+      setIsMutating(false);
+    }
   }
 
   async function generatePlan() {
@@ -1446,22 +1523,77 @@ export function App() {
                   {scheduleHistory.length > 0 ? (
                     <div className="schedule-history-list">
                       {scheduleHistory.map((historyItem) => (
-                        <button
+                        <article
                           key={historyItem.id}
                           className={
                             selectedScheduleRunId === historyItem.id
                               ? "schedule-history-row active"
                               : "schedule-history-row"
                           }
-                          type="button"
-                          onClick={() => selectScheduleHistoryItem(historyItem)}
                         >
-                          <span>{formatTime(historyItem.created_at)}</span>
-                          <strong>{historyItem.planning_mode}</strong>
-                          <em>
-                            {historyItem.scheduled_task_count} tasks | {historyItem.item_count} blocks
-                          </em>
-                        </button>
+                          {editingScheduleRunId === historyItem.id ? (
+                            <div className="schedule-history-editor">
+                              <input
+                                aria-label={`Schedule title for ${historyItem.title}`}
+                                value={scheduleRunTitleDraft}
+                                maxLength={120}
+                                onChange={(event) => setScheduleRunTitleDraft(event.target.value)}
+                              />
+                              <button
+                                className="ghost-button"
+                                type="button"
+                                aria-label={`Save ${historyItem.title}`}
+                                disabled={isMutating}
+                                onClick={() => void renameScheduleRun(historyItem.id)}
+                              >
+                                <CheckCircle2 size={17} />
+                              </button>
+                              <button
+                                className="ghost-button text-button"
+                                type="button"
+                                disabled={isMutating}
+                                onClick={cancelRenamingScheduleRun}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <button
+                                className="schedule-history-main"
+                                type="button"
+                                onClick={() => selectScheduleHistoryItem(historyItem)}
+                              >
+                                <span>{formatTime(historyItem.created_at)}</span>
+                                <strong>{historyItem.title}</strong>
+                                <em>
+                                  {historyItem.planning_mode} | {historyItem.scheduled_task_count} tasks |{" "}
+                                  {historyItem.item_count} blocks
+                                </em>
+                              </button>
+                              <div className="schedule-history-actions">
+                                <button
+                                  className="ghost-button"
+                                  type="button"
+                                  aria-label={`Rename ${historyItem.title}`}
+                                  disabled={isMutating}
+                                  onClick={() => startRenamingScheduleRun(historyItem)}
+                                >
+                                  <Pencil size={16} />
+                                </button>
+                                <button
+                                  className="ghost-button danger"
+                                  type="button"
+                                  aria-label={`Delete ${historyItem.title}`}
+                                  disabled={isMutating}
+                                  onClick={() => void deleteScheduleRun(historyItem.id)}
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </article>
                       ))}
                     </div>
                   ) : (

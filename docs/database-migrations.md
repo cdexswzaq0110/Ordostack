@@ -5,7 +5,7 @@ Issue 9 introduces Alembic as the database migration tool for `backend-api`.
 ## Current Revision
 
 ```text
-20260603_0001_initial_ordostack_schema
+20260604_0002_schedule_history_actions
 ```
 
 ## Docker Startup
