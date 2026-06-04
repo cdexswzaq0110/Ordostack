@@ -1,9 +1,10 @@
 from logging.config import fileConfig
-import os
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 from sqlalchemy.engine import URL
+
+from app.config import load_runtime_config
 
 config = context.config
 
@@ -14,13 +15,14 @@ target_metadata = None
 
 
 def build_database_url() -> str:
+    runtime_config = load_runtime_config()
     database_url = URL.create(
         "mysql+pymysql",
-        username=os.getenv("DB_USER", "root"),
-        password=os.getenv("DB_PASSWORD", ""),
-        host=os.getenv("DB_HOST", "mysql"),
-        port=int(os.getenv("DB_PORT", "3306")),
-        database=os.getenv("DB_NAME", "ordostack"),
+        username=runtime_config.db_user,
+        password=runtime_config.db_password,
+        host=runtime_config.db_host,
+        port=runtime_config.db_port,
+        database=runtime_config.db_name,
     )
     return database_url.render_as_string(hide_password=False)
 

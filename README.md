@@ -244,6 +244,13 @@ Covered in Issue 26 MVP:
 - Documentation baseline corrected from Issue 20 to Issue 26.
 - Migration expectation corrected to Alembic revision `20260604_0002`.
 
+Covered in Issue 27 MVP:
+
+- Backend runtime configuration validation.
+- Shared configuration parser for backend runtime, Alembic, MySQL, scheduler URL, and ML URL.
+- Expanded `.env.example` and environment configuration documentation.
+- Explicit local environment setting in Docker Compose.
+
 Not covered yet:
 
 - Production ML / DL model registry.
@@ -278,3 +285,4 @@ python scripts\browser_smoke.py
 - Release process: [docs/release-process.md](docs/release-process.md)
 - Version history: [CHANGELOG.md](CHANGELOG.md)
 - PM status report: [docs/project-status-report.md](docs/project-status-report.md)
+- Environment configuration: [docs/environment.md](docs/environment.md)

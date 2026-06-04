@@ -1,5 +1,40 @@
 # Development Log
 
+## 2026-06-04 - Issue 27 - Environment Configuration Hardening
+
+Branch:
+
+```text
+feature/issue-27-config-hardening
+```
+
+Scope:
+
+- Add backend runtime configuration parser and validation.
+- Validate backend configuration during FastAPI startup.
+- Reuse the same configuration parser for MySQL connections, scheduler-service URL, ml-service URL, and Alembic.
+- Expand `.env.example` with supported local settings.
+- Add environment configuration documentation.
+- Set explicit `ORDOSTACK_ENV=local` in Docker Compose.
+
+MVP boundaries:
+
+- No production deployment implementation yet.
+- No authentication or user isolation yet.
+- Production secrets are still external to the repository.
+
+Suggested git commit:
+
+```text
+chore(config): harden environment validation
+```
+
+Verification:
+
+- backend-api tests must pass locally.
+- `docker compose config` must pass locally.
+- Docker Compose startup must keep backend-api healthy.
+
 ## 2026-06-04 - Issue 26 - PM Status Report And Baseline Corrections
 
 Branch:

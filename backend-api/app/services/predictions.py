@@ -1,15 +1,14 @@
-import os
 from datetime import date
 from typing import Any
 
 import httpx
 
+from app.config import load_runtime_config
 from app.schemas.predictions import DurationPredictionResponse
 from app.schemas.tasks import TaskRead
 from app.services import analytics as analytics_service
 from app.services import tasks as task_service
 
-DEFAULT_ML_SERVICE_URL = "http://ml-service:8200"
 ML_TIMEOUT_SECONDS = 8.0
 FALLBACK_MODEL_NAME = "estimate-fallback"
 FALLBACK_MODEL_VERSION = "0.1.0"
@@ -26,7 +25,7 @@ def predict_for_tasks(
     tasks: list[TaskRead],
 ) -> DurationPredictionResponse:
     ml_payload = build_ml_payload(user_id=user_id, target_date=target_date, tasks=tasks)
-    ml_url = os.getenv("ML_SERVICE_URL", DEFAULT_ML_SERVICE_URL).rstrip("/")
+    ml_url = load_runtime_config().ml_service_url
 
     try:
         response = httpx.post(

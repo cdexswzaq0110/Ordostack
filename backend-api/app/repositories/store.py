@@ -1,6 +1,6 @@
-import os
 from typing import Protocol
 
+from app.config import load_runtime_config
 from app.repositories.memory_store import store as memory_store
 
 
@@ -30,7 +30,7 @@ _mysql_store: StoreProtocol | None = None
 
 
 def get_store() -> StoreProtocol:
-    if os.getenv("DATA_STORE", "memory").strip().lower() != "mysql":
+    if load_runtime_config().data_store != "mysql":
         return memory_store
 
     global _mysql_store

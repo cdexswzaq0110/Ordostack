@@ -2,6 +2,19 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.26.0 - 2026-06-04
+
+- Add backend runtime configuration validation.
+- Share configuration parsing between backend runtime, MySQL repository, service clients, and Alembic.
+- Expand `.env.example` and add environment configuration documentation.
+- Set explicit `ORDOSTACK_ENV=local` in Docker Compose.
+
+Suggested commit:
+
+```text
+chore(config): harden environment validation
+```
+
 ## 0.25.0 - 2026-06-04
 
 - Add PM project status report with launch-readiness assessment.

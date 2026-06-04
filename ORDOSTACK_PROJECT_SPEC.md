@@ -7,7 +7,7 @@ This markdown file records the implementation baseline used by Codex for the rep
 ## Current Baseline
 
 ```text
-Version: 0.25.0
+Version: 0.26.0
 Stage: Customer Demo MVP
 Runtime: Local Docker Compose
 Primary UI: web-dashboard
@@ -68,7 +68,7 @@ OrdoStack is an AI daily planning product that lets users capture tasks and fixe
 | ML duration prediction | Local duration prediction API with bundled training artifact and heuristic fallback |
 | Storage | Docker MySQL persistence with Alembic migration baseline and local compatibility bootstrap |
 | Demo support | Seeded demo data and demo-only reset control |
-| Quality gates | Python service tests, web-dashboard build, Docker Compose config, local E2E smoke script, browser screenshot smoke, GitHub Actions baseline |
+| Quality gates | Python service tests, web-dashboard build, Docker Compose config, environment validation, local E2E smoke script, browser screenshot smoke, GitHub Actions baseline |
 | Documentation | API docs, QA plan, release process, branching strategy, development log, changelog, PM status report |
 
 ## System Components

@@ -8,6 +8,7 @@ services:
     ports:
       - "8000:8000"
     environment:
+      ORDOSTACK_ENV: "local"
       DATA_STORE: "mysql"
       DB_HOST: "mysql"
       DB_PORT: "3306"

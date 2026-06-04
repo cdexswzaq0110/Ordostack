@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -8,11 +10,19 @@ from app.api.fixed_events import router as fixed_events_router
 from app.api.predictions import router as predictions_router
 from app.api.schedules import router as schedules_router
 from app.api.tasks import router as tasks_router
+from app.config import load_runtime_config
 
 SERVICE_NAME = "backend-api"
 VERSION = "0.1.0"
 
-app = FastAPI(title="OrdoStack Backend API", version=VERSION)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    load_runtime_config()
+    yield
+
+
+app = FastAPI(title="OrdoStack Backend API", version=VERSION, lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

@@ -20,6 +20,7 @@ flowchart LR
 - `web-dashboard` is the browser-facing customer demo UI.
 - `backend-api` is the public API gateway for product features.
 - `backend-api` owns task, fixed event, execution log, analytics, schedule persistence, and demo reset workflows.
+- `backend-api` validates runtime environment configuration during startup.
 - `scheduler-service` owns scheduling algorithm internals and returns generated schedule blocks.
 - `ml-service` owns duration prediction behavior and model metadata.
 - `mysql` stores local Docker MVP data.
@@ -59,6 +60,7 @@ Current local release gates:
 - ml-service pytest suite.
 - web-dashboard production build.
 - Docker Compose config validation.
+- Runtime environment validation.
 - Docker Compose rebuild and health checks.
 - Local E2E smoke script.
 - Browser screenshot smoke script.

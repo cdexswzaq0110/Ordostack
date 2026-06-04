@@ -1,6 +1,6 @@
 # QA MVP Test Plan
 
-Scope: Issue 25 Browser Screenshot Smoke, Issue 24 Schedule Export, Issue 23 Schedule Diff, Issue 22 Schedule History Actions, Issue 21 Task Filter And Sort, Issue 20 Demo MVP Documentation Baseline, Issue 19 E2E Smoke Workflow, Demo Seed And Reset Control, Dashboard UX Polish, Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
+Scope: Issue 27 Environment Configuration Hardening, Issue 25 Browser Screenshot Smoke, Issue 24 Schedule Export, Issue 23 Schedule Diff, Issue 22 Schedule History Actions, Issue 21 Task Filter And Sort, Issue 20 Demo MVP Documentation Baseline, Issue 19 E2E Smoke Workflow, Demo Seed And Reset Control, Dashboard UX Polish, Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
 
 ## Environment
 
@@ -100,6 +100,14 @@ Expected:
 - Script exits with status code `0`.
 - `artifacts/browser-smoke/dashboard.png` exists.
 - Screenshot file is a non-trivial PNG.
+
+## Environment Configuration Checks
+
+1. Confirm `.env.example` documents backend, dashboard, ML, and optional ClearML variables.
+2. Confirm Docker Compose sets `ORDOSTACK_ENV=local` for backend-api.
+3. Run backend-api tests.
+4. Expected: config validation tests pass.
+5. Confirm production MySQL mode rejects an empty `DB_PASSWORD`.
 
 ## Task Tests
 

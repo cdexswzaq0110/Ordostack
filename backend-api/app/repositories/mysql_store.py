@@ -1,8 +1,9 @@
 from datetime import UTC, date, datetime
 import json
-import os
 from threading import Lock
 from typing import Any
+
+from app.config import load_runtime_config
 
 from app.repositories.memory_store import DEMO_USER_ID
 
@@ -587,12 +588,13 @@ class MySqlStore:
         import pymysql
         import pymysql.cursors
 
+        config = load_runtime_config()
         return pymysql.connect(
-            host=os.getenv("DB_HOST", "mysql"),
-            port=int(os.getenv("DB_PORT", "3306")),
-            user=os.getenv("DB_USER", "root"),
-            password=os.getenv("DB_PASSWORD", ""),
-            database=os.getenv("DB_NAME", "ordostack"),
+            host=config.db_host,
+            port=config.db_port,
+            user=config.db_user,
+            password=config.db_password,
+            database=config.db_name,
             autocommit=True,
             cursorclass=pymysql.cursors.DictCursor,
         )

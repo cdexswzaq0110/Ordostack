@@ -1,10 +1,10 @@
-import os
 from datetime import date
 from typing import Any
 
 import httpx
 from fastapi import HTTPException, status
 
+from app.config import load_runtime_config
 from app.repositories.store import get_store
 from app.schemas.schedules import (
     ScheduleGenerateRequest,
@@ -20,7 +20,6 @@ from app.services import fixed_events as fixed_event_service
 from app.services import predictions as prediction_service
 from app.services import tasks as task_service
 
-DEFAULT_SCHEDULER_SERVICE_URL = "http://scheduler-service:8100"
 SCHEDULER_TIMEOUT_SECONDS = 8.0
 
 
@@ -54,7 +53,7 @@ def generate_schedule(payload: ScheduleGenerateRequest) -> ScheduleGenerateRespo
     ]
     scheduler_payload["fixed_events"] = [event.model_dump(mode="json") for event in fixed_events]
 
-    scheduler_url = os.getenv("SCHEDULER_SERVICE_URL", DEFAULT_SCHEDULER_SERVICE_URL).rstrip("/")
+    scheduler_url = load_runtime_config().scheduler_service_url
     try:
         response = httpx.post(
             f"{scheduler_url}/schedule/generate",

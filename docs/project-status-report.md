@@ -1,7 +1,7 @@
 # OrdoStack Project Status Report
 
 Date: 2026-06-04
-Version: 0.25.0
+Version: 0.26.0
 Report role: PM / project management
 
 ## Executive Summary
@@ -11,11 +11,11 @@ OrdoStack is currently a local Customer Demo MVP. It is suitable for internal QA
 Current evidence:
 
 - Latest release tag before this report: `v0.24.0`.
-- Current product stage after this report: PM baseline `v0.25.0`.
+- Current product stage after Issue 27: environment-hardened Customer Demo MVP `v0.26.0`.
 - Main runnable entrypoint: `http://localhost:5173`.
 - Runtime: local Docker Compose.
 - Database: local MySQL container.
-- Verification gates available: Python tests, web build, Docker health checks, E2E smoke, browser screenshot smoke, secrets scan.
+- Verification gates available: Python tests, web build, Docker health checks, environment validation, E2E smoke, browser screenshot smoke, secrets scan.
 
 ## PM Assessment
 
@@ -30,7 +30,7 @@ Public launch:
 
 ```text
 Status: Not ready
-Estimated remaining issue count: 18 to 24 focused issues
+Estimated remaining issue count: 17 to 23 focused issues
 Reason: auth, deployment, security, observability, backup, production data policy, accessibility, and operational workflows are missing
 ```
 
@@ -38,7 +38,7 @@ Private beta:
 
 ```text
 Status: Not ready yet
-Estimated remaining issue count: 8 to 12 focused issues
+Estimated remaining issue count: 5 to 8 focused issues
 Reason: beta can skip mobile and full MLOps, but still needs auth, deployment, backup, monitoring, and stricter QA
 ```
 
@@ -65,6 +65,7 @@ Product capabilities already implemented:
 - Local E2E smoke test.
 - Browser screenshot smoke test.
 - Version history, release process, QA plan, API docs, architecture docs.
+- Environment configuration docs and startup validation.
 
 ## Not Implemented
 
@@ -104,12 +105,6 @@ Product gaps from the original specification:
 - Current CI validates build/test/config but does not run full Docker runtime E2E in GitHub Actions.
 
 ## Recommended Next Issues
-
-Issue 27: Environment and configuration hardening
-
-- Add explicit local/dev/prod configuration docs.
-- Add startup validation for required environment variables.
-- Add `.env.example` coverage for every supported setting.
 
 Issue 28: Authentication foundation
 
@@ -226,10 +221,10 @@ Private Beta Candidate
 
 Minimum next target for private beta:
 
-- Complete Issues 27 to 32.
+- Complete Issues 28 to 32.
 - Keep Issues 33 to 38 as product polish if beta users need schedule editing and recurring events.
 - Keep Issues 39 to 42 as intelligence roadmap, not beta blockers unless ML capability is the primary sales claim.
 
 ## Next Execution Plan
 
-The next engineering pass should start with Issue 27 because environment hardening reduces risk before auth, deployment, and observability work. Authentication should not be added before configuration and environment boundaries are clear.
+The next engineering pass should start with Issue 28 because environment hardening is now complete and authentication is the next major blocker before private beta.
