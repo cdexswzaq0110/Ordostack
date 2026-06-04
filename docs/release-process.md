@@ -5,7 +5,7 @@ OrdoStack uses MVP issue releases until production deployment exists.
 ## Current Version
 
 ```text
-0.18.0
+0.19.0
 ```
 
 ## Release Types
@@ -51,6 +51,10 @@ cd ..
 docker compose config
 docker compose up --build -d
 docker compose ps
+cd web-dashboard
+npm run build
+cd ..
+python scripts\e2e_smoke.py
 ```
 
 Linux / WSL:
@@ -66,14 +70,18 @@ cd ..
 docker compose config
 docker compose up --build -d
 docker compose ps
+cd web-dashboard
+npm run build
+cd ..
+python scripts/e2e_smoke.py
 ```
 
 ## Tagging
 
-After a clean baseline commit:
+After a clean release commit:
 
 ```bash
-git tag v0.10.1
+git tag v0.19.0
 ```
 
 Tags should point only to commits that passed the release checklist.

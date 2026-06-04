@@ -1,5 +1,36 @@
 # Development Log
 
+## 2026-06-04 - Issue 20 - Demo MVP Documentation Baseline
+
+Branch:
+
+```text
+feature/issue-20-docs-refresh
+```
+
+Scope:
+
+- Refresh the project specification to the current Customer Demo MVP baseline.
+- Update architecture documentation for current runtime boundaries, persistence, and data flow.
+- Update demo, release, QA, README, changelog, and development-log records for version `0.19.0`.
+
+MVP boundaries:
+
+- Documentation-only issue.
+- No production deployment work.
+- No new product behavior.
+
+Suggested git commit:
+
+```text
+docs(product): refresh demo mvp specification
+```
+
+Verification:
+
+- Documentation diff must not introduce secrets.
+- Full release checklist should pass before tagging `v0.19.0`.
+
 ## 2026-06-04 - Issue 19 - E2E Smoke Workflow MVP
 
 Branch:

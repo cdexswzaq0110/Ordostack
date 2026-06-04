@@ -2,6 +2,18 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.19.0 - 2026-06-04
+
+- Refresh the project specification to the current Customer Demo MVP baseline.
+- Update architecture, demo, release, QA, README, changelog, and development-log documentation.
+- Record current production-readiness gaps and next-phase scope.
+
+Suggested commit:
+
+```text
+docs(product): refresh demo mvp specification
+```
+
 ## 0.18.0 - 2026-06-04
 
 - Add local E2E smoke script for Docker Compose demo verification.

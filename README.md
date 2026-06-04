@@ -2,7 +2,7 @@
 
 OrdoStack is an AI daily planning MVP for task capture, protected calendar blocks, persisted generated schedules, execution analytics, local duration prediction, and MySQL-backed persistence.
 
-This version is intentionally small: it implements task/fixed-event APIs, a scheduler-service MVP, persisted generated schedules, execution logs, daily analytics, local ML duration prediction, MySQL persistence in Docker, and a React dashboard. Authentication, production migrations, ClearML agent execution, and AWS deployment are not implemented yet.
+This version is a local Customer Demo MVP: it implements task/fixed-event APIs, a scheduler-service MVP, persisted generated schedules, execution logs, daily analytics, local ML duration prediction, MySQL persistence in Docker, Alembic baseline migrations, a React dashboard, demo reset, and local E2E smoke verification. Production authentication, ClearML agent execution, mobile app implementation, and AWS deployment are not implemented yet.
 
 ## Quick Start
 
@@ -201,12 +201,19 @@ Covered in Issue 19 MVP:
 - Local E2E smoke script for Docker Compose demo verification.
 - Smoke coverage for health, dashboard HTML, task edit, fixed event edit, schedule generation, and schedule history.
 
+Covered in Issue 20 MVP:
+
+- Project specification refreshed to the Customer Demo MVP baseline.
+- Architecture documentation updated for current service boundaries and data flow.
+- Demo script, release process, QA plan, README, changelog, and development log aligned to version `0.19.0`.
+
 Not covered yet:
 
 - Production ML / DL model registry.
 - ClearML agent execution.
 - Mobile app implementation.
 - AWS deployment.
+- Production authentication and user isolation.
 
 ## No Secrets Policy
 
