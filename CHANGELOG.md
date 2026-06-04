@@ -2,6 +2,18 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.24.0 - 2026-06-04
+
+- Add local browser smoke script that captures a dashboard screenshot through headless Edge or Chrome.
+- Extend E2E smoke coverage for schedule rename, diff, and export APIs.
+- Ignore generated browser smoke artifacts.
+
+Suggested commit:
+
+```text
+test(browser): add dashboard screenshot smoke
+```
+
 ## 0.23.0 - 2026-06-04
 
 - Add schedule history export API for Markdown and CSV.

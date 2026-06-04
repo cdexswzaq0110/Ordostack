@@ -130,9 +130,43 @@ def main() -> int:
         )
         assert_true(len(schedule["items"]) >= 1, "generated schedule has items")
 
+        second_schedule = request_json(
+            f"{BACKEND_API_URL}/schedules/generate",
+            method="POST",
+            payload={
+                "user_id": DEMO_USER_ID,
+                "target_date": TARGET_DATE,
+                "planning_mode": "balanced",
+                "start_hour": 9,
+                "end_hour": 23,
+                "buffer_minutes": 10,
+                "include_fixed_events": True,
+            },
+        )
+        assert_true(len(second_schedule["items"]) >= 1, "second generated schedule has items")
+
         history = request_json(f"{BACKEND_API_URL}/schedules/history?user_id=1&target_date={TARGET_DATE}&limit=5")
-        assert_true(len(history) >= 1, "schedule history has at least one run")
+        assert_true(len(history) >= 2, "schedule history has at least two runs")
         assert_equal(history[0]["schedule"]["schedule_date"], TARGET_DATE, "history target date")
+
+        renamed_schedule = request_json(
+            f"{BACKEND_API_URL}/schedules/history/{history[0]['id']}?user_id={DEMO_USER_ID}",
+            method="PATCH",
+            payload={"title": f"E2E smoke plan {timestamp}"},
+        )
+        assert_true(renamed_schedule["title"].startswith("E2E smoke plan"), "schedule rename")
+
+        schedule_diff = request_json(
+            f"{BACKEND_API_URL}/schedules/history/{history[0]['id']}/diff?user_id={DEMO_USER_ID}&against_run_id={history[1]['id']}",
+        )
+        assert_equal(schedule_diff["compare_run_id"], history[0]["id"], "schedule diff compare run")
+        assert_equal(schedule_diff["base_run_id"], history[1]["id"], "schedule diff base run")
+
+        exported_schedule = request_json(
+            f"{BACKEND_API_URL}/schedules/history/{history[0]['id']}/export?user_id={DEMO_USER_ID}&format=markdown",
+        )
+        assert_true(exported_schedule["filename"].endswith(".md"), "schedule export filename")
+        assert_true(exported_schedule["content"].startswith("# E2E smoke plan"), "schedule export content")
 
         print(
             json.dumps(
@@ -141,6 +175,7 @@ def main() -> int:
                     "checked_at": datetime.now().isoformat(timespec="seconds"),
                     "task_id": created_task["id"],
                     "fixed_event_id": created_event["id"],
+                    "schedule_run_id": history[0]["id"],
                     "history_runs": len(history),
                 },
                 indent=2,

@@ -61,6 +61,19 @@ Expected:
 - Script exits with status code `0`.
 - Local smoke task and fixed-event records are created for traceability.
 
+Browser screenshot smoke:
+
+Windows PowerShell:
+
+```powershell
+python scripts\browser_smoke.py
+```
+
+Expected:
+
+- Output contains `"status": "ok"`.
+- `artifacts/browser-smoke/dashboard.png` is created.
+
 ## Demo Reset
 
 The dashboard Reset demo button calls:

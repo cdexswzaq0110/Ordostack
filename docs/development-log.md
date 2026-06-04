@@ -1,5 +1,37 @@
 # Development Log
 
+## 2026-06-04 - Issue 25 - Browser Screenshot Smoke MVP
+
+Branch:
+
+```text
+feature/issue-25-browser-smoke
+```
+
+Scope:
+
+- Add local browser smoke script that opens the dashboard with headless Edge or Chrome.
+- Capture a PNG screenshot under `artifacts/browser-smoke`.
+- Verify dashboard HTML contains `OrdoStack`, screenshot exists, screenshot is PNG, and screenshot size is non-trivial.
+- Extend E2E smoke for schedule rename, diff, and export APIs.
+
+MVP boundaries:
+
+- Screenshot is smoke evidence, not pixel-perfect visual diff.
+- No paid browser testing service.
+- No cloud artifact upload.
+
+Suggested git commit:
+
+```text
+test(browser): add dashboard screenshot smoke
+```
+
+Verification:
+
+- `python -m py_compile scripts/e2e_smoke.py scripts/browser_smoke.py` must pass.
+- Browser smoke should pass when Docker Compose is running and Edge or Chrome is installed.
+
 ## 2026-06-04 - Issue 24 - Schedule Export MVP
 
 Branch:

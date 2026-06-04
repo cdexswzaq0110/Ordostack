@@ -232,6 +232,12 @@ Covered in Issue 24 MVP:
 - Dashboard Export MD action for selected generated plans.
 - Backend tests for export filename and content.
 
+Covered in Issue 25 MVP:
+
+- Browser smoke script that captures a dashboard PNG screenshot with headless Edge or Chrome.
+- E2E smoke coverage for schedule rename, diff, and export APIs.
+- Generated browser smoke artifacts ignored from Git.
+
 Not covered yet:
 
 - Production ML / DL model registry.
@@ -252,6 +258,12 @@ Local E2E smoke after Docker Compose is running:
 
 ```powershell
 python scripts\e2e_smoke.py
+```
+
+Local browser smoke after Docker Compose is running and Edge or Chrome is installed:
+
+```powershell
+python scripts\browser_smoke.py
 ```
 
 ## Development Process
