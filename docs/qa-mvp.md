@@ -1,6 +1,6 @@
 # QA MVP Test Plan
 
-Scope: Issue 20 Demo MVP Documentation Baseline, Issue 19 E2E Smoke Workflow, Demo Seed And Reset Control, Dashboard UX Polish, Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
+Scope: Issue 21 Task Filter And Sort, Issue 20 Demo MVP Documentation Baseline, Issue 19 E2E Smoke Workflow, Demo Seed And Reset Control, Dashboard UX Polish, Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
 
 ## Environment
 
@@ -96,6 +96,20 @@ Expected:
 10. Click `Today`.
 11. Expected: the top date changes to the current local date.
 12. Expected: latest saved schedule can appear again for dates with saved schedules.
+
+### Filter And Sort Task Queue
+
+1. Open `http://localhost:5173`.
+2. Select a task status filter.
+3. Expected: Task queue only shows matching tasks.
+4. Select a category filter.
+5. Expected: Task queue only shows matching category rows.
+6. Select Focus `Focus` or `Flexible`.
+7. Expected: Task queue follows the focus requirement.
+8. Change Sort to deadline, estimate, or status.
+9. Expected: Task queue order changes without reloading the page.
+10. Click `Reset`.
+11. Expected: filters return to defaults and all matching date tasks are visible.
 
 ### Create Task
 

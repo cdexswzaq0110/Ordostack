@@ -13,6 +13,7 @@ import {
   Clock3,
   Command,
   LayoutDashboard,
+  ListFilter,
   ListTodo,
   Loader2,
   MoreHorizontal,
@@ -38,6 +39,9 @@ type NavigationItem = {
 };
 
 type TaskStatus = "pending" | "in_progress" | "completed" | "skipped";
+type TaskStatusFilter = "all" | TaskStatus;
+type TaskFocusFilter = "all" | "focus" | "non_focus";
+type TaskSortMode = "priority" | "deadline" | "estimate" | "status";
 
 type ApiTask = {
   id: number;
@@ -587,6 +591,35 @@ function taskStateLabel(status: TaskStatus): string {
   return labels[status];
 }
 
+function deadlineTimeValue(task: ApiTask): number {
+  return task.deadline ? new Date(task.deadline).getTime() : Number.MAX_SAFE_INTEGER;
+}
+
+function compareTasks(sortMode: TaskSortMode): (left: ApiTask, right: ApiTask) => number {
+  const statusRank: Record<TaskStatus, number> = {
+    in_progress: 0,
+    pending: 1,
+    completed: 2,
+    skipped: 3,
+  };
+
+  return (left, right) => {
+    if (sortMode === "deadline") {
+      return deadlineTimeValue(left) - deadlineTimeValue(right) || right.priority - left.priority || left.id - right.id;
+    }
+
+    if (sortMode === "estimate") {
+      return right.estimated_minutes - left.estimated_minutes || right.priority - left.priority || left.id - right.id;
+    }
+
+    if (sortMode === "status") {
+      return statusRank[left.status] - statusRank[right.status] || right.priority - left.priority || left.id - right.id;
+    }
+
+    return right.priority - left.priority || deadlineTimeValue(left) - deadlineTimeValue(right) || left.id - right.id;
+  };
+}
+
 function buildTimeline(tasks: ApiTask[], fixedEvents: ApiFixedEvent[], selectedDate: string): TimelineItem[] {
   const taskStarts = ["09:00", "10:45", "13:30", "15:00"];
   const pendingTasks = tasks
@@ -678,6 +711,10 @@ export function App() {
   const [analytics, setAnalytics] = useState<ApiDailyAnalytics | null>(null);
   const [durationPredictions, setDurationPredictions] = useState<ApiDurationPredictionResponse | null>(null);
   const [query, setQuery] = useState("");
+  const [taskStatusFilter, setTaskStatusFilter] = useState<TaskStatusFilter>("all");
+  const [taskCategoryFilter, setTaskCategoryFilter] = useState("all");
+  const [taskFocusFilter, setTaskFocusFilter] = useState<TaskFocusFilter>("all");
+  const [taskSortMode, setTaskSortMode] = useState<TaskSortMode>("priority");
   const [isLoading, setIsLoading] = useState(true);
   const [isMutating, setIsMutating] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -745,17 +782,38 @@ export function App() {
 
   const filteredTasks = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    if (normalizedQuery.length === 0) {
-      return tasks;
-    }
+    const matchesQuery = (task: ApiTask) => {
+      if (normalizedQuery.length === 0) {
+        return true;
+      }
 
-    return tasks.filter((task) => {
-      return (
-        task.title.toLowerCase().includes(normalizedQuery) ||
-        task.category.toLowerCase().includes(normalizedQuery)
-      );
-    });
-  }, [query, tasks]);
+      return task.title.toLowerCase().includes(normalizedQuery) || task.category.toLowerCase().includes(normalizedQuery);
+    };
+
+    return tasks
+      .filter((task) => matchesQuery(task))
+      .filter((task) => taskStatusFilter === "all" || task.status === taskStatusFilter)
+      .filter((task) => taskCategoryFilter === "all" || task.category === taskCategoryFilter)
+      .filter((task) => {
+        if (taskFocusFilter === "all") {
+          return true;
+        }
+
+        return taskFocusFilter === "focus" ? task.requires_focus : !task.requires_focus;
+      })
+      .sort(compareTasks(taskSortMode));
+  }, [query, taskCategoryFilter, taskFocusFilter, taskSortMode, taskStatusFilter, tasks]);
+
+  const taskCategories = useMemo(() => {
+    return Array.from(new Set(tasks.map((task) => task.category))).sort((left, right) => left.localeCompare(right));
+  }, [tasks]);
+  const activeTaskFilterCount = [
+    query.trim().length > 0,
+    taskStatusFilter !== "all",
+    taskCategoryFilter !== "all",
+    taskFocusFilter !== "all",
+    taskSortMode !== "priority",
+  ].filter(Boolean).length;
 
   const timelineItems = useMemo(
     () => (schedule ? buildTimelineFromSchedule(schedule.items) : buildTimeline(tasks, fixedEvents, selectedDate)),
@@ -865,6 +923,14 @@ export function App() {
   function changeSelectedDate(days: number) {
     setSelectedDate((currentDate) => shiftDate(currentDate, days));
     closeDateScopedEditors();
+  }
+
+  function clearTaskFilters() {
+    setQuery("");
+    setTaskStatusFilter("all");
+    setTaskCategoryFilter("all");
+    setTaskFocusFilter("all");
+    setTaskSortMode("priority");
   }
 
   function startEditingTask(task: ApiTask) {
@@ -1412,6 +1478,65 @@ export function App() {
                   </div>
                   <button className="icon-button" type="button" aria-label="Command palette" disabled>
                     <Command size={17} />
+                  </button>
+                </div>
+
+                <div className="task-toolbar" aria-label="Task filters and sorting">
+                  <div className="task-toolbar-title">
+                    <ListFilter size={16} aria-hidden="true" />
+                    <span>{activeTaskFilterCount === 0 ? "All tasks" : `${activeTaskFilterCount} filters active`}</span>
+                  </div>
+                  <label className="filter-control">
+                    <span>Status</span>
+                    <select
+                      value={taskStatusFilter}
+                      onChange={(event) => setTaskStatusFilter(event.target.value as TaskStatusFilter)}
+                    >
+                      <option value="all">All</option>
+                      <option value="pending">Ready</option>
+                      <option value="in_progress">Doing</option>
+                      <option value="completed">Done</option>
+                      <option value="skipped">Skipped</option>
+                    </select>
+                  </label>
+                  <label className="filter-control">
+                    <span>Category</span>
+                    <select value={taskCategoryFilter} onChange={(event) => setTaskCategoryFilter(event.target.value)}>
+                      <option value="all">All</option>
+                      {taskCategories.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="filter-control">
+                    <span>Focus</span>
+                    <select
+                      value={taskFocusFilter}
+                      onChange={(event) => setTaskFocusFilter(event.target.value as TaskFocusFilter)}
+                    >
+                      <option value="all">All</option>
+                      <option value="focus">Focus</option>
+                      <option value="non_focus">Flexible</option>
+                    </select>
+                  </label>
+                  <label className="filter-control">
+                    <span>Sort</span>
+                    <select value={taskSortMode} onChange={(event) => setTaskSortMode(event.target.value as TaskSortMode)}>
+                      <option value="priority">Priority</option>
+                      <option value="deadline">Deadline</option>
+                      <option value="estimate">Estimate</option>
+                      <option value="status">Status</option>
+                    </select>
+                  </label>
+                  <button
+                    className="ghost-button text-button"
+                    type="button"
+                    disabled={activeTaskFilterCount === 0}
+                    onClick={clearTaskFilters}
+                  >
+                    Reset
                   </button>
                 </div>
 

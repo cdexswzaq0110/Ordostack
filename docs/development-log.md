@@ -1,5 +1,35 @@
 # Development Log
 
+## 2026-06-04 - Issue 21 - Task Filter And Sort MVP
+
+Branch:
+
+```text
+feature/issue-21-task-filter-sort
+```
+
+Scope:
+
+- Add task queue filters for status, category, and focus requirement.
+- Add task queue sorting by priority, deadline, estimate, or status.
+- Add active filter count and reset action.
+
+MVP boundaries:
+
+- Client-side filtering only.
+- No saved user filter presets.
+- No backend query contract changes.
+
+Suggested git commit:
+
+```text
+feat(dashboard): add task filters and sorting
+```
+
+Verification:
+
+- web-dashboard production build must pass.
+
 ## 2026-06-04 - Issue 20 - Demo MVP Documentation Baseline
 
 Branch:

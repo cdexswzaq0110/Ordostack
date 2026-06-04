@@ -2,6 +2,18 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.20.0 - 2026-06-04
+
+- Add dashboard task status, category, focus, and sort controls.
+- Add active filter count and reset action for customer demo task triage.
+- Keep filtering client-side without changing backend contracts.
+
+Suggested commit:
+
+```text
+feat(dashboard): add task filters and sorting
+```
+
 ## 0.19.0 - 2026-06-04
 
 - Refresh the project specification to the current Customer Demo MVP baseline.

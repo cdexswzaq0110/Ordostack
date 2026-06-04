@@ -207,6 +207,12 @@ Covered in Issue 20 MVP:
 - Architecture documentation updated for current service boundaries and data flow.
 - Demo script, release process, QA plan, README, changelog, and development log aligned to version `0.19.0`.
 
+Covered in Issue 21 MVP:
+
+- Dashboard task filters for status, category, and focus requirement.
+- Dashboard task sorting by priority, deadline, estimate, or status.
+- Active filter count and reset action for customer demo triage.
+
 Not covered yet:
 
 - Production ML / DL model registry.

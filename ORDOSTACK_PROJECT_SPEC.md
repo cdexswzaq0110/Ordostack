@@ -7,7 +7,7 @@ This markdown file records the implementation baseline used by Codex for the rep
 ## Current Baseline
 
 ```text
-Version: 0.19.0
+Version: 0.20.0
 Stage: Customer Demo MVP
 Runtime: Local Docker Compose
 Primary UI: web-dashboard
@@ -57,7 +57,7 @@ OrdoStack is an AI daily planning product that lets users capture tasks and fixe
 | Area | Current implementation |
 | --- | --- |
 | Repository | Monorepo structure, README, project spec, rulebooks, architecture docs, Docker Compose, CI docs |
-| Web dashboard | React / Vite TypeScript dashboard with landing/demo product experience |
+| Web dashboard | React / Vite TypeScript dashboard with landing/demo product experience, task filters, and task sorting |
 | Tasks | Create, list, edit, status transitions, reopen, soft delete |
 | Fixed events | Create, list, edit, soft delete, validation for `HH:MM` time ranges |
 | Date navigation | Previous day, next day, native date picker, Today shortcut |

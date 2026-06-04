@@ -668,6 +668,52 @@ h3 {
   gap: 10px;
 }
 
+.task-toolbar {
+  display: grid;
+  grid-template-columns: minmax(112px, auto) repeat(4, minmax(0, 1fr)) auto;
+  align-items: end;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid #e1e5ea;
+  border-radius: 8px;
+  background: #f7f8fa;
+}
+
+.task-toolbar-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 38px;
+  color: #4d5663;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.filter-control {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.filter-control span {
+  color: #68717e;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.filter-control select {
+  width: 100%;
+  min-width: 0;
+  height: 38px;
+  padding: 0 8px;
+  color: #15191f;
+  border: 1px solid #cfd5dd;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
 .task-stack {
   display: grid;
   gap: 8px;
@@ -1065,6 +1111,14 @@ h3 {
   .form-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .task-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .task-toolbar-title {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 560px) {
@@ -1108,6 +1162,10 @@ h3 {
 
   .form-grid,
   .form-grid.two-column {
+    grid-template-columns: 1fr;
+  }
+
+  .task-toolbar {
     grid-template-columns: 1fr;
   }
 
