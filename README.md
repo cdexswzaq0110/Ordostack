@@ -226,6 +226,12 @@ Covered in Issue 23 MVP:
 - Dashboard Compare previous action.
 - Compact diff summary for added, removed, changed, and minute delta.
 
+Covered in Issue 24 MVP:
+
+- Schedule history export endpoint for Markdown and CSV.
+- Dashboard Export MD action for selected generated plans.
+- Backend tests for export filename and content.
+
 Not covered yet:
 
 - Production ML / DL model registry.

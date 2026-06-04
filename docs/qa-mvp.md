@@ -1,6 +1,6 @@
 # QA MVP Test Plan
 
-Scope: Issue 23 Schedule Diff, Issue 22 Schedule History Actions, Issue 21 Task Filter And Sort, Issue 20 Demo MVP Documentation Baseline, Issue 19 E2E Smoke Workflow, Demo Seed And Reset Control, Dashboard UX Polish, Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
+Scope: Issue 24 Schedule Export, Issue 23 Schedule Diff, Issue 22 Schedule History Actions, Issue 21 Task Filter And Sort, Issue 20 Demo MVP Documentation Baseline, Issue 19 E2E Smoke Workflow, Demo Seed And Reset Control, Dashboard UX Polish, Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
 
 ## Environment
 
@@ -250,7 +250,9 @@ Expected:
 10. Select a history row that has an older run below it.
 11. Click `Compare previous`.
 12. Expected: diff summary shows added, removed, changed, and minute-delta counts.
-13. Call:
+13. Click `Export MD`.
+14. Expected: browser downloads a Markdown text export for the selected generated plan.
+15. Call:
 
 ```powershell
 Invoke-RestMethod -Uri "http://localhost:8000/api/schedules/history?user_id=1&target_date=2026-06-03&limit=5"
@@ -261,6 +263,7 @@ Expected:
 - Response contains recent generated schedule runs.
 - First item is the newest run.
 - Soft-deleted runs are not returned.
+- Export API supports `format=markdown` and `format=csv`.
 
 ## ML Duration Prediction Tests
 

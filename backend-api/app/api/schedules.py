@@ -6,6 +6,7 @@ from app.schemas.schedules import (
     ScheduleGenerateRequest,
     ScheduleGenerateResponse,
     ScheduleDiffResponse,
+    ScheduleExportResponse,
     ScheduleHistoryDeleteResponse,
     ScheduleHistoryItem,
     ScheduleHistoryUpdate,
@@ -62,4 +63,17 @@ def get_schedule_history_diff(
         user_id=user_id,
         compare_run_id=schedule_run_id,
         base_run_id=against_run_id,
+    )
+
+
+@router.get("/history/{schedule_run_id}/export", response_model=ScheduleExportResponse)
+def export_schedule_history_item(
+    schedule_run_id: int,
+    user_id: int = 1,
+    export_format: str = Query(default="markdown", alias="format", pattern="^(markdown|csv)$"),
+) -> ScheduleExportResponse:
+    return schedule_service.export_schedule_history_item(
+        user_id=user_id,
+        schedule_run_id=schedule_run_id,
+        export_format=export_format,
     )

@@ -84,6 +84,7 @@ Backend entrypoint:
 | `PATCH` | `/schedules/history/{schedule_run_id}?user_id=1` | Rename a schedule history item |
 | `DELETE` | `/schedules/history/{schedule_run_id}?user_id=1` | Soft delete a schedule history item |
 | `GET` | `/schedules/history/{schedule_run_id}/diff?user_id=1&against_run_id=1` | Compare two schedule history items |
+| `GET` | `/schedules/history/{schedule_run_id}/export?user_id=1&format=markdown` | Export a schedule history item as Markdown or CSV text |
 
 Request example:
 
@@ -154,6 +155,7 @@ Generated schedule persistence:
 - `PATCH /schedules/history/{schedule_run_id}` updates the history item title.
 - `DELETE /schedules/history/{schedule_run_id}` soft deletes the history item.
 - `GET /schedules/history/{schedule_run_id}/diff` compares a selected generated run against another run.
+- `GET /schedules/history/{schedule_run_id}/export` returns a downloadable text payload for `markdown` or `csv`.
 - If no saved schedule exists, `GET /schedules/latest` returns `404`.
 
 ## Execution Logs MVP

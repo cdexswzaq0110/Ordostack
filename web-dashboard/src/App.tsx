@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Clock3,
   Command,
+  Download,
   LayoutDashboard,
   ListFilter,
   ListTodo,
@@ -136,6 +137,13 @@ type ApiScheduleDiffResponse = {
   unchanged_count: number;
   total_delta_minutes: number;
   changes: ApiScheduleDiffItem[];
+};
+
+type ApiScheduleExportResponse = {
+  filename: string;
+  format: "markdown" | "csv";
+  content_type: string;
+  content: string;
 };
 
 type ScheduleSource = "none" | "saved" | "generated" | "history";
@@ -722,6 +730,16 @@ async function requestOptionalJson<T>(url: string, options?: RequestInit): Promi
   return sendJsonRequest<T>(url, options, true);
 }
 
+function downloadTextFile(filename: string, content: string, contentType: string) {
+  const blob = new Blob([content], { type: contentType });
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = objectUrl;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(objectUrl);
+}
+
 export function App() {
   const [selectedDate, setSelectedDate] = useState(DEFAULT_SELECTED_DATE);
   const [tasks, setTasks] = useState<ApiTask[]>([]);
@@ -744,6 +762,7 @@ export function App() {
   const [isMutating, setIsMutating] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isComparing, setIsComparing] = useState(false);
+  const [isExportingSchedule, setIsExportingSchedule] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [isFixedEventFormOpen, setIsFixedEventFormOpen] = useState(false);
@@ -1032,6 +1051,27 @@ export function App() {
       setError(caughtError instanceof Error ? caughtError.message : "Unable to compare schedules");
     } finally {
       setIsComparing(false);
+    }
+  }
+
+  async function exportSelectedSchedule(exportFormat: "markdown" | "csv") {
+    if (selectedScheduleRunId === null) {
+      setError("Select a generated plan before exporting");
+      return;
+    }
+
+    setIsExportingSchedule(true);
+    setError(null);
+
+    try {
+      const exportedSchedule = await requestJson<ApiScheduleExportResponse>(
+        `${API_BASE_URL}/schedules/history/${selectedScheduleRunId}/export?user_id=${DEMO_USER_ID}&format=${exportFormat}`,
+      );
+      downloadTextFile(exportedSchedule.filename, exportedSchedule.content, exportedSchedule.content_type);
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Unable to export schedule");
+    } finally {
+      setIsExportingSchedule(false);
     }
   }
 
@@ -1662,6 +1702,19 @@ export function App() {
                             <Activity size={16} aria-hidden="true" />
                           )}
                           <span>{isComparing ? "Comparing" : "Compare previous"}</span>
+                        </button>
+                        <button
+                          className="secondary-action"
+                          type="button"
+                          disabled={isExportingSchedule || selectedScheduleRunId === null}
+                          onClick={() => void exportSelectedSchedule("markdown")}
+                        >
+                          {isExportingSchedule ? (
+                            <Loader2 className="spinning" size={16} aria-hidden="true" />
+                          ) : (
+                            <Download size={16} aria-hidden="true" />
+                          )}
+                          <span>{isExportingSchedule ? "Exporting" : "Export MD"}</span>
                         </button>
                       </div>
                       {scheduleDiff ? (

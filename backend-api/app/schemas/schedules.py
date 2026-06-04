@@ -55,3 +55,10 @@ class ScheduleDiffResponse(BaseModel):
     unchanged_count: int
     total_delta_minutes: int
     changes: list[ScheduleDiffItem]
+
+
+class ScheduleExportResponse(BaseModel):
+    filename: str
+    format: Literal["markdown", "csv"]
+    content_type: str
+    content: str

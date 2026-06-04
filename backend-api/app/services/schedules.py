@@ -11,6 +11,7 @@ from app.schemas.schedules import (
     ScheduleGenerateResponse,
     ScheduleDiffItem,
     ScheduleDiffResponse,
+    ScheduleExportResponse,
     ScheduleHistoryDeleteResponse,
     ScheduleHistoryItem,
     ScheduleHistoryUpdate,
@@ -130,6 +131,27 @@ def get_schedule_history_diff(user_id: int, compare_run_id: int, base_run_id: in
     return build_schedule_diff(base_run=base_run, compare_run=compare_run)
 
 
+def export_schedule_history_item(user_id: int, schedule_run_id: int, export_format: str) -> ScheduleExportResponse:
+    schedule_run = get_store().get_generated_schedule_history_item(user_id=user_id, schedule_run_id=schedule_run_id)
+    if schedule_run is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Generated schedule not found")
+
+    if export_format == "csv":
+        return ScheduleExportResponse(
+            filename=f"ordostack-schedule-{schedule_run_id}.csv",
+            format="csv",
+            content_type="text/csv",
+            content=build_schedule_csv(schedule_run),
+        )
+
+    return ScheduleExportResponse(
+        filename=f"ordostack-schedule-{schedule_run_id}.md",
+        format="markdown",
+        content_type="text/markdown",
+        content=build_schedule_markdown(schedule_run),
+    )
+
+
 def build_schedule_diff(base_run: dict[str, Any], compare_run: dict[str, Any]) -> ScheduleDiffResponse:
     base_items = {schedule_item_key(item): item for item in base_run["schedule"].get("items", [])}
     compare_items = {schedule_item_key(item): item for item in compare_run["schedule"].get("items", [])}
@@ -205,6 +227,61 @@ def build_diff_item(
 
 def schedule_minutes(items: Any) -> int:
     return sum(int(item.get("planned_minutes", 0)) for item in items if item.get("type") == "task")
+
+
+def build_schedule_markdown(schedule_run: dict[str, Any]) -> str:
+    schedule = schedule_run["schedule"]
+    lines = [
+        f"# {schedule_run['title']}",
+        "",
+        f"- Date: {schedule.get('schedule_date')}",
+        f"- Planning mode: {schedule.get('planning_mode')}",
+        f"- Generated at: {schedule_run['created_at']}",
+        "",
+        "| Start | End | Type | Title | Minutes |",
+        "| --- | --- | --- | --- | ---: |",
+    ]
+    for item in schedule.get("items", []):
+        lines.append(
+            "| "
+            + " | ".join(
+                [
+                    str(item.get("start_time", "")),
+                    str(item.get("end_time", "")),
+                    str(item.get("type", "")),
+                    escape_markdown_cell(str(item.get("title", ""))),
+                    str(item.get("planned_minutes", "")),
+                ],
+            )
+            + " |",
+        )
+    return "\n".join(lines) + "\n"
+
+
+def build_schedule_csv(schedule_run: dict[str, Any]) -> str:
+    rows = [["start_time", "end_time", "type", "title", "planned_minutes", "category"]]
+    for item in schedule_run["schedule"].get("items", []):
+        rows.append(
+            [
+                str(item.get("start_time", "")),
+                str(item.get("end_time", "")),
+                str(item.get("type", "")),
+                str(item.get("title", "")),
+                str(item.get("planned_minutes", "")),
+                str(item.get("category", "")),
+            ],
+        )
+    return "\n".join(",".join(csv_escape(value) for value in row) for row in rows) + "\n"
+
+
+def csv_escape(value: str) -> str:
+    if any(character in value for character in [",", "\"", "\n", "\r"]):
+        return '"' + value.replace('"', '""') + '"'
+    return value
+
+
+def escape_markdown_cell(value: str) -> str:
+    return value.replace("|", "\\|")
 
 
 def extract_scheduler_error(response: httpx.Response) -> Any:

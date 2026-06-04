@@ -2,6 +2,18 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.23.0 - 2026-06-04
+
+- Add schedule history export API for Markdown and CSV.
+- Add dashboard Export MD action for the selected generated plan.
+- Add backend tests for schedule export content and filenames.
+
+Suggested commit:
+
+```text
+feat(schedule): add schedule export
+```
+
 ## 0.22.0 - 2026-06-04
 
 - Add backend schedule history diff endpoint for comparing two generated runs.

@@ -1,5 +1,36 @@
 # Development Log
 
+## 2026-06-04 - Issue 24 - Schedule Export MVP
+
+Branch:
+
+```text
+feature/issue-24-schedule-export
+```
+
+Scope:
+
+- Add schedule history export API for Markdown and CSV.
+- Add dashboard Export MD action for the selected generated plan.
+- Generate filenames and text content from persisted schedule history.
+
+MVP boundaries:
+
+- Export is text-based only.
+- No PDF export.
+- No cloud share link.
+
+Suggested git commit:
+
+```text
+feat(schedule): add schedule export
+```
+
+Verification:
+
+- Schedule API tests must pass locally.
+- web-dashboard production build must pass.
+
 ## 2026-06-04 - Issue 23 - Schedule Diff MVP
 
 Branch:

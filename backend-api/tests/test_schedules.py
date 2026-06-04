@@ -306,6 +306,64 @@ def test_schedule_history_returns_recent_generated_runs(monkeypatch) -> None:
     assert history[0]["schedule"]["schedule_date"] == "2026-06-03"
 
 
+def test_schedule_history_export_returns_markdown_and_csv(monkeypatch) -> None:
+    store.reset()
+
+    def fake_post(url: str, json: dict[str, Any], timeout: float) -> FakeSchedulerResponse:
+        return FakeSchedulerResponse()
+
+    def fake_predict_for_tasks(user_id, target_date, tasks) -> DurationPredictionResponse:
+        return DurationPredictionResponse(
+            user_id=user_id,
+            target_date=target_date,
+            model_name="heuristic-duration",
+            model_version="0.1.0",
+            predictions=[],
+        )
+
+    monkeypatch.setattr(schedule_service.httpx, "post", fake_post)
+    monkeypatch.setattr(schedule_service.prediction_service, "predict_for_tasks", fake_predict_for_tasks)
+    client = TestClient(app)
+
+    generate_response = client.post(
+        "/api/schedules/generate",
+        json={
+            "user_id": 1,
+            "target_date": "2026-06-03",
+            "planning_mode": "balanced",
+            "start_hour": 9,
+            "end_hour": 23,
+            "buffer_minutes": 10,
+            "include_fixed_events": True,
+        },
+    )
+    assert generate_response.status_code == 200
+
+    history_response = client.get(
+        "/api/schedules/history",
+        params={"user_id": 1, "target_date": "2026-06-03", "limit": 5},
+    )
+    schedule_run_id = history_response.json()[0]["id"]
+
+    markdown_response = client.get(
+        f"/api/schedules/history/{schedule_run_id}/export",
+        params={"user_id": 1, "format": "markdown"},
+    )
+    csv_response = client.get(
+        f"/api/schedules/history/{schedule_run_id}/export",
+        params={"user_id": 1, "format": "csv"},
+    )
+
+    assert markdown_response.status_code == 200
+    assert markdown_response.json()["filename"].endswith(".md")
+    assert markdown_response.json()["content"].startswith("# Balanced plan")
+    assert "| Start | End | Type | Title | Minutes |" in markdown_response.json()["content"]
+
+    assert csv_response.status_code == 200
+    assert csv_response.json()["filename"].endswith(".csv")
+    assert csv_response.json()["content"].startswith("start_time,end_time,type,title,planned_minutes,category")
+
+
 def test_schedule_history_title_update_and_soft_delete(monkeypatch) -> None:
     store.reset()
 
