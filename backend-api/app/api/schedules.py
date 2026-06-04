@@ -5,6 +5,7 @@ from fastapi import APIRouter, Query
 from app.schemas.schedules import (
     ScheduleGenerateRequest,
     ScheduleGenerateResponse,
+    ScheduleDiffResponse,
     ScheduleHistoryDeleteResponse,
     ScheduleHistoryItem,
     ScheduleHistoryUpdate,
@@ -49,3 +50,16 @@ def update_schedule_history_title(
 @router.delete("/history/{schedule_run_id}", response_model=ScheduleHistoryDeleteResponse)
 def delete_schedule_history_item(schedule_run_id: int, user_id: int = 1) -> ScheduleHistoryDeleteResponse:
     return schedule_service.delete_schedule_history_item(user_id=user_id, schedule_run_id=schedule_run_id)
+
+
+@router.get("/history/{schedule_run_id}/diff", response_model=ScheduleDiffResponse)
+def get_schedule_history_diff(
+    schedule_run_id: int,
+    against_run_id: int,
+    user_id: int = 1,
+) -> ScheduleDiffResponse:
+    return schedule_service.get_schedule_history_diff(
+        user_id=user_id,
+        compare_run_id=schedule_run_id,
+        base_run_id=against_run_id,
+    )

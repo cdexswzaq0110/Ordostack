@@ -83,6 +83,7 @@ Backend entrypoint:
 | `GET` | `/schedules/history?user_id=1&target_date=2026-06-03&limit=5` | Load recent persisted generated schedules |
 | `PATCH` | `/schedules/history/{schedule_run_id}?user_id=1` | Rename a schedule history item |
 | `DELETE` | `/schedules/history/{schedule_run_id}?user_id=1` | Soft delete a schedule history item |
+| `GET` | `/schedules/history/{schedule_run_id}/diff?user_id=1&against_run_id=1` | Compare two schedule history items |
 
 Request example:
 
@@ -152,6 +153,7 @@ Generated schedule persistence:
 - `GET /schedules/history` returns recent non-deleted generated schedules for the given `user_id` and `target_date`, newest first.
 - `PATCH /schedules/history/{schedule_run_id}` updates the history item title.
 - `DELETE /schedules/history/{schedule_run_id}` soft deletes the history item.
+- `GET /schedules/history/{schedule_run_id}/diff` compares a selected generated run against another run.
 - If no saved schedule exists, `GET /schedules/latest` returns `404`.
 
 ## Execution Logs MVP

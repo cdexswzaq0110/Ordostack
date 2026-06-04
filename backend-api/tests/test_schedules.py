@@ -31,6 +31,19 @@ class FakeSchedulerResponse:
         }
 
 
+class PayloadSchedulerResponse:
+    status_code = 200
+
+    def __init__(self, payload: dict[str, Any]) -> None:
+        self.payload = payload
+
+    def raise_for_status(self) -> None:
+        return None
+
+    def json(self) -> dict[str, Any]:
+        return self.payload
+
+
 def test_generate_schedule_forwards_tasks_and_fixed_events(monkeypatch) -> None:
     store.reset()
     captured_request: dict[str, Any] = {}
@@ -91,6 +104,146 @@ def test_generate_schedule_forwards_tasks_and_fixed_events(monkeypatch) -> None:
 
     assert latest_response.status_code == 200
     assert latest_response.json()["algorithm_summary"]["scheduled_task_count"] == 1
+
+
+def test_schedule_history_diff_compares_two_runs(monkeypatch) -> None:
+    store.reset()
+    schedule_payloads = [
+        {
+            "schedule_date": "2026-06-03",
+            "planning_mode": "balanced",
+            "items": [
+                {
+                    "type": "task",
+                    "task_id": 1,
+                    "fixed_event_id": None,
+                    "title": "ML course chapter notes",
+                    "start_time": "2026-06-03T09:00:00",
+                    "end_time": "2026-06-03T10:00:00",
+                    "planned_minutes": 60,
+                    "order_index": 0,
+                    "category": "study",
+                    "requires_focus": True,
+                    "score": 70,
+                },
+                {
+                    "type": "task",
+                    "task_id": 2,
+                    "fixed_event_id": None,
+                    "title": "Backend API review",
+                    "start_time": "2026-06-03T10:10:00",
+                    "end_time": "2026-06-03T10:40:00",
+                    "planned_minutes": 30,
+                    "order_index": 1,
+                    "category": "backend",
+                    "requires_focus": False,
+                    "score": 50,
+                },
+            ],
+            "algorithm_summary": {
+                "available_minutes": 600,
+                "selected_task_count": 2,
+                "scheduled_task_count": 2,
+                "skipped_task_count": 0,
+                "total_task_minutes": 90,
+                "applied_algorithms": ["priority-score"],
+                "warnings": [],
+            },
+        },
+        {
+            "schedule_date": "2026-06-03",
+            "planning_mode": "balanced",
+            "items": [
+                {
+                    "type": "task",
+                    "task_id": 1,
+                    "fixed_event_id": None,
+                    "title": "ML course chapter notes",
+                    "start_time": "2026-06-03T09:30:00",
+                    "end_time": "2026-06-03T10:45:00",
+                    "planned_minutes": 75,
+                    "order_index": 0,
+                    "category": "study",
+                    "requires_focus": True,
+                    "score": 70,
+                },
+                {
+                    "type": "task",
+                    "task_id": 3,
+                    "fixed_event_id": None,
+                    "title": "Record task execution samples",
+                    "start_time": "2026-06-03T11:00:00",
+                    "end_time": "2026-06-03T11:30:00",
+                    "planned_minutes": 30,
+                    "order_index": 1,
+                    "category": "analytics",
+                    "requires_focus": False,
+                    "score": 45,
+                },
+            ],
+            "algorithm_summary": {
+                "available_minutes": 600,
+                "selected_task_count": 2,
+                "scheduled_task_count": 2,
+                "skipped_task_count": 0,
+                "total_task_minutes": 105,
+                "applied_algorithms": ["priority-score"],
+                "warnings": [],
+            },
+        },
+    ]
+
+    def fake_post(url: str, json: dict[str, Any], timeout: float) -> PayloadSchedulerResponse:
+        return PayloadSchedulerResponse(schedule_payloads.pop(0))
+
+    def fake_predict_for_tasks(user_id, target_date, tasks) -> DurationPredictionResponse:
+        return DurationPredictionResponse(
+            user_id=user_id,
+            target_date=target_date,
+            model_name="heuristic-duration",
+            model_version="0.1.0",
+            predictions=[],
+        )
+
+    monkeypatch.setattr(schedule_service.httpx, "post", fake_post)
+    monkeypatch.setattr(schedule_service.prediction_service, "predict_for_tasks", fake_predict_for_tasks)
+    client = TestClient(app)
+
+    for _ in range(2):
+        response = client.post(
+            "/api/schedules/generate",
+            json={
+                "user_id": 1,
+                "target_date": "2026-06-03",
+                "planning_mode": "balanced",
+                "start_hour": 9,
+                "end_hour": 23,
+                "buffer_minutes": 10,
+                "include_fixed_events": True,
+            },
+        )
+        assert response.status_code == 200
+
+    history_response = client.get(
+        "/api/schedules/history",
+        params={"user_id": 1, "target_date": "2026-06-03", "limit": 5},
+    )
+    newest_run = history_response.json()[0]
+    older_run = history_response.json()[1]
+
+    diff_response = client.get(
+        f"/api/schedules/history/{newest_run['id']}/diff",
+        params={"user_id": 1, "against_run_id": older_run["id"]},
+    )
+
+    assert diff_response.status_code == 200
+    diff = diff_response.json()
+    assert diff["base_run_id"] == older_run["id"]
+    assert diff["compare_run_id"] == newest_run["id"]
+    assert diff["added_count"] == 1
+    assert diff["removed_count"] == 1
+    assert diff["changed_count"] == 1
+    assert diff["total_delta_minutes"] == 15
 
 
 def test_latest_schedule_returns_404_when_missing() -> None:

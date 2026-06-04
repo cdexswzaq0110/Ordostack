@@ -1,6 +1,6 @@
 # QA MVP Test Plan
 
-Scope: Issue 22 Schedule History Actions, Issue 21 Task Filter And Sort, Issue 20 Demo MVP Documentation Baseline, Issue 19 E2E Smoke Workflow, Demo Seed And Reset Control, Dashboard UX Polish, Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
+Scope: Issue 23 Schedule Diff, Issue 22 Schedule History Actions, Issue 21 Task Filter And Sort, Issue 20 Demo MVP Documentation Baseline, Issue 19 E2E Smoke Workflow, Demo Seed And Reset Control, Dashboard UX Polish, Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
 
 ## Environment
 
@@ -247,7 +247,10 @@ Expected:
 7. Expected: the schedule history row shows the updated title.
 8. Click the delete control on a history row and confirm.
 9. Expected: the row disappears from schedule history.
-10. Call:
+10. Select a history row that has an older run below it.
+11. Click `Compare previous`.
+12. Expected: diff summary shows added, removed, changed, and minute-delta counts.
+13. Call:
 
 ```powershell
 Invoke-RestMethod -Uri "http://localhost:8000/api/schedules/history?user_id=1&target_date=2026-06-03&limit=5"
@@ -379,7 +382,7 @@ Invoke-RestMethod -Uri "http://localhost:8200/model/info"
 ## Known Limitations
 
 - Demo reset is for local demo user data only and is not a production data restore feature.
-- Schedule history rename and deletion are implemented; schedule diff is not implemented yet.
+- Schedule history rename, deletion, and compact diff are implemented; side-by-side timeline diff is not implemented yet.
 - Active timers only affect actual minutes after pause, complete, or skip closes an interval.
 - Task splitting is not implemented yet.
 - Duration prediction uses a local JSON training artifact, not a production model registry.

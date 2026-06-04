@@ -220,6 +220,12 @@ Covered in Issue 22 MVP:
 - backend-api schedule history rename/delete endpoints.
 - Alembic migration for schedule history action fields.
 
+Covered in Issue 23 MVP:
+
+- Schedule history diff endpoint for comparing generated runs.
+- Dashboard Compare previous action.
+- Compact diff summary for added, removed, changed, and minute delta.
+
 Not covered yet:
 
 - Production ML / DL model registry.

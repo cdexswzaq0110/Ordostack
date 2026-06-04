@@ -1,5 +1,36 @@
 # Development Log
 
+## 2026-06-04 - Issue 23 - Schedule Diff MVP
+
+Branch:
+
+```text
+feature/issue-23-schedule-diff
+```
+
+Scope:
+
+- Add schedule history diff API for comparing a selected run with another run.
+- Add dashboard Compare previous action.
+- Show added, removed, changed, unchanged, and task-minute delta summary.
+
+MVP boundaries:
+
+- Diff is read-only.
+- Diff compares generated schedule items, not raw task field history.
+- No side-by-side timeline view yet.
+
+Suggested git commit:
+
+```text
+feat(schedule): add schedule history diff
+```
+
+Verification:
+
+- Schedule API tests must pass locally.
+- web-dashboard production build must pass.
+
 ## 2026-06-04 - Issue 22 - Schedule History Actions MVP
 
 Branch:

@@ -117,6 +117,27 @@ type ApiScheduleHistoryItem = {
   schedule: ApiScheduleResponse;
 };
 
+type ApiScheduleDiffItem = {
+  item_key: string;
+  change_type: "added" | "removed" | "changed";
+  title: string;
+  previous_start_time: string | null;
+  next_start_time: string | null;
+  previous_planned_minutes: number | null;
+  next_planned_minutes: number | null;
+};
+
+type ApiScheduleDiffResponse = {
+  base_run_id: number;
+  compare_run_id: number;
+  added_count: number;
+  removed_count: number;
+  changed_count: number;
+  unchanged_count: number;
+  total_delta_minutes: number;
+  changes: ApiScheduleDiffItem[];
+};
+
 type ScheduleSource = "none" | "saved" | "generated" | "history";
 
 type ApiTaskExecutionSummary = {
@@ -711,6 +732,7 @@ export function App() {
   const [selectedScheduleRunId, setSelectedScheduleRunId] = useState<number | null>(null);
   const [editingScheduleRunId, setEditingScheduleRunId] = useState<number | null>(null);
   const [scheduleRunTitleDraft, setScheduleRunTitleDraft] = useState("");
+  const [scheduleDiff, setScheduleDiff] = useState<ApiScheduleDiffResponse | null>(null);
   const [analytics, setAnalytics] = useState<ApiDailyAnalytics | null>(null);
   const [durationPredictions, setDurationPredictions] = useState<ApiDurationPredictionResponse | null>(null);
   const [query, setQuery] = useState("");
@@ -721,6 +743,7 @@ export function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isMutating, setIsMutating] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isComparing, setIsComparing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [isFixedEventFormOpen, setIsFixedEventFormOpen] = useState(false);
@@ -772,6 +795,7 @@ export function App() {
       setScheduleHistory(nextScheduleHistory);
       setSelectedScheduleRunId(latestSchedule ? nextScheduleHistory[0]?.id ?? null : null);
       setScheduleSource(latestSchedule ? "saved" : "none");
+      setScheduleDiff(null);
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Unable to load dashboard data");
     } finally {
@@ -817,6 +841,9 @@ export function App() {
     taskFocusFilter !== "all",
     taskSortMode !== "priority",
   ].filter(Boolean).length;
+  const selectedScheduleHistoryIndex = scheduleHistory.findIndex((historyItem) => historyItem.id === selectedScheduleRunId);
+  const previousScheduleHistoryItem =
+    selectedScheduleHistoryIndex >= 0 ? scheduleHistory[selectedScheduleHistoryIndex + 1] ?? null : null;
 
   const timelineItems = useMemo(
     () => (schedule ? buildTimelineFromSchedule(schedule.items) : buildTimeline(tasks, fixedEvents, selectedDate)),
@@ -984,6 +1011,28 @@ export function App() {
     setSchedule(historyItem.schedule);
     setScheduleSource("history");
     setSelectedScheduleRunId(historyItem.id);
+    setScheduleDiff(null);
+  }
+
+  async function compareScheduleWithPrevious() {
+    if (selectedScheduleRunId === null || previousScheduleHistoryItem === null) {
+      setError("Select a generated plan with an older run to compare");
+      return;
+    }
+
+    setIsComparing(true);
+    setError(null);
+
+    try {
+      const nextScheduleDiff = await requestJson<ApiScheduleDiffResponse>(
+        `${API_BASE_URL}/schedules/history/${selectedScheduleRunId}/diff?user_id=${DEMO_USER_ID}&against_run_id=${previousScheduleHistoryItem.id}`,
+      );
+      setScheduleDiff(nextScheduleDiff);
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Unable to compare schedules");
+    } finally {
+      setIsComparing(false);
+    }
   }
 
   async function renameScheduleRun(scheduleRunId: number) {
@@ -1009,6 +1058,7 @@ export function App() {
           historyItem.id === updatedScheduleRun.id ? updatedScheduleRun : historyItem,
         ),
       );
+      setScheduleDiff(null);
       cancelRenamingScheduleRun();
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Unable to rename schedule");
@@ -1038,6 +1088,7 @@ export function App() {
         setScheduleSource(nextSelectedRun ? "history" : "none");
         setSelectedScheduleRunId(nextSelectedRun?.id ?? null);
       }
+      setScheduleDiff(null);
       if (editingScheduleRunId === scheduleRunId) {
         cancelRenamingScheduleRun();
       }
@@ -1070,6 +1121,7 @@ export function App() {
       setScheduleSource("generated");
       const nextScheduleHistory = await refreshScheduleHistory();
       setSelectedScheduleRunId(nextScheduleHistory[0]?.id ?? null);
+      setScheduleDiff(null);
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Unable to generate plan");
     } finally {
@@ -1521,7 +1573,8 @@ export function App() {
                     <h2>Recent generated plans</h2>
                   </div>
                   {scheduleHistory.length > 0 ? (
-                    <div className="schedule-history-list">
+                    <>
+                      <div className="schedule-history-list">
                       {scheduleHistory.map((historyItem) => (
                         <article
                           key={historyItem.id}
@@ -1595,7 +1648,49 @@ export function App() {
                           )}
                         </article>
                       ))}
-                    </div>
+                      </div>
+                      <div className="schedule-compare-bar">
+                        <button
+                          className="secondary-action"
+                          type="button"
+                          disabled={isComparing || previousScheduleHistoryItem === null}
+                          onClick={() => void compareScheduleWithPrevious()}
+                        >
+                          {isComparing ? (
+                            <Loader2 className="spinning" size={16} aria-hidden="true" />
+                          ) : (
+                            <Activity size={16} aria-hidden="true" />
+                          )}
+                          <span>{isComparing ? "Comparing" : "Compare previous"}</span>
+                        </button>
+                      </div>
+                      {scheduleDiff ? (
+                        <section className="schedule-diff-panel" aria-label="Schedule diff">
+                          <div className="diff-summary">
+                            <span>+{scheduleDiff.added_count} added</span>
+                            <span>-{scheduleDiff.removed_count} removed</span>
+                            <span>{scheduleDiff.changed_count} changed</span>
+                            <span>{formatSignedMinutes(scheduleDiff.total_delta_minutes)}</span>
+                          </div>
+                          {scheduleDiff.changes.length > 0 ? (
+                            <div className="diff-list">
+                              {scheduleDiff.changes.slice(0, 4).map((change) => (
+                                <article key={change.item_key} className={`diff-row ${change.change_type}`}>
+                                  <strong>{change.title}</strong>
+                                  <span>
+                                    {change.change_type} |{" "}
+                                    {change.previous_start_time ? formatTime(change.previous_start_time) : "new"} to{" "}
+                                    {change.next_start_time ? formatTime(change.next_start_time) : "removed"}
+                                  </span>
+                                </article>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="empty-state compact-state">No schedule differences.</div>
+                          )}
+                        </section>
+                      ) : null}
+                    </>
                   ) : (
                     <div className="empty-state compact-state">Generate a plan to create the first saved run.</div>
                   )}

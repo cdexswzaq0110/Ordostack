@@ -2,6 +2,18 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.22.0 - 2026-06-04
+
+- Add backend schedule history diff endpoint for comparing two generated runs.
+- Add dashboard Compare previous control and compact diff summary.
+- Cover added, removed, changed, unchanged, and task-minute delta cases in tests.
+
+Suggested commit:
+
+```text
+feat(schedule): add schedule history diff
+```
+
 ## 0.21.0 - 2026-06-04
 
 - Add schedule history titles for generated plans.

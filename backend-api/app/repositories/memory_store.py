@@ -234,6 +234,18 @@ class InMemoryStore:
         ordered_runs = sorted(schedule_runs, key=lambda schedule_run: schedule_run["id"], reverse=True)[:limit]
         return [self._build_schedule_history_item(schedule_run) for schedule_run in ordered_runs]
 
+    def get_generated_schedule_history_item(self, user_id: int, schedule_run_id: int) -> dict[str, Any] | None:
+        with self._lock:
+            schedule_run = self._schedule_runs.get(schedule_run_id)
+            if (
+                schedule_run is None
+                or schedule_run["user_id"] != user_id
+                or schedule_run["deleted_at"] is not None
+            ):
+                return None
+
+            return self._build_schedule_history_item(deepcopy(schedule_run))
+
     def update_generated_schedule_title(
         self,
         user_id: int,

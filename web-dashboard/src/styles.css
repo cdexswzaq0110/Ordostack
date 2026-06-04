@@ -701,6 +701,76 @@ h3 {
   background: #ffffff;
 }
 
+.schedule-compare-bar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.schedule-diff-panel {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #d8dde3;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.diff-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.diff-summary span {
+  min-height: 30px;
+  padding: 7px 8px;
+  color: #4d5663;
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-align: center;
+  border-radius: 8px;
+  background: #f1f3f6;
+}
+
+.diff-list {
+  display: grid;
+  gap: 6px;
+}
+
+.diff-row {
+  display: grid;
+  gap: 3px;
+  padding: 8px 10px;
+  border-left: 4px solid #8d98a8;
+  border-radius: 8px;
+  background: #f7f8fa;
+}
+
+.diff-row.added {
+  border-left-color: #2f8f68;
+}
+
+.diff-row.removed {
+  border-left-color: #c2414b;
+}
+
+.diff-row.changed {
+  border-left-color: #d18a00;
+}
+
+.diff-row strong {
+  overflow: hidden;
+  color: #15191f;
+  font-size: 0.8rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.diff-row span {
+  color: #68717e;
+  font-size: 0.74rem;
+}
+
 .task-list,
 .insight-list {
   display: grid;
@@ -1223,6 +1293,10 @@ h3 {
 
   .schedule-history-actions {
     justify-content: flex-start;
+  }
+
+  .diff-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

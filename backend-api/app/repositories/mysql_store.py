@@ -401,6 +401,35 @@ class MySqlStore:
 
         return history_items
 
+    def get_generated_schedule_history_item(self, user_id: int, schedule_run_id: int) -> dict[str, Any] | None:
+        self._ensure_ready()
+        with self._connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT *
+                    FROM schedule_runs
+                    WHERE id=%s AND user_id=%s AND deleted_at IS NULL
+                    """,
+                    (schedule_run_id, user_id),
+                )
+                schedule_run = cursor.fetchone()
+                if schedule_run is None:
+                    return None
+
+                cursor.execute(
+                    """
+                    SELECT *
+                    FROM schedule_items
+                    WHERE schedule_run_id=%s
+                    ORDER BY order_index ASC, id ASC
+                    """,
+                    (schedule_run_id,),
+                )
+                schedule_items = cursor.fetchall()
+
+        return self._normalize_schedule_history_item(schedule_run, schedule_items)
+
     def update_generated_schedule_title(
         self,
         user_id: int,

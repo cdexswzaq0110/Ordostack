@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from typing import Literal
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -33,3 +34,24 @@ class ScheduleHistoryUpdate(BaseModel):
 
 class ScheduleHistoryDeleteResponse(BaseModel):
     deleted: bool
+
+
+class ScheduleDiffItem(BaseModel):
+    item_key: str
+    change_type: Literal["added", "removed", "changed"]
+    title: str
+    previous_start_time: str | None
+    next_start_time: str | None
+    previous_planned_minutes: int | None
+    next_planned_minutes: int | None
+
+
+class ScheduleDiffResponse(BaseModel):
+    base_run_id: int
+    compare_run_id: int
+    added_count: int
+    removed_count: int
+    changed_count: int
+    unchanged_count: int
+    total_delta_minutes: int
+    changes: list[ScheduleDiffItem]
