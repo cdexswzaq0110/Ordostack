@@ -1,5 +1,41 @@
 # Development Log
 
+## 2026-06-04 - Issue 32 - Backup And Restore MVP
+
+Branch:
+
+```text
+codex/issue-32-backup-restore-mvp
+```
+
+Scope:
+
+- Add local MySQL backup scripts for Windows PowerShell and Linux / WSL.
+- Add backup verification scripts for non-empty SQL dumps and destructive-statement checks.
+- Add backup and restore drill runbook.
+- Harden browser screenshot smoke for Windows headless Edge/Chrome execution.
+- Update release, QA, PM, and project documentation.
+
+MVP boundaries:
+
+- No cloud storage, AWS account, paid API, or external backup vendor.
+- No automated restore into the active `ordostack` database.
+- No destructive restore command is provided.
+
+Suggested git commit:
+
+```text
+docs(backup): add backup and restore drill
+```
+
+Verification:
+
+- Backup script must create a SQL file under `artifacts/backups`.
+- Verify script must return `status: ok` for the generated backup.
+- Browser smoke must produce a non-trivial PNG when Edge or Chrome is available.
+- Backup files remain ignored by Git.
+- Secrets scan must find no committed credentials.
+
 ## 2026-06-04 - Issue 31 - Observability Baseline MVP
 
 Branch:

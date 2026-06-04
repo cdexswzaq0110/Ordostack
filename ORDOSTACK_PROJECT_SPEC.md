@@ -2,12 +2,12 @@
 
 Source document: `C:\Users\HUANG\Desktop\OrdoStack Project Specification.docx`
 
-This markdown file records the implementation baseline used by Codex for the repository. The project is developed incrementally by issue. As of Issue 31, the repository is a local Customer Demo MVP with authentication, user-scoped planner data, deployment baseline documentation, and observability baseline, not a production launch build.
+This markdown file records the implementation baseline used by Codex for the repository. The project is developed incrementally by issue. As of Issue 32, the repository is a local Customer Demo MVP with authentication, user-scoped planner data, deployment baseline documentation, observability baseline, and backup/restore drill baseline, not a production launch build.
 
 ## Current Baseline
 
 ```text
-Version: 0.30.0
+Version: 0.31.0
 Stage: Customer Demo MVP
 Runtime: Local Docker Compose
 Primary UI: web-dashboard
@@ -47,13 +47,14 @@ OrdoStack is an AI daily planning product that lets users capture tasks and fixe
 - No production ML / DL model registry yet.
 - No DL completion-rate or focus-score service yet.
 - No hosted AWS deployment, HTTPS rollout, production Nginx rollout, or production backup plan yet.
+- No automated restore into the active production database.
 - No external observability vendor, hosted uptime monitor, metrics backend, tracing backend, or alerting workflow yet.
 - No full Google Calendar two-way sync.
 - No payment system.
 - No complex permission system.
 - No chatbot replacing the scheduling algorithm core.
 
-## Implemented Through Issue 31
+## Implemented Through Issue 32
 
 | Area | Current implementation |
 | --- | --- |
@@ -71,9 +72,10 @@ OrdoStack is an AI daily planning product that lets users capture tasks and fixe
 | Auth | Local register, login, current-user API, PBKDF2 password hashes, HMAC bearer tokens, demo account, user-scoped planner APIs |
 | Deployment | Production env template, Nginx reverse-proxy skeleton, single-node deployment guide, hosted smoke checklist |
 | Observability | Request ID propagation, structured request logs, readiness endpoints, local observability runbook |
+| Backup/restore | Local MySQL backup scripts, backup verification scripts, non-destructive restore drill docs |
 | Demo support | Seeded demo data and demo-only reset control |
-| Quality gates | Python service tests, web-dashboard build, Docker Compose config, environment validation, local E2E smoke script, browser screenshot smoke, GitHub Actions baseline |
-| Documentation | API docs, QA plan, release process, branching strategy, development log, changelog, PM status report, environment configuration guide |
+| Quality gates | Python service tests, web-dashboard build, Docker Compose config, environment validation, local E2E smoke script, browser screenshot smoke, backup verification, GitHub Actions baseline |
+| Documentation | API docs, QA plan, release process, branching strategy, development log, changelog, PM status report, environment configuration guide, backup/restore runbook |
 
 ## System Components
 
@@ -193,13 +195,15 @@ Before a release tag:
   - `http://localhost:8200/ready`
 - `python scripts/e2e_smoke.py` exits with status code `0`.
 - `python scripts/browser_smoke.py` exits with status code `0` when Edge or Chrome is available.
+- Backup script creates a SQL file under `artifacts/backups`.
+- Backup verification script returns `status: ok` for the generated SQL file.
 - Secrets scan finds no committed credentials.
 
 ## Remaining Gaps Before Public Launch
 
 - Production-grade authentication and authorization.
 - Real onboarding, user settings, timezone handling, and profile data.
-- Production-grade migration policy, backup, restore, and data retention.
+- Production-grade migration policy, off-host backup, automated restore, and data retention.
 - Hosted deployment execution with HTTPS, domain, metrics, tracing, alerting, and incident playbook.
 - Mobile app implementation.
 - ClearML experiment tracking, model registry, agent execution, and deployment workflow.
@@ -212,7 +216,7 @@ Before a release tag:
 
 ## Planned Phases
 
-1. Local Customer Demo MVP: complete through Issue 31.
+1. Local Customer Demo MVP: complete through Issue 32.
 2. Beta Hardening: auth, user isolation, deployment, observability, backup, a11y, and browser regression tests.
 3. MLOps Expansion: ClearML tracking, model registry, scheduled retraining, and model promotion.
 4. Intelligence Expansion: DL completion-rate or focus-score service.

@@ -2,6 +2,20 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.31.0 - 2026-06-04
+
+- Add non-destructive MySQL backup scripts for Windows PowerShell and Linux / WSL.
+- Add backup verification scripts that reject empty files and destructive SQL statements.
+- Add backup and restore drill runbook for temporary restore targets.
+- Update QA and release documentation with backup verification checks.
+- Harden browser screenshot smoke for Windows headless Edge/Chrome execution.
+
+Suggested commit:
+
+```text
+docs(backup): add backup and restore drill
+```
+
 ## 0.30.0 - 2026-06-04
 
 - Add request ID propagation for backend-api, scheduler-service, and ml-service.

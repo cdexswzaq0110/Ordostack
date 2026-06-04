@@ -1,6 +1,6 @@
 # QA MVP Test Plan
 
-Scope: Issue 31 Observability Baseline, Issue 30 Deployment Baseline, Issue 29 User Isolation, Issue 28 Authentication Foundation, Issue 27 Environment Configuration Hardening, Issue 25 Browser Screenshot Smoke, Issue 24 Schedule Export, Issue 23 Schedule Diff, Issue 22 Schedule History Actions, Issue 21 Task Filter And Sort, Issue 20 Demo MVP Documentation Baseline, Issue 19 E2E Smoke Workflow, Demo Seed And Reset Control, Dashboard UX Polish, Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
+Scope: Issue 32 Backup And Restore MVP, Issue 31 Observability Baseline, Issue 30 Deployment Baseline, Issue 29 User Isolation, Issue 28 Authentication Foundation, Issue 27 Environment Configuration Hardening, Issue 25 Browser Screenshot Smoke, Issue 24 Schedule Export, Issue 23 Schedule Diff, Issue 22 Schedule History Actions, Issue 21 Task Filter And Sort, Issue 20 Demo MVP Documentation Baseline, Issue 19 E2E Smoke Workflow, Demo Seed And Reset Control, Dashboard UX Polish, Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
 
 ## Environment
 
@@ -151,6 +151,40 @@ docker compose logs ml-service
 
 7. Expected: logs contain JSON entries with `event`, `service`, `request_id`, `method`, `path`, `status_code`, and `duration_ms`.
 8. Expected: logs do not contain request bodies, query strings, authorization headers, cookies, database passwords, or token values.
+
+## Backup And Restore MVP Checks
+
+1. Confirm Docker Compose is running:
+
+```powershell
+docker compose ps
+```
+
+2. Create a local MySQL backup:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\backup_mysql.ps1
+```
+
+3. Expected: console output contains `"status": "ok"`.
+4. Expected: a SQL file exists under `artifacts/backups`.
+5. Verify the generated backup:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\verify_mysql_backup.ps1 -Path artifacts\backups\<backup-file>.sql
+```
+
+6. Expected: verification returns `"status": "ok"`.
+7. Expected: verification confirms `destructive_statements` is `none`.
+8. Confirm backup artifacts are not staged for Git:
+
+```powershell
+git status --short artifacts
+```
+
+9. Expected: no generated SQL backup file is tracked.
+10. Restore drill must use a temporary database or disposable MySQL container only.
+11. Do not restore into the active `ordostack` database during QA.
 
 ## Auth Foundation Checks
 
@@ -484,6 +518,7 @@ Invoke-RestMethod -Uri "http://localhost:8200/model/info"
 - Duration prediction uses a local JSON training artifact, not a production model registry.
 - Core planner APIs require local bearer authentication and scope data to the current user.
 - Observability baseline provides request IDs, request logs, and readiness only; metrics, tracing, alerting, and hosted uptime checks are not implemented yet.
+- Backup/restore baseline provides local SQL dump and verification only; scheduled jobs, encrypted off-host storage, and automated production restore are not implemented yet.
 - ML metrics are local sample metrics until a production model registry exists.
 - Schema bootstrap remains as a compatibility fallback; Alembic is the Docker startup path.
 - MySQL uses local development settings and no production credential management.

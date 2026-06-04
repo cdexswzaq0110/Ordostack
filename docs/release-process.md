@@ -5,7 +5,7 @@ OrdoStack uses MVP issue releases until production deployment exists.
 ## Current Version
 
 ```text
-0.30.0
+0.31.0
 ```
 
 ## Release Types
@@ -56,6 +56,8 @@ npm run build
 cd ..
 python scripts\e2e_smoke.py
 python scripts\browser_smoke.py
+powershell -ExecutionPolicy Bypass -File scripts\backup_mysql.ps1
+powershell -ExecutionPolicy Bypass -File scripts\verify_mysql_backup.ps1 -Path artifacts\backups\<backup-file>.sql
 ```
 
 Linux / WSL:
@@ -76,6 +78,8 @@ npm run build
 cd ..
 python scripts/e2e_smoke.py
 python scripts/browser_smoke.py
+bash scripts/backup_mysql.sh
+bash scripts/verify_mysql_backup.sh artifacts/backups/<backup-file>.sql
 ```
 
 ## Tagging
@@ -83,7 +87,7 @@ python scripts/browser_smoke.py
 After a clean release commit:
 
 ```bash
-git tag v0.30.0
+git tag v0.31.0
 ```
 
 Tags should point only to commits that passed the release checklist.
