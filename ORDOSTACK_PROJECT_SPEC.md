@@ -2,12 +2,12 @@
 
 Source document: `C:\Users\HUANG\Desktop\OrdoStack Project Specification.docx`
 
-This markdown file records the implementation baseline used by Codex for the repository. The project is developed incrementally by issue. As of Issue 32, the repository is a local Customer Demo MVP with authentication, user-scoped planner data, deployment baseline documentation, observability baseline, and backup/restore drill baseline, not a production launch build.
+This markdown file records the implementation baseline used by Codex for the repository. The project is developed incrementally by issue. As of Issue 33, the repository is a local Customer Demo MVP with authentication, user-scoped planner data, English / Traditional Chinese dashboard locale support, deployment baseline documentation, observability baseline, and backup/restore drill baseline, not a production launch build.
 
 ## Current Baseline
 
 ```text
-Version: 0.31.0
+Version: 0.32.0
 Stage: Customer Demo MVP
 Runtime: Local Docker Compose
 Primary UI: web-dashboard
@@ -54,12 +54,12 @@ OrdoStack is an AI daily planning product that lets users capture tasks and fixe
 - No complex permission system.
 - No chatbot replacing the scheduling algorithm core.
 
-## Implemented Through Issue 32
+## Implemented Through Issue 33
 
 | Area | Current implementation |
 | --- | --- |
 | Repository | Monorepo structure, README, project spec, rulebooks, architecture docs, Docker Compose, CI docs |
-| Web dashboard | React / Vite TypeScript dashboard with landing/demo product experience, task filters, and task sorting |
+| Web dashboard | React / Vite TypeScript dashboard with landing/demo product experience, English / Traditional Chinese locale support, task filters, and task sorting |
 | Tasks | Create, list, edit, status transitions, reopen, soft delete |
 | Fixed events | Create, list, edit, soft delete, validation for `HH:MM` time ranges |
 | Date navigation | Previous day, next day, native date picker, Today shortcut |

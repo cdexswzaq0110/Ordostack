@@ -18,7 +18,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -357,6 +358,32 @@ a {
   border: 1px solid #d7dbe1;
   border-radius: 8px;
   background: #ffffff;
+}
+
+.language-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 10px;
+  color: #4d5663;
+  border: 1px solid #d7dbe1;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.language-switcher span {
+  color: #68717e;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.language-switcher select {
+  min-width: 110px;
+  color: #15191f;
+  border: 0;
+  outline: 0;
+  background: transparent;
 }
 
 .search-box input {
@@ -881,7 +908,7 @@ h3 {
 
 .task-toolbar {
   display: grid;
-  grid-template-columns: minmax(112px, auto) repeat(4, minmax(0, 1fr)) auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: end;
   gap: 8px;
   margin-bottom: 12px;
@@ -893,6 +920,7 @@ h3 {
 
 .task-toolbar-title {
   display: inline-flex;
+  grid-column: 1 / -1;
   align-items: center;
   gap: 7px;
   min-height: 38px;
@@ -908,10 +936,18 @@ h3 {
 }
 
 .filter-control span {
+  min-height: 1.6em;
   color: #68717e;
   font-size: 0.7rem;
   font-weight: 800;
+  line-height: 1.2;
   text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.task-toolbar .text-button {
+  grid-column: 1 / -1;
+  width: 100%;
 }
 
 .filter-control select {
@@ -1303,6 +1339,7 @@ h3 {
 
   .topbar-actions,
   .search-box,
+  .language-switcher,
   .auth-panel,
   .auth-form,
   .auth-summary,
@@ -1336,6 +1373,10 @@ h3 {
 
   .search-box {
     flex: 1 1 100%;
+  }
+
+  .language-switcher {
+    justify-content: space-between;
   }
 
   .form-grid {

@@ -2,6 +2,19 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.32.0 - 2026-06-04
+
+- Add dashboard language switcher with English as the default locale.
+- Add Traditional Chinese dashboard UI copy for core navigation, controls, states, forms, analytics, and schedule views.
+- Persist the selected dashboard language in local storage.
+- Keep user-created task and event content unchanged.
+
+Suggested commit:
+
+```text
+feat(i18n): add Traditional Chinese dashboard locale
+```
+
 ## 0.31.0 - 2026-06-04
 
 - Add non-destructive MySQL backup scripts for Windows PowerShell and Linux / WSL.

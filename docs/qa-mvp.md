@@ -1,6 +1,6 @@
 # QA MVP Test Plan
 
-Scope: Issue 32 Backup And Restore MVP, Issue 31 Observability Baseline, Issue 30 Deployment Baseline, Issue 29 User Isolation, Issue 28 Authentication Foundation, Issue 27 Environment Configuration Hardening, Issue 25 Browser Screenshot Smoke, Issue 24 Schedule Export, Issue 23 Schedule Diff, Issue 22 Schedule History Actions, Issue 21 Task Filter And Sort, Issue 20 Demo MVP Documentation Baseline, Issue 19 E2E Smoke Workflow, Demo Seed And Reset Control, Dashboard UX Polish, Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
+Scope: Issue 33 Traditional Chinese Dashboard Locale, Issue 32 Backup And Restore MVP, Issue 31 Observability Baseline, Issue 30 Deployment Baseline, Issue 29 User Isolation, Issue 28 Authentication Foundation, Issue 27 Environment Configuration Hardening, Issue 25 Browser Screenshot Smoke, Issue 24 Schedule Export, Issue 23 Schedule Diff, Issue 22 Schedule History Actions, Issue 21 Task Filter And Sort, Issue 20 Demo MVP Documentation Baseline, Issue 19 E2E Smoke Workflow, Demo Seed And Reset Control, Dashboard UX Polish, Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
 
 ## Environment
 
@@ -100,6 +100,18 @@ Expected:
 - Script exits with status code `0`.
 - `artifacts/browser-smoke/dashboard.png` exists.
 - Screenshot file is a non-trivial PNG.
+
+## Dashboard Locale Checks
+
+1. Open `http://localhost:5173`.
+2. Expected: dashboard loads in English by default.
+3. Change Language to `繁體中文`.
+4. Expected: navigation, controls, form labels, empty states, analytics labels, and schedule labels switch to Traditional Chinese.
+5. Refresh the page.
+6. Expected: selected language remains Traditional Chinese.
+7. Change Language back to `English`.
+8. Expected: dashboard returns to English.
+9. Expected: user-entered task and fixed event titles are unchanged.
 
 ## Environment Configuration Checks
 

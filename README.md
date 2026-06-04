@@ -2,7 +2,7 @@
 
 OrdoStack is an AI daily planning MVP for task capture, protected calendar blocks, persisted generated schedules, execution analytics, local duration prediction, and MySQL-backed persistence.
 
-This version is a local Customer Demo MVP: it implements task/fixed-event APIs, a scheduler-service MVP, persisted generated schedules, execution logs, daily analytics, local ML duration prediction, MySQL persistence in Docker, Alembic baseline migrations, a React dashboard, demo reset, local auth foundation, user-scoped planner APIs, deployment baseline docs, observability baseline, backup/restore drill baseline, and local E2E smoke verification. Production-grade auth hardening, ClearML agent execution, mobile app implementation, and AWS deployment are not implemented yet.
+This version is a local Customer Demo MVP: it implements task/fixed-event APIs, a scheduler-service MVP, persisted generated schedules, execution logs, daily analytics, local ML duration prediction, MySQL persistence in Docker, Alembic baseline migrations, a React dashboard, English / Traditional Chinese dashboard locale support, demo reset, local auth foundation, user-scoped planner APIs, deployment baseline docs, observability baseline, backup/restore drill baseline, and local E2E smoke verification. Production-grade auth hardening, ClearML agent execution, mobile app implementation, and AWS deployment are not implemented yet.
 
 ## Quick Start
 
@@ -294,6 +294,14 @@ Covered in Issue 32 MVP:
 - Restore drill documentation that targets temporary databases only.
 - Generated backup files are written under ignored `artifacts/backups`.
 - No cloud backup account, paid API, or automatic destructive restore command is required for this issue.
+
+Covered in Issue 33 MVP:
+
+- Dashboard language switcher.
+- English remains the default language.
+- Traditional Chinese UI copy for the main dashboard workflow.
+- Selected language persists in local storage.
+- User-entered task and event content is not translated.
 
 Not covered yet:
 

@@ -5,7 +5,7 @@ OrdoStack uses MVP issue releases until production deployment exists.
 ## Current Version
 
 ```text
-0.31.0
+0.32.0
 ```
 
 ## Release Types
@@ -87,7 +87,7 @@ bash scripts/verify_mysql_backup.sh artifacts/backups/<backup-file>.sql
 After a clean release commit:
 
 ```bash
-git tag v0.31.0
+git tag v0.32.0
 ```
 
 Tags should point only to commits that passed the release checklist.

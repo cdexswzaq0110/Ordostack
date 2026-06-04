@@ -1,17 +1,17 @@
 # OrdoStack Project Status Report
 
 Date: 2026-06-04
-Version: 0.31.0
+Version: 0.32.0
 Report role: PM / project management
 
 ## Executive Summary
 
-OrdoStack is currently a local Customer Demo MVP with authentication, user-scoped planner data, deployment baseline documentation, observability baseline, and backup/restore drill baseline. It is suitable for internal QA and customer reference demos on a developer machine through Docker Compose. It is not ready for public launch because hosted deployment execution, production backup automation, security review, mobile app, ClearML production workflow, hosted monitoring, and production model governance are not implemented yet.
+OrdoStack is currently a local Customer Demo MVP with authentication, user-scoped planner data, English / Traditional Chinese dashboard locale support, deployment baseline documentation, observability baseline, and backup/restore drill baseline. It is suitable for internal QA and customer reference demos on a developer machine through Docker Compose. It is not ready for public launch because hosted deployment execution, production backup automation, security review, mobile app, ClearML production workflow, hosted monitoring, and production model governance are not implemented yet.
 
 Current evidence:
 
-- Previous release tag before backup/restore baseline: `v0.30.0`.
-- Current product stage after Issue 32: operable local Customer Demo MVP `v0.31.0`.
+- Previous release tag before Traditional Chinese locale support: `v0.31.0`.
+- Current product stage after Issue 33: localized local Customer Demo MVP `v0.32.0`.
 - Main runnable entrypoint: `http://localhost:5173`.
 - Runtime: local Docker Compose.
 - Database: local MySQL container.
@@ -52,6 +52,7 @@ Product capabilities already implemented:
 - Fixed event create, edit, soft delete.
 - Date navigation, date picker, Today shortcut.
 - Task queue search, status/category/focus filters, sorting.
+- English / Traditional Chinese dashboard language switcher.
 - Daily schedule generation.
 - Scheduler algorithms: priority score, topological sort, knapsack-style capacity selection, priority queue ordering, fixed-event free-slot builder.
 - Execution logs and daily analytics.

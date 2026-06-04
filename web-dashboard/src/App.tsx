@@ -35,6 +35,15 @@ import {
   UserCircle,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import {
+  DEFAULT_LOCALE,
+  LOCALE_STORAGE_KEY,
+  localeOptions,
+  resolveLocale,
+  translate,
+  type LocaleCode,
+  type Translator,
+} from "./i18n";
 
 type NavigationItem = {
   label: string;
@@ -304,29 +313,31 @@ type FixedEventMutationPayload = {
 type TaskFormFieldsProps = {
   form: TaskFormState;
   onChange: Dispatch<SetStateAction<TaskFormState>>;
+  t: Translator;
 };
 
 type FixedEventFormFieldsProps = {
   form: FixedEventFormState;
   onChange: Dispatch<SetStateAction<FixedEventFormState>>;
+  t: Translator;
 };
 
-function TaskFormFields({ form, onChange }: TaskFormFieldsProps) {
+function TaskFormFields({ form, onChange, t }: TaskFormFieldsProps) {
   return (
     <>
       <div className="form-grid">
         <label>
-          <span>Title</span>
+          <span>{t("Title")}</span>
           <input
             value={form.title}
             onChange={(event) =>
               onChange((currentForm) => ({ ...currentForm, title: event.target.value }))
             }
-            placeholder="Task title"
+            placeholder={t("Task title")}
           />
         </label>
         <label>
-          <span>Category</span>
+          <span>{t("Category")}</span>
           <input
             value={form.category}
             onChange={(event) =>
@@ -335,7 +346,7 @@ function TaskFormFields({ form, onChange }: TaskFormFieldsProps) {
           />
         </label>
         <label>
-          <span>Minutes</span>
+          <span>{t("Minutes")}</span>
           <input
             type="number"
             min="1"
@@ -347,7 +358,7 @@ function TaskFormFields({ form, onChange }: TaskFormFieldsProps) {
           />
         </label>
         <label>
-          <span>Priority</span>
+          <span>{t("Priority")}</span>
           <input
             type="number"
             min="1"
@@ -360,7 +371,7 @@ function TaskFormFields({ form, onChange }: TaskFormFieldsProps) {
           />
         </label>
         <label>
-          <span>Difficulty</span>
+          <span>{t("Difficulty")}</span>
           <input
             type="number"
             min="1"
@@ -373,7 +384,7 @@ function TaskFormFields({ form, onChange }: TaskFormFieldsProps) {
           />
         </label>
         <label>
-          <span>Deadline</span>
+          <span>{t("Deadline")}</span>
           <input
             type="text"
             inputMode="numeric"
@@ -395,38 +406,38 @@ function TaskFormFields({ form, onChange }: TaskFormFieldsProps) {
             onChange((currentForm) => ({ ...currentForm, requiresFocus: event.target.checked }))
           }
         />
-        <span>Requires focus block</span>
+        <span>{t("Requires focus block")}</span>
       </label>
     </>
   );
 }
 
-function FixedEventFormFields({ form, onChange }: FixedEventFormFieldsProps) {
+function FixedEventFormFields({ form, onChange, t }: FixedEventFormFieldsProps) {
   return (
     <>
       <label>
-        <span>Title</span>
+        <span>{t("Title")}</span>
         <input
           value={form.title}
           onChange={(event) =>
             onChange((currentForm) => ({ ...currentForm, title: event.target.value }))
           }
-          placeholder="Meeting"
+          placeholder={t("Meeting")}
         />
       </label>
       <label>
-        <span>Type</span>
+        <span>{t("Type")}</span>
         <input
           value={form.eventType}
           onChange={(event) =>
             onChange((currentForm) => ({ ...currentForm, eventType: event.target.value }))
           }
-          placeholder="meeting"
+          placeholder={t("meeting")}
         />
       </label>
       <div className="form-grid two-column">
         <label>
-          <span>Start</span>
+          <span>{t("Start")}</span>
           <input
             type="text"
             inputMode="numeric"
@@ -440,7 +451,7 @@ function FixedEventFormFields({ form, onChange }: FixedEventFormFieldsProps) {
           />
         </label>
         <label>
-          <span>End</span>
+          <span>{t("End")}</span>
           <input
             type="text"
             inputMode="numeric"
@@ -458,60 +469,60 @@ function FixedEventFormFields({ form, onChange }: FixedEventFormFieldsProps) {
   );
 }
 
-function getTaskFormError(form: TaskFormState): string | null {
+function getTaskFormError(form: TaskFormState, t: Translator): string | null {
   if (form.title.trim().length === 0) {
-    return "Task title is required";
+    return t("Task title is required");
   }
 
   if (form.category.trim().length === 0) {
-    return "Task category is required";
+    return t("Task category is required");
   }
 
   const estimatedMinutes = Number(form.estimatedMinutes);
   if (!Number.isInteger(estimatedMinutes) || estimatedMinutes < 1) {
-    return "Estimated minutes must be a whole number greater than 0";
+    return t("Estimated minutes must be a whole number greater than 0");
   }
 
   const priority = Number(form.priority);
   if (!Number.isInteger(priority) || priority < 1 || priority > 5) {
-    return "Priority must be a whole number from 1 to 5";
+    return t("Priority must be a whole number from 1 to 5");
   }
 
   const difficulty = Number(form.difficulty);
   if (!Number.isInteger(difficulty) || difficulty < 1 || difficulty > 5) {
-    return "Difficulty must be a whole number from 1 to 5";
+    return t("Difficulty must be a whole number from 1 to 5");
   }
 
   if (form.deadlineTime.length === 0) {
-    return "Deadline time is required";
+    return t("Deadline time is required");
   }
 
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(form.deadlineTime)) {
-    return "Deadline time must use HH:MM format";
+    return t("Deadline time must use HH:MM format");
   }
 
   return null;
 }
 
-function getFixedEventFormError(form: FixedEventFormState): string | null {
+function getFixedEventFormError(form: FixedEventFormState, t: Translator): string | null {
   if (form.title.trim().length === 0) {
-    return "Fixed event title is required";
+    return t("Fixed event title is required");
   }
 
   if (form.eventType.trim().length === 0) {
-    return "Fixed event type is required";
+    return t("Fixed event type is required");
   }
 
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(form.startTime)) {
-    return "Start time must use HH:MM format";
+    return t("Start time must use HH:MM format");
   }
 
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(form.endTime)) {
-    return "End time must use HH:MM format";
+    return t("End time must use HH:MM format");
   }
 
   if (form.endTime <= form.startTime) {
-    return "End time must be later than start time";
+    return t("End time must be later than start time");
   }
 
   return null;
@@ -559,43 +570,49 @@ function fixedEventFormFromEvent(event: ApiFixedEvent): FixedEventFormState {
   };
 }
 
-function formatMinutes(totalMinutes: number): string {
+function formatMinutes(totalMinutes: number, locale: LocaleCode = DEFAULT_LOCALE): string {
   if (totalMinutes < 60) {
+    if (locale === "zh-TW") {
+      return `${totalMinutes} 分鐘`;
+    }
     return `${totalMinutes}m`;
   }
 
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
+  if (locale === "zh-TW") {
+    return minutes === 0 ? `${hours} 小時` : `${hours} 小時 ${minutes} 分鐘`;
+  }
   return minutes === 0 ? `${hours}h` : `${hours}h ${minutes}m`;
 }
 
-function formatSignedMinutes(totalMinutes: number): string {
+function formatSignedMinutes(totalMinutes: number, locale: LocaleCode = DEFAULT_LOCALE): string {
   if (totalMinutes === 0) {
-    return "0m";
+    return formatMinutes(0, locale);
   }
 
   const prefix = totalMinutes > 0 ? "+" : "-";
-  return `${prefix}${formatMinutes(Math.abs(totalMinutes))}`;
+  return `${prefix}${formatMinutes(Math.abs(totalMinutes), locale)}`;
 }
 
-function formatTime(value: string): string {
-  return new Intl.DateTimeFormat("en-US", {
+function formatTime(value: string, locale: LocaleCode = DEFAULT_LOCALE): string {
+  return new Intl.DateTimeFormat(locale, {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
   }).format(new Date(value));
 }
 
-function formatSelectedDate(value: string): string {
-  return new Intl.DateTimeFormat("en-US", {
+function formatSelectedDate(value: string, locale: LocaleCode = DEFAULT_LOCALE): string {
+  return new Intl.DateTimeFormat(locale, {
     month: "long",
     day: "numeric",
     year: "numeric",
   }).format(new Date(`${value}T00:00:00`));
 }
 
-function formatWeekday(value: string): string {
-  return new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(new Date(`${value}T00:00:00`));
+function formatWeekday(value: string, locale: LocaleCode = DEFAULT_LOCALE): string {
+  return new Intl.DateTimeFormat(locale, { weekday: "long" }).format(new Date(`${value}T00:00:00`));
 }
 
 function shiftDate(value: string, days: number): string {
@@ -619,8 +636,8 @@ function addMinutes(dateTime: Date, minutes: number): Date {
   return new Date(dateTime.getTime() + minutes * 60_000);
 }
 
-function toTimeLabel(dateTime: Date): string {
-  return new Intl.DateTimeFormat("en-US", {
+function toTimeLabel(dateTime: Date, locale: LocaleCode = DEFAULT_LOCALE): string {
+  return new Intl.DateTimeFormat(locale, {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
@@ -643,7 +660,7 @@ function priorityClass(priority: number): string {
   return "p3";
 }
 
-function taskStateLabel(status: TaskStatus): string {
+function taskStateLabel(status: TaskStatus, t: Translator): string {
   const labels: Record<TaskStatus, string> = {
     pending: "Ready",
     in_progress: "Doing",
@@ -651,7 +668,7 @@ function taskStateLabel(status: TaskStatus): string {
     skipped: "Skipped",
   };
 
-  return labels[status];
+  return t(labels[status]);
 }
 
 function deadlineTimeValue(task: ApiTask): number {
@@ -683,7 +700,13 @@ function compareTasks(sortMode: TaskSortMode): (left: ApiTask, right: ApiTask) =
   };
 }
 
-function buildTimeline(tasks: ApiTask[], fixedEvents: ApiFixedEvent[], selectedDate: string): TimelineItem[] {
+function buildTimeline(
+  tasks: ApiTask[],
+  fixedEvents: ApiFixedEvent[],
+  selectedDate: string,
+  locale: LocaleCode,
+  t: Translator,
+): TimelineItem[] {
   const taskStarts = ["09:00", "10:45", "13:30", "15:00"];
   const pendingTasks = tasks
     .filter((task) => task.status !== "completed" && task.status !== "skipped")
@@ -694,36 +717,36 @@ function buildTimeline(tasks: ApiTask[], fixedEvents: ApiFixedEvent[], selectedD
     const start = new Date(`${selectedDate}T${taskStarts[index]}:00`);
     const end = addMinutes(start, task.estimated_minutes);
     return {
-      start: toTimeLabel(start),
-      end: toTimeLabel(end),
+      start: toTimeLabel(start, locale),
+      end: toTimeLabel(end, locale),
       title: task.title,
-      meta: `${task.category} | ${formatMinutes(task.estimated_minutes)} | priority ${task.priority}`,
+      meta: `${task.category} | ${formatMinutes(task.estimated_minutes, locale)} | ${t("priority")} ${task.priority}`,
       type: task.requires_focus ? "focus" : "admin",
     } satisfies TimelineItem;
   });
 
   const fixedBlocks = fixedEvents.map((event) => ({
-    start: formatTime(event.start_time),
-    end: formatTime(event.end_time),
+    start: formatTime(event.start_time, locale),
+    end: formatTime(event.end_time, locale),
     title: event.title,
-    meta: `${event.event_type ?? "fixed"} | protected`,
+    meta: `${event.event_type ?? t("fixed")} | ${t("protected")}`,
     type: "fixed",
   })) satisfies TimelineItem[];
 
   return [...taskBlocks, ...fixedBlocks].sort((left, right) => left.start.localeCompare(right.start));
 }
 
-function buildTimelineFromSchedule(items: ApiScheduleItem[]): TimelineItem[] {
+function buildTimelineFromSchedule(items: ApiScheduleItem[], locale: LocaleCode, t: Translator): TimelineItem[] {
   return items
     .map((item) => {
       const timelineItem: TimelineItem = {
-        start: formatTime(item.start_time),
-        end: formatTime(item.end_time),
+        start: formatTime(item.start_time, locale),
+        end: formatTime(item.end_time, locale),
         title: item.title,
         meta:
           item.type === "fixed_event"
-            ? `${item.category ?? "fixed"} | protected`
-            : `${item.category ?? "task"} | ${formatMinutes(item.planned_minutes)} | score ${
+            ? `${item.category ?? t("fixed")} | ${t("protected")}`
+            : `${item.category ?? t("task")} | ${formatMinutes(item.planned_minutes, locale)} | ${t("score")} ${
                 item.score?.toFixed(1) ?? "n/a"
               }`,
         type: item.type === "fixed_event" ? "fixed" : item.requires_focus ? "focus" : "admin",
@@ -811,6 +834,13 @@ export function App() {
   const [authForm, setAuthForm] = useState<AuthFormState>(emptyAuthForm);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authStatus, setAuthStatus] = useState<string | null>(null);
+  const [locale, setLocale] = useState<LocaleCode>(() => resolveLocale(localStorage.getItem(LOCALE_STORAGE_KEY)));
+  const t = useMemo(() => (key: string) => translate(locale, key), [locale]);
+
+  function changeLocale(nextLocale: LocaleCode) {
+    setLocale(nextLocale);
+    localStorage.setItem(LOCALE_STORAGE_KEY, nextLocale);
+  }
 
   async function loadCurrentUser(token: string) {
     try {
@@ -822,18 +852,18 @@ export function App() {
     } catch {
       setAuthToken("");
       setCurrentUser(null);
-      setAuthStatus("Session expired. Please sign in again.");
+      setAuthStatus(t("Session expired. Please sign in again."));
     }
   }
 
   async function submitAuthForm() {
     if (authForm.email.trim().length === 0 || authForm.password.length === 0) {
-      setAuthStatus("Email and password are required.");
+      setAuthStatus(t("Email and password are required."));
       return;
     }
 
     if (authMode === "register" && authForm.displayName.trim().length === 0) {
-      setAuthStatus("Display name is required.");
+      setAuthStatus(t("Display name is required."));
       return;
     }
 
@@ -859,9 +889,9 @@ export function App() {
       });
       setAuthToken(authPayload.access_token);
       setCurrentUser(authPayload.user);
-      setAuthStatus(authMode === "register" ? "Account created." : "Signed in.");
+      setAuthStatus(authMode === "register" ? t("Account created.") : t("Signed in."));
     } catch (caughtError) {
-      setAuthStatus(caughtError instanceof Error ? caughtError.message : "Authentication failed.");
+      setAuthStatus(caughtError instanceof Error ? caughtError.message : t("Authentication failed."));
     } finally {
       setIsAuthenticating(false);
     }
@@ -887,9 +917,9 @@ export function App() {
       });
       setAuthToken(authPayload.access_token);
       setCurrentUser(authPayload.user);
-      setAuthStatus("Demo account signed in.");
+      setAuthStatus(t("Demo account signed in."));
     } catch (caughtError) {
-      setAuthStatus(caughtError instanceof Error ? caughtError.message : "Unable to sign in demo account.");
+      setAuthStatus(caughtError instanceof Error ? caughtError.message : t("Unable to sign in demo account."));
     } finally {
       setIsAuthenticating(false);
     }
@@ -898,7 +928,7 @@ export function App() {
   function signOut() {
     setAuthToken("");
     setCurrentUser(null);
-    setAuthStatus("Signed out.");
+    setAuthStatus(t("Signed out."));
   }
 
   function buildAuthHeaders(): Record<string, string> {
@@ -969,7 +999,7 @@ export function App() {
       setScheduleSource(latestSchedule ? "saved" : "none");
       setScheduleDiff(null);
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Unable to load dashboard data");
+      setError(caughtError instanceof Error ? caughtError.message : t("Unable to load dashboard data"));
     } finally {
       setIsLoading(false);
     }
@@ -1029,8 +1059,11 @@ export function App() {
     selectedScheduleHistoryIndex >= 0 ? scheduleHistory[selectedScheduleHistoryIndex + 1] ?? null : null;
 
   const timelineItems = useMemo(
-    () => (schedule ? buildTimelineFromSchedule(schedule.items) : buildTimeline(tasks, fixedEvents, selectedDate)),
-    [fixedEvents, schedule, selectedDate, tasks],
+    () =>
+      schedule
+        ? buildTimelineFromSchedule(schedule.items, locale, t)
+        : buildTimeline(tasks, fixedEvents, selectedDate, locale, t),
+    [fixedEvents, locale, schedule, selectedDate, t, tasks],
   );
   const analyticsByTask = useMemo(() => {
     return new Map((analytics?.task_summaries ?? []).map((summary) => [summary.task_id, summary]));
@@ -1060,20 +1093,20 @@ export function App() {
   const algorithmSummary = schedule?.algorithm_summary ?? null;
   const scheduleKicker =
     scheduleSource === "saved"
-      ? "Saved schedule"
+      ? t("Saved schedule")
       : scheduleSource === "generated"
-        ? "Generated schedule"
+        ? t("Generated schedule")
         : scheduleSource === "history"
-          ? "Schedule history"
-          : "Today planner";
+          ? t("Schedule history")
+          : t("Today planner");
   const plannedTimeDetail =
     scheduleSource === "saved"
-      ? "from latest saved schedule"
+      ? t("from latest saved schedule")
       : scheduleSource === "generated"
-        ? "from generated schedule"
+        ? t("from generated schedule")
         : scheduleSource === "history"
-          ? "from selected history run"
-          : "from backend tasks";
+          ? t("from selected history run")
+          : t("from backend tasks");
   const planScore = algorithmSummary
     ? Math.max(0, Math.min(98, 82 + algorithmSummary.scheduled_task_count * 4 - algorithmSummary.skipped_task_count * 6))
     : Math.min(98, completionRate + 24);
@@ -1081,38 +1114,38 @@ export function App() {
   const insights: InsightItem[] = algorithmSummary
     ? [
         {
-          label: "Scheduled tasks",
+          label: t("Scheduled tasks"),
           value: `${algorithmSummary.scheduled_task_count}/${algorithmSummary.selected_task_count}`,
-          detail: `${algorithmSummary.skipped_task_count} skipped by capacity or dependencies`,
+          detail: `${algorithmSummary.skipped_task_count} ${t("skipped by capacity or dependencies")}`,
         },
         {
-          label: "Free capacity",
-          value: formatMinutes(algorithmSummary.available_minutes),
-          detail: `${algorithmSummary.applied_algorithms.length} scheduler algorithms applied`,
+          label: t("Free capacity"),
+          value: formatMinutes(algorithmSummary.available_minutes, locale),
+          detail: `${algorithmSummary.applied_algorithms.length} ${t("scheduler algorithms applied")}`,
         },
         {
-          label: "Work selected",
-          value: formatMinutes(scheduledTaskMinutes),
-          detail: algorithmSummary.warnings[0] ?? "No scheduler warnings",
+          label: t("Work selected"),
+          value: formatMinutes(scheduledTaskMinutes, locale),
+          detail: algorithmSummary.warnings[0] ?? t("No scheduler warnings"),
         },
       ]
     : [
         {
-          label: "Completion forecast",
+          label: t("Completion forecast"),
           value: `${Math.min(96, completionRate + 24)}%`,
-          detail: "Uses current queue and protected events",
+          detail: t("Uses current queue and protected events"),
         },
         {
-          label: "Estimate drift",
-          value: formatSignedMinutes(estimateDeltaMinutes),
-          detail: "Actual minus estimated work time",
+          label: t("Estimate drift"),
+          value: formatSignedMinutes(estimateDeltaMinutes, locale),
+          detail: t("Actual minus estimated work time"),
         },
         {
-          label: "Predicted workload",
-          value: formatMinutes(predictedMinutes),
+          label: t("Predicted workload"),
+          value: formatMinutes(predictedMinutes, locale),
           detail: durationPredictions
             ? `${durationPredictions.model_name} ${durationPredictions.model_version}`
-            : "ML service not loaded",
+            : t("ML service not loaded"),
         },
       ];
 
@@ -1200,7 +1233,7 @@ export function App() {
 
   async function compareScheduleWithPrevious() {
     if (selectedScheduleRunId === null || previousScheduleHistoryItem === null) {
-      setError("Select a generated plan with an older run to compare");
+      setError(t("Select a generated plan with an older run to compare"));
       return;
     }
 
@@ -1214,7 +1247,7 @@ export function App() {
       );
       setScheduleDiff(nextScheduleDiff);
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Unable to compare schedules");
+      setError(caughtError instanceof Error ? caughtError.message : t("Unable to compare schedules"));
     } finally {
       setIsComparing(false);
     }
@@ -1222,7 +1255,7 @@ export function App() {
 
   async function exportSelectedSchedule(exportFormat: "markdown" | "csv") {
     if (selectedScheduleRunId === null) {
-      setError("Select a generated plan before exporting");
+      setError(t("Select a generated plan before exporting"));
       return;
     }
 
@@ -1236,7 +1269,7 @@ export function App() {
       );
       downloadTextFile(exportedSchedule.filename, exportedSchedule.content, exportedSchedule.content_type);
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Unable to export schedule");
+      setError(caughtError instanceof Error ? caughtError.message : t("Unable to export schedule"));
     } finally {
       setIsExportingSchedule(false);
     }
@@ -1245,7 +1278,7 @@ export function App() {
   async function renameScheduleRun(scheduleRunId: number) {
     const title = scheduleRunTitleDraft.trim();
     if (title.length === 0) {
-      setError("Schedule title is required");
+      setError(t("Schedule title is required"));
       return;
     }
 
@@ -1269,14 +1302,14 @@ export function App() {
       setScheduleDiff(null);
       cancelRenamingScheduleRun();
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Unable to rename schedule");
+      setError(caughtError instanceof Error ? caughtError.message : t("Unable to rename schedule"));
     } finally {
       setIsMutating(false);
     }
   }
 
   async function deleteScheduleRun(scheduleRunId: number) {
-    const shouldDelete = window.confirm("Remove this generated plan from schedule history?");
+    const shouldDelete = window.confirm(t("Remove this generated plan from schedule history?"));
     if (!shouldDelete) {
       return;
     }
@@ -1301,7 +1334,7 @@ export function App() {
         cancelRenamingScheduleRun();
       }
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Unable to delete schedule");
+      setError(caughtError instanceof Error ? caughtError.message : t("Unable to delete schedule"));
     } finally {
       setIsMutating(false);
     }
@@ -1331,14 +1364,14 @@ export function App() {
       setSelectedScheduleRunId(nextScheduleHistory[0]?.id ?? null);
       setScheduleDiff(null);
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Unable to generate plan");
+      setError(caughtError instanceof Error ? caughtError.message : t("Unable to generate plan"));
     } finally {
       setIsGenerating(false);
     }
   }
 
   async function createTask() {
-    const formError = getTaskFormError(taskForm);
+    const formError = getTaskFormError(taskForm, t);
     if (formError) {
       setError(formError);
       return;
@@ -1365,14 +1398,14 @@ export function App() {
       cancelEditingTask();
       await loadDashboardData();
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Unable to create task");
+      setError(caughtError instanceof Error ? caughtError.message : t("Unable to create task"));
     } finally {
       setIsMutating(false);
     }
   }
 
   async function updateTaskDetails(taskId: number) {
-    const formError = getTaskFormError(editTaskForm);
+    const formError = getTaskFormError(editTaskForm, t);
     if (formError) {
       setError(formError);
       return;
@@ -1391,14 +1424,14 @@ export function App() {
       cancelEditingTask();
       await loadDashboardData();
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Unable to update task");
+      setError(caughtError instanceof Error ? caughtError.message : t("Unable to update task"));
     } finally {
       setIsMutating(false);
     }
   }
 
   async function createFixedEvent() {
-    const formError = getFixedEventFormError(fixedEventForm);
+    const formError = getFixedEventFormError(fixedEventForm, t);
     if (formError) {
       setError(formError);
       return;
@@ -1421,14 +1454,14 @@ export function App() {
       cancelEditingFixedEvent();
       await loadDashboardData();
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Unable to create fixed event");
+      setError(caughtError instanceof Error ? caughtError.message : t("Unable to create fixed event"));
     } finally {
       setIsMutating(false);
     }
   }
 
   async function updateFixedEventDetails(fixedEventId: number) {
-    const formError = getFixedEventFormError(editFixedEventForm);
+    const formError = getFixedEventFormError(editFixedEventForm, t);
     if (formError) {
       setError(formError);
       return;
@@ -1447,7 +1480,7 @@ export function App() {
       cancelEditingFixedEvent();
       await loadDashboardData();
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Unable to update fixed event");
+      setError(caughtError instanceof Error ? caughtError.message : t("Unable to update fixed event"));
     } finally {
       setIsMutating(false);
     }
@@ -1468,14 +1501,14 @@ export function App() {
 
       await loadDashboardData();
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Unable to delete fixed event");
+      setError(caughtError instanceof Error ? caughtError.message : t("Unable to delete fixed event"));
     } finally {
       setIsMutating(false);
     }
   }
 
   async function resetDemoData() {
-    const shouldReset = window.confirm("Reset demo data for user 1? This clears demo tasks, events, logs, and schedules.");
+    const shouldReset = window.confirm(t("Reset demo data for user 1? This clears demo tasks, events, logs, and schedules."));
     if (!shouldReset) {
       return;
     }
@@ -1494,7 +1527,7 @@ export function App() {
         setSelectedDate(DEFAULT_SELECTED_DATE);
       }
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Unable to reset demo data");
+      setError(caughtError instanceof Error ? caughtError.message : t("Unable to reset demo data"));
     } finally {
       setIsMutating(false);
     }
@@ -1512,7 +1545,7 @@ export function App() {
       });
       await loadDashboardData();
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Unable to record execution event");
+      setError(caughtError instanceof Error ? caughtError.message : t("Unable to record execution event"));
     } finally {
       setIsMutating(false);
     }
@@ -1534,7 +1567,7 @@ export function App() {
       });
       await loadDashboardData();
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Unable to update task");
+      setError(caughtError instanceof Error ? caughtError.message : t("Unable to update task"));
     } finally {
       setIsMutating(false);
     }
@@ -1555,7 +1588,7 @@ export function App() {
 
       await loadDashboardData();
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Unable to delete task");
+      setError(caughtError instanceof Error ? caughtError.message : t("Unable to delete task"));
     } finally {
       setIsMutating(false);
     }
@@ -1563,36 +1596,36 @@ export function App() {
 
   return (
     <div className="product-shell">
-      <aside className="sidebar" aria-label="Workspace navigation">
+      <aside className="sidebar" aria-label={t("Workspace navigation")}>
         <div className="brand-lockup">
           <div className="brand-mark" aria-hidden="true">
             O
           </div>
           <div>
             <strong>OrdoStack</strong>
-            <span>Daily Planning OS</span>
+            <span>{t("Daily Planning OS")}</span>
           </div>
         </div>
 
-        <nav className="sidebar-nav" aria-label="Primary">
+        <nav className="sidebar-nav" aria-label={t("Primary")}>
           {navigationItems.map((item) => (
             <a key={item.label} className={item.isActive ? "nav-item active" : "nav-item"} href="#">
               <item.icon size={18} aria-hidden="true" />
-              <span>{item.label}</span>
+              <span>{t(item.label)}</span>
             </a>
           ))}
         </nav>
 
-        <div className="sidebar-status" aria-label="Service health">
+        <div className="sidebar-status" aria-label={t("Service health")}>
           <div className="status-heading">
             <Activity size={16} aria-hidden="true" />
-            <span>System</span>
+            <span>{t("System")}</span>
           </div>
           {serviceHealth.map((service) => (
             <div key={service} className="status-row">
               <span className="health-dot" aria-hidden="true" />
               <span>{service}</span>
-              <strong>ok</strong>
+              <strong>{t("ok")}</strong>
             </div>
           ))}
           <button
@@ -1602,28 +1635,28 @@ export function App() {
             onClick={() => void resetDemoData()}
           >
             <RotateCcw size={15} aria-hidden="true" />
-            <span>Reset demo</span>
+            <span>{t("Reset demo")}</span>
           </button>
         </div>
       </aside>
 
       <main className="workspace" aria-labelledby="page-title">
         <header className="topbar">
-          <div className="date-control" aria-label="Selected date">
+          <div className="date-control" aria-label={t("Selected date")}>
             <button
               className="icon-button"
               type="button"
-              aria-label="Previous day"
+              aria-label={t("Previous day")}
               disabled={isLoading}
               onClick={() => changeSelectedDate(-1)}
             >
               <ChevronLeft size={18} aria-hidden="true" />
             </button>
             <div>
-              <span>{formatWeekday(selectedDate)}</span>
-              <strong>{formatSelectedDate(selectedDate)}</strong>
+              <span>{formatWeekday(selectedDate, locale)}</span>
+              <strong>{formatSelectedDate(selectedDate, locale)}</strong>
             </div>
-            <label className="date-picker" aria-label="Choose date">
+            <label className="date-picker" aria-label={t("Choose date")}>
               <CalendarDays size={16} aria-hidden="true" />
               <input
                 type="date"
@@ -1635,7 +1668,7 @@ export function App() {
             <button
               className="icon-button"
               type="button"
-              aria-label="Next day"
+              aria-label={t("Next day")}
               disabled={isLoading}
               onClick={() => changeSelectedDate(1)}
             >
@@ -1647,12 +1680,12 @@ export function App() {
               disabled={isLoading || selectedDate === todayDateString()}
               onClick={() => selectDate(todayDateString())}
             >
-              Today
+              {t("Today")}
             </button>
           </div>
 
           <div className="topbar-actions">
-            <section className="auth-panel" aria-label="Account">
+            <section className="auth-panel" aria-label={t("Account")}>
               {currentUser ? (
                 <div className="auth-summary">
                   <UserCircle size={18} aria-hidden="true" />
@@ -1663,7 +1696,7 @@ export function App() {
                   <button
                     className="ghost-button"
                     type="button"
-                    aria-label="Sign out"
+                    aria-label={t("Sign out")}
                     disabled={isAuthenticating}
                     onClick={signOut}
                   >
@@ -1678,7 +1711,7 @@ export function App() {
                     void submitAuthForm();
                   }}
                 >
-                  <div className="auth-mode" role="tablist" aria-label="Authentication mode">
+                  <div className="auth-mode" role="tablist" aria-label={t("Authentication mode")}>
                     <button
                       className={authMode === "login" ? "active" : ""}
                       type="button"
@@ -1686,7 +1719,7 @@ export function App() {
                       aria-selected={authMode === "login"}
                       onClick={() => setAuthMode("login")}
                     >
-                      Login
+                      {t("Login")}
                     </button>
                     <button
                       className={authMode === "register" ? "active" : ""}
@@ -1695,11 +1728,11 @@ export function App() {
                       aria-selected={authMode === "register"}
                       onClick={() => setAuthMode("register")}
                     >
-                      Register
+                      {t("Register")}
                     </button>
                   </div>
                   <label>
-                    <span>Email</span>
+                    <span>{t("Email")}</span>
                     <input
                       type="email"
                       value={authForm.email}
@@ -1711,7 +1744,7 @@ export function App() {
                   </label>
                   {authMode === "register" ? (
                     <label>
-                      <span>Name</span>
+                      <span>{t("Name")}</span>
                       <input
                         value={authForm.displayName}
                         disabled={isAuthenticating}
@@ -1722,7 +1755,7 @@ export function App() {
                     </label>
                   ) : null}
                   <label>
-                    <span>Password</span>
+                    <span>{t("Password")}</span>
                     <input
                       type="password"
                       value={authForm.password}
@@ -1734,7 +1767,7 @@ export function App() {
                   </label>
                   <button className="secondary-action" type="submit" disabled={isAuthenticating}>
                     <LogIn size={16} aria-hidden="true" />
-                    <span>{authMode === "register" ? "Create" : "Login"}</span>
+                    <span>{authMode === "register" ? t("Create") : t("Login")}</span>
                   </button>
                   <button
                     className="ghost-button text-button"
@@ -1742,22 +1775,32 @@ export function App() {
                     disabled={isAuthenticating}
                     onClick={() => void loginDemoUser()}
                   >
-                    Demo
+                    {t("Demo")}
                   </button>
                 </form>
               )}
               {authStatus ? <p className="auth-status">{authStatus}</p> : null}
             </section>
-            <label className="search-box" aria-label="Search tasks">
+            <label className="language-switcher" aria-label={t("Language")}>
+              <span>{t("Language")}</span>
+              <select value={locale} onChange={(event) => changeLocale(resolveLocale(event.target.value))}>
+                {localeOptions.map((option) => (
+                  <option key={option.code} value={option.code}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="search-box" aria-label={t("Search tasks")}>
               <Search size={17} aria-hidden="true" />
               <input
                 type="search"
-                placeholder="Search tasks"
+                placeholder={t("Search tasks")}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
               />
             </label>
-            <button className="icon-button" type="button" aria-label="Notifications" disabled>
+            <button className="icon-button" type="button" aria-label={t("Notifications")} disabled>
               <Bell size={18} />
             </button>
             <button
@@ -1771,7 +1814,7 @@ export function App() {
               ) : (
                 <Sparkles size={18} aria-hidden="true" />
               )}
-              <span>{isGenerating ? "Generating" : "Generate Plan"}</span>
+              <span>{isGenerating ? t("Generating") : t("Generate Plan")}</span>
             </button>
           </div>
         </header>
@@ -1781,40 +1824,42 @@ export function App() {
             <AlertCircle size={18} aria-hidden="true" />
             <span>{error}</span>
             <button className="ghost-button text-button" type="button" onClick={() => void loadDashboardData()}>
-              Retry
+              {t("Retry")}
             </button>
           </div>
         ) : null}
 
         {isLoading ? (
-          <section className="loading-panel" aria-label="Loading dashboard data">
+          <section className="loading-panel" aria-label={t("Loading dashboard data")}>
             <Loader2 size={22} aria-hidden="true" />
-            <span>Loading task and fixed event data...</span>
+            <span>{t("Loading task and fixed event data...")}</span>
           </section>
         ) : (
           <>
-            <section className="overview-strip" aria-label="Daily overview">
+            <section className="overview-strip" aria-label={t("Daily overview")}>
               <article>
-                <span>Completion</span>
+                <span>{t("Completion")}</span>
                 <strong>{completionRate}%</strong>
                 <em>
-                  {completedTasks} of {totalTasks} tasks done
+                  {completedTasks} / {totalTasks} {t("tasks done")}
                 </em>
               </article>
               <article>
-                <span>Planned time</span>
-                <strong>{formatMinutes(scheduledTaskMinutes)}</strong>
+                <span>{t("Planned time")}</span>
+                <strong>{formatMinutes(scheduledTaskMinutes, locale)}</strong>
                 <em>{plannedTimeDetail}</em>
               </article>
               <article>
-                <span>Protected events</span>
+                <span>{t("Protected events")}</span>
                 <strong>{fixedEvents.length}</strong>
-                <em>fixed schedule blocks</em>
+                <em>{t("fixed schedule blocks")}</em>
               </article>
               <article>
-                <span>Actual time</span>
-                <strong>{formatMinutes(actualMinutes)}</strong>
-                <em>{formatSignedMinutes(estimateDeltaMinutes)} estimate drift</em>
+                <span>{t("Actual time")}</span>
+                <strong>{formatMinutes(actualMinutes, locale)}</strong>
+                <em>
+                  {formatSignedMinutes(estimateDeltaMinutes, locale)} {t("estimate drift")}
+                </em>
               </article>
             </section>
 
@@ -1823,7 +1868,7 @@ export function App() {
                 <div className="section-header">
                   <div>
                     <p className="section-kicker">{scheduleKicker}</p>
-                    <h1 id="page-title">Focused schedule</h1>
+                    <h1 id="page-title">{t("Focused schedule")}</h1>
                   </div>
                 <button
                   className="secondary-action"
@@ -1835,7 +1880,7 @@ export function App() {
                     }}
                   >
                     <Plus size={17} aria-hidden="true" />
-                    <span>Add task</span>
+                    <span>{t("Add task")}</span>
                   </button>
                 </div>
 
@@ -1847,10 +1892,10 @@ export function App() {
                       void createTask();
                     }}
                   >
-                    <TaskFormFields form={taskForm} onChange={setTaskForm} />
+                    <TaskFormFields form={taskForm} onChange={setTaskForm} t={t} />
                     <button className="primary-action" type="submit" disabled={isMutating}>
                       <Plus size={17} aria-hidden="true" />
-                      <span>Create task</span>
+                      <span>{t("Create task")}</span>
                     </button>
                   </form>
                 ) : null}
@@ -1868,7 +1913,7 @@ export function App() {
                             <h2>{item.title}</h2>
                             <p>{item.meta}</p>
                           </div>
-                          <button className="ghost-button" type="button" aria-label={`More options for ${item.title}`}>
+                          <button className="ghost-button" type="button" aria-label={`${t("More options for")} ${item.title}`}>
                             <MoreHorizontal size={18} />
                           </button>
                         </div>
@@ -1877,15 +1922,15 @@ export function App() {
                   </div>
                 ) : (
                   <div className="empty-state tall-state">
-                    <strong>No schedule blocks</strong>
-                    <span>Add tasks or fixed events, then generate a plan.</span>
+                    <strong>{t("No schedule blocks")}</strong>
+                    <span>{t("Add tasks or fixed events, then generate a plan.")}</span>
                   </div>
                 )}
 
-                <section className="schedule-history-panel" aria-label="Schedule history">
+                <section className="schedule-history-panel" aria-label={t("Schedule history")}>
                   <div>
-                    <p className="section-kicker">Schedule history</p>
-                    <h2>Recent generated plans</h2>
+                    <p className="section-kicker">{t("Schedule history")}</p>
+                    <h2>{t("Recent generated plans")}</h2>
                   </div>
                   {scheduleHistory.length > 0 ? (
                     <>
@@ -1902,7 +1947,7 @@ export function App() {
                           {editingScheduleRunId === historyItem.id ? (
                             <div className="schedule-history-editor">
                               <input
-                                aria-label={`Schedule title for ${historyItem.title}`}
+                                aria-label={`${t("Schedule title for")} ${historyItem.title}`}
                                 value={scheduleRunTitleDraft}
                                 maxLength={120}
                                 onChange={(event) => setScheduleRunTitleDraft(event.target.value)}
@@ -1910,7 +1955,7 @@ export function App() {
                               <button
                                 className="ghost-button"
                                 type="button"
-                                aria-label={`Save ${historyItem.title}`}
+                                aria-label={`${t("Save")} ${historyItem.title}`}
                                 disabled={isMutating}
                                 onClick={() => void renameScheduleRun(historyItem.id)}
                               >
@@ -1922,7 +1967,7 @@ export function App() {
                                 disabled={isMutating}
                                 onClick={cancelRenamingScheduleRun}
                               >
-                                Cancel
+                                {t("Cancel")}
                               </button>
                             </div>
                           ) : (
@@ -1935,15 +1980,15 @@ export function App() {
                                 <span>{formatTime(historyItem.created_at)}</span>
                                 <strong>{historyItem.title}</strong>
                                 <em>
-                                  {historyItem.planning_mode} | {historyItem.scheduled_task_count} tasks |{" "}
-                                  {historyItem.item_count} blocks
+                                  {historyItem.planning_mode} | {historyItem.scheduled_task_count} {t("Tasks")} |{" "}
+                                  {historyItem.item_count} {t("blocks")}
                                 </em>
                               </button>
                               <div className="schedule-history-actions">
                                 <button
                                   className="ghost-button"
                                   type="button"
-                                  aria-label={`Rename ${historyItem.title}`}
+                                  aria-label={`${t("Rename")} ${historyItem.title}`}
                                   disabled={isMutating}
                                   onClick={() => startRenamingScheduleRun(historyItem)}
                                 >
@@ -1952,7 +1997,7 @@ export function App() {
                                 <button
                                   className="ghost-button danger"
                                   type="button"
-                                  aria-label={`Delete ${historyItem.title}`}
+                                  aria-label={`${t("Delete")} ${historyItem.title}`}
                                   disabled={isMutating}
                                   onClick={() => void deleteScheduleRun(historyItem.id)}
                                 >
@@ -1976,7 +2021,7 @@ export function App() {
                           ) : (
                             <Activity size={16} aria-hidden="true" />
                           )}
-                          <span>{isComparing ? "Comparing" : "Compare previous"}</span>
+                          <span>{isComparing ? t("Comparing") : t("Compare previous")}</span>
                         </button>
                         <button
                           className="secondary-action"
@@ -1989,16 +2034,16 @@ export function App() {
                           ) : (
                             <Download size={16} aria-hidden="true" />
                           )}
-                          <span>{isExportingSchedule ? "Exporting" : "Export MD"}</span>
+                          <span>{isExportingSchedule ? t("Exporting") : t("Export MD")}</span>
                         </button>
                       </div>
                       {scheduleDiff ? (
-                        <section className="schedule-diff-panel" aria-label="Schedule diff">
+                        <section className="schedule-diff-panel" aria-label={t("Schedule diff")}>
                           <div className="diff-summary">
-                            <span>+{scheduleDiff.added_count} added</span>
-                            <span>-{scheduleDiff.removed_count} removed</span>
-                            <span>{scheduleDiff.changed_count} changed</span>
-                            <span>{formatSignedMinutes(scheduleDiff.total_delta_minutes)}</span>
+                            <span>+{scheduleDiff.added_count} {t("added")}</span>
+                            <span>-{scheduleDiff.removed_count} {t("removed")}</span>
+                            <span>{scheduleDiff.changed_count} {t("changed")}</span>
+                            <span>{formatSignedMinutes(scheduleDiff.total_delta_minutes, locale)}</span>
                           </div>
                           {scheduleDiff.changes.length > 0 ? (
                             <div className="diff-list">
@@ -2006,21 +2051,22 @@ export function App() {
                                 <article key={change.item_key} className={`diff-row ${change.change_type}`}>
                                   <strong>{change.title}</strong>
                                   <span>
-                                    {change.change_type} |{" "}
-                                    {change.previous_start_time ? formatTime(change.previous_start_time) : "new"} to{" "}
-                                    {change.next_start_time ? formatTime(change.next_start_time) : "removed"}
+                                    {t(change.change_type)} |{" "}
+                                    {change.previous_start_time ? formatTime(change.previous_start_time, locale) : t("new")}{" "}
+                                    {t("to")}{" "}
+                                    {change.next_start_time ? formatTime(change.next_start_time, locale) : t("removed")}
                                   </span>
                                 </article>
                               ))}
                             </div>
                           ) : (
-                            <div className="empty-state compact-state">No schedule differences.</div>
+                            <div className="empty-state compact-state">{t("No schedule differences.")}</div>
                           )}
                         </section>
                       ) : null}
                     </>
                   ) : (
-                    <div className="empty-state compact-state">Generate a plan to create the first saved run.</div>
+                    <div className="empty-state compact-state">{t("Generate a plan to create the first saved run.")}</div>
                   )}
                 </section>
               </section>
@@ -2028,36 +2074,40 @@ export function App() {
               <section className="queue-surface" aria-labelledby="queue-title">
                 <div className="section-header compact">
                   <div>
-                    <p className="section-kicker">Task queue</p>
-                    <h2 id="queue-title">Next candidates</h2>
+                    <p className="section-kicker">{t("Task queue")}</p>
+                    <h2 id="queue-title">{t("Next candidates")}</h2>
                   </div>
-                  <button className="icon-button" type="button" aria-label="Command palette" disabled>
+                  <button className="icon-button" type="button" aria-label={t("Command palette")} disabled>
                     <Command size={17} />
                   </button>
                 </div>
 
-                <div className="task-toolbar" aria-label="Task filters and sorting">
+                <div className="task-toolbar" aria-label={t("Task filters and sorting")}>
                   <div className="task-toolbar-title">
                     <ListFilter size={16} aria-hidden="true" />
-                    <span>{activeTaskFilterCount === 0 ? "All tasks" : `${activeTaskFilterCount} filters active`}</span>
+                    <span>
+                      {activeTaskFilterCount === 0
+                        ? t("All tasks")
+                        : `${activeTaskFilterCount} ${t("filters active")}`}
+                    </span>
                   </div>
                   <label className="filter-control">
-                    <span>Status</span>
+                    <span>{t("Status")}</span>
                     <select
                       value={taskStatusFilter}
                       onChange={(event) => setTaskStatusFilter(event.target.value as TaskStatusFilter)}
                     >
-                      <option value="all">All</option>
-                      <option value="pending">Ready</option>
-                      <option value="in_progress">Doing</option>
-                      <option value="completed">Done</option>
-                      <option value="skipped">Skipped</option>
+                      <option value="all">{t("All")}</option>
+                      <option value="pending">{t("Ready")}</option>
+                      <option value="in_progress">{t("Doing")}</option>
+                      <option value="completed">{t("Done")}</option>
+                      <option value="skipped">{t("Skipped")}</option>
                     </select>
                   </label>
                   <label className="filter-control">
-                    <span>Category</span>
+                    <span>{t("Category")}</span>
                     <select value={taskCategoryFilter} onChange={(event) => setTaskCategoryFilter(event.target.value)}>
-                      <option value="all">All</option>
+                      <option value="all">{t("All")}</option>
                       {taskCategories.map((category) => (
                         <option key={category} value={category}>
                           {category}
@@ -2066,23 +2116,23 @@ export function App() {
                     </select>
                   </label>
                   <label className="filter-control">
-                    <span>Focus</span>
+                    <span>{t("Focus")}</span>
                     <select
                       value={taskFocusFilter}
                       onChange={(event) => setTaskFocusFilter(event.target.value as TaskFocusFilter)}
                     >
-                      <option value="all">All</option>
-                      <option value="focus">Focus</option>
-                      <option value="non_focus">Flexible</option>
+                      <option value="all">{t("All")}</option>
+                      <option value="focus">{t("Focus")}</option>
+                      <option value="non_focus">{t("Flexible")}</option>
                     </select>
                   </label>
                   <label className="filter-control">
-                    <span>Sort</span>
+                    <span>{t("Sort")}</span>
                     <select value={taskSortMode} onChange={(event) => setTaskSortMode(event.target.value as TaskSortMode)}>
-                      <option value="priority">Priority</option>
-                      <option value="deadline">Deadline</option>
-                      <option value="estimate">Estimate</option>
-                      <option value="status">Status</option>
+                      <option value="priority">{t("Priority")}</option>
+                      <option value="deadline">{t("DeadlineOption")}</option>
+                      <option value="estimate">{t("Estimate")}</option>
+                      <option value="status">{t("Status")}</option>
                     </select>
                   </label>
                   <button
@@ -2091,13 +2141,13 @@ export function App() {
                     disabled={activeTaskFilterCount === 0}
                     onClick={clearTaskFilters}
                   >
-                    Reset
+                    {t("Reset")}
                   </button>
                 </div>
 
                 <div className="task-list">
                   {filteredTasks.length === 0 ? (
-                    <div className="empty-state">No matching tasks.</div>
+                    <div className="empty-state">{t("No matching tasks.")}</div>
                   ) : (
                     filteredTasks.map((task) => {
                       const taskExecutionSummary = analyticsByTask.get(task.id);
@@ -2108,7 +2158,7 @@ export function App() {
                             <button
                               className="task-check"
                               type="button"
-                              aria-label={`Mark ${task.title} completed`}
+                              aria-label={`${t("Mark")} ${task.title} ${t("completed")}`}
                               disabled={isMutating || task.status === "completed" || task.status === "skipped"}
                               onClick={() => void recordExecutionEvent(task.id, "complete")}
                             >
@@ -2117,26 +2167,28 @@ export function App() {
                             <div className="task-copy">
                               <h3>{task.title}</h3>
                               <p>
-                                {task.category} | estimate {formatMinutes(task.estimated_minutes)} | predicted{" "}
+                                {task.category} | {t("estimate")} {formatMinutes(task.estimated_minutes, locale)} |{" "}
+                                {t("predicted")}{" "}
                                 {formatMinutes(
                                   taskPrediction?.predicted_minutes ??
                                     task.predicted_minutes ??
                                     task.estimated_minutes,
+                                  locale,
                                 )}{" "}
-                                | actual {formatMinutes(taskExecutionSummary?.actual_minutes ?? 0)}
+                                | {t("actual")} {formatMinutes(taskExecutionSummary?.actual_minutes ?? 0, locale)}
                               </p>
                             </div>
                             <div className="task-meta">
                               <span className={`priority ${priorityClass(task.priority)}`}>
                                 {priorityLabel(task.priority)}
                               </span>
-                              <strong>{taskStateLabel(task.status)}</strong>
+                              <strong>{taskStateLabel(task.status, t)}</strong>
                             </div>
                             <div className="row-actions">
                               <button
                                 className="ghost-button"
                                 type="button"
-                                aria-label={`Edit ${task.title}`}
+                                aria-label={`${t("Edit")} ${task.title}`}
                                 disabled={isMutating}
                                 onClick={() => startEditingTask(task)}
                               >
@@ -2146,7 +2198,7 @@ export function App() {
                                 <button
                                   className="ghost-button"
                                   type="button"
-                                  aria-label={`Start ${task.title}`}
+                                  aria-label={`${t("Start")} ${task.title}`}
                                   disabled={isMutating}
                                   onClick={() => void recordExecutionEvent(task.id, "start")}
                                 >
@@ -2157,7 +2209,7 @@ export function App() {
                                 <button
                                   className="ghost-button"
                                   type="button"
-                                  aria-label={`Pause ${task.title}`}
+                                  aria-label={`${t("Pause")} ${task.title}`}
                                   disabled={isMutating}
                                   onClick={() => void recordExecutionEvent(task.id, "pause")}
                                 >
@@ -2168,7 +2220,7 @@ export function App() {
                                 <button
                                   className="ghost-button"
                                   type="button"
-                                  aria-label={`Skip ${task.title}`}
+                                  aria-label={`${t("Skip")} ${task.title}`}
                                   disabled={isMutating}
                                   onClick={() => void recordExecutionEvent(task.id, "skip")}
                                 >
@@ -2179,7 +2231,7 @@ export function App() {
                                 <button
                                   className="ghost-button"
                                   type="button"
-                                  aria-label={`Reopen ${task.title}`}
+                                  aria-label={`${t("Reopen")} ${task.title}`}
                                   disabled={isMutating}
                                   onClick={() => void updateTaskStatus(task.id, "pending")}
                                 >
@@ -2189,7 +2241,7 @@ export function App() {
                               <button
                                 className="ghost-button danger"
                                 type="button"
-                                aria-label={`Delete ${task.title}`}
+                                aria-label={`${t("Delete")} ${task.title}`}
                                 disabled={isMutating}
                                 onClick={() => void deleteTask(task.id)}
                               >
@@ -2201,17 +2253,17 @@ export function App() {
                           {editingTaskId === task.id ? (
                             <form
                               className="inline-form task-edit-form"
-                              aria-label={`Edit ${task.title}`}
+                              aria-label={`${t("Edit")} ${task.title}`}
                               onSubmit={(event) => {
                                 event.preventDefault();
                                 void updateTaskDetails(task.id);
                               }}
                             >
-                              <TaskFormFields form={editTaskForm} onChange={setEditTaskForm} />
+                              <TaskFormFields form={editTaskForm} onChange={setEditTaskForm} t={t} />
                               <div className="form-actions">
                                 <button className="primary-action" type="submit" disabled={isMutating}>
                                   <CheckCircle2 size={17} aria-hidden="true" />
-                                  <span>Save changes</span>
+                                  <span>{t("Save changes")}</span>
                                 </button>
                                 <button
                                   className="ghost-button text-button"
@@ -2219,7 +2271,7 @@ export function App() {
                                   disabled={isMutating}
                                   onClick={cancelEditingTask}
                                 >
-                                  Cancel
+                                  {t("Cancel")}
                                 </button>
                               </div>
                             </form>
@@ -2233,8 +2285,8 @@ export function App() {
                 <div className="fixed-events-panel">
                   <div className="section-header compact">
                     <div>
-                      <p className="section-kicker">Fixed events</p>
-                      <h2>Protected time</h2>
+                      <p className="section-kicker">{t("Fixed events")}</p>
+                      <h2>{t("Protected time")}</h2>
                     </div>
                     <button
                       className="secondary-action"
@@ -2246,7 +2298,7 @@ export function App() {
                       }}
                     >
                       <Plus size={16} aria-hidden="true" />
-                      <span>Add</span>
+                      <span>{t("Add")}</span>
                     </button>
                   </div>
 
@@ -2258,10 +2310,10 @@ export function App() {
                         void createFixedEvent();
                       }}
                     >
-                      <FixedEventFormFields form={fixedEventForm} onChange={setFixedEventForm} />
+                      <FixedEventFormFields form={fixedEventForm} onChange={setFixedEventForm} t={t} />
                       <button className="primary-action" type="submit" disabled={isMutating}>
                         <Plus size={16} aria-hidden="true" />
-                        <span>Create event</span>
+                        <span>{t("Create event")}</span>
                       </button>
                     </form>
                   ) : null}
@@ -2275,14 +2327,14 @@ export function App() {
                             <div>
                               <strong>{event.title}</strong>
                               <span>
-                                {formatTime(event.start_time)} - {formatTime(event.end_time)}
+                                {formatTime(event.start_time, locale)} - {formatTime(event.end_time, locale)}
                               </span>
                             </div>
                             <div className="row-actions">
                               <button
                                 className="ghost-button"
                                 type="button"
-                                aria-label={`Edit ${event.title}`}
+                                aria-label={`${t("Edit")} ${event.title}`}
                                 disabled={isMutating}
                                 onClick={() => startEditingFixedEvent(event)}
                               >
@@ -2291,7 +2343,7 @@ export function App() {
                               <button
                                 className="ghost-button danger"
                                 type="button"
-                                aria-label={`Delete ${event.title}`}
+                                aria-label={`${t("Delete")} ${event.title}`}
                                 disabled={isMutating}
                                 onClick={() => void deleteFixedEvent(event.id)}
                               >
@@ -2303,17 +2355,17 @@ export function App() {
                           {editingFixedEventId === event.id ? (
                             <form
                               className="inline-form compact-form fixed-event-edit-form"
-                              aria-label={`Edit ${event.title}`}
+                              aria-label={`${t("Edit")} ${event.title}`}
                               onSubmit={(formEvent) => {
                                 formEvent.preventDefault();
                                 void updateFixedEventDetails(event.id);
                               }}
                             >
-                              <FixedEventFormFields form={editFixedEventForm} onChange={setEditFixedEventForm} />
+                              <FixedEventFormFields form={editFixedEventForm} onChange={setEditFixedEventForm} t={t} />
                               <div className="form-actions">
                                 <button className="primary-action" type="submit" disabled={isMutating}>
                                   <CheckCircle2 size={16} aria-hidden="true" />
-                                  <span>Save event</span>
+                                  <span>{t("Save event")}</span>
                                 </button>
                                 <button
                                   className="ghost-button text-button"
@@ -2321,7 +2373,7 @@ export function App() {
                                   disabled={isMutating}
                                   onClick={cancelEditingFixedEvent}
                                 >
-                                  Cancel
+                                  {t("Cancel")}
                                 </button>
                               </div>
                             </form>
@@ -2330,7 +2382,7 @@ export function App() {
                       ))}
                     </div>
                   ) : (
-                    <div className="empty-state compact-state">No fixed events on this date.</div>
+                    <div className="empty-state compact-state">{t("No fixed events on this date.")}</div>
                   )}
                 </div>
               </section>
@@ -2338,15 +2390,15 @@ export function App() {
               <aside className="insight-surface" aria-labelledby="insight-title">
                 <div className="section-header compact">
                   <div>
-                    <p className="section-kicker">AI review</p>
-                    <h2 id="insight-title">Plan quality</h2>
+                    <p className="section-kicker">{t("AI review")}</p>
+                    <h2 id="insight-title">{t("Plan quality")}</h2>
                   </div>
                   <Target size={19} aria-hidden="true" />
                 </div>
 
-                <div className="score-ring" aria-label={`Plan score ${planScore} out of 100`}>
+                <div className="score-ring" aria-label={`${t("Plan score")} ${planScore} / 100`}>
                   <span>{planScore}</span>
-                  <strong>Plan score</strong>
+                  <strong>{t("Plan score")}</strong>
                 </div>
 
                 <div className="insight-list">
@@ -2366,10 +2418,10 @@ export function App() {
                     <Brain size={18} aria-hidden="true" />
                     <span>
                       {schedule
-                        ? `${scheduleSource === "saved" ? "saved " : ""}scheduler-mvp + ${
-                            durationPredictions?.model_name ?? "estimate-fallback"
+                        ? `${scheduleSource === "saved" ? t("saved ") : ""}scheduler-mvp + ${
+                            durationPredictions?.model_name ?? t("estimate-fallback")
                           }`
-                        : durationPredictions?.model_name ?? "duration-baseline"}
+                        : durationPredictions?.model_name ?? t("duration-baseline")}
                     </span>
                   </div>
                   <strong>{schedule ? "v0.5.0" : durationPredictions?.model_version ?? "v0.2.0"}</strong>
@@ -2377,25 +2429,25 @@ export function App() {
               </aside>
             </div>
 
-            <section className="bottom-rail" aria-label="Execution state">
+            <section className="bottom-rail" aria-label={t("Execution state")}>
               <div>
                 <Timer size={18} aria-hidden="true" />
-                <span>Current focus</span>
+                <span>{t("Current focus")}</span>
                 <strong>
                   {tasks.find((task) => task.status === "in_progress")?.title ??
                     tasks.find((task) => task.requires_focus && task.status === "pending")?.title ??
-                    "No focus task"}
+                    t("No focus task")}
                 </strong>
               </div>
               <div>
                 <Clock3 size={18} aria-hidden="true" />
-                <span>Next fixed event</span>
-                <strong>{fixedEvents[0]?.title ?? "No fixed event"}</strong>
+                <span>{t("Next fixed event")}</span>
+                <strong>{fixedEvents[0]?.title ?? t("No fixed event")}</strong>
               </div>
               <div>
                 <CalendarDays size={18} aria-hidden="true" />
-                <span>Data source</span>
-                <strong>execution analytics MVP</strong>
+                <span>{t("Data source")}</span>
+                <strong>{t("execution analytics MVP")}</strong>
               </div>
             </section>
           </>

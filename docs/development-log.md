@@ -1,5 +1,40 @@
 # Development Log
 
+## 2026-06-04 - Issue 33 - Traditional Chinese Dashboard Locale
+
+Branch:
+
+```text
+codex/issue-33-zh-tw-locale
+```
+
+Scope:
+
+- Add English / Traditional Chinese locale support to web-dashboard.
+- Keep English as the default locale.
+- Add a visible language selector in the dashboard top bar.
+- Persist the selected locale in local storage.
+- Translate core UI labels, controls, empty states, form labels, validation messages, and dashboard insight copy.
+
+MVP boundaries:
+
+- User-entered task and fixed event content is not translated.
+- Backend API error payloads are not fully localized.
+- Demo seed data remains unchanged.
+- No paid translation API is used.
+
+Suggested git commit:
+
+```text
+feat(i18n): add Traditional Chinese dashboard locale
+```
+
+Verification:
+
+- web-dashboard Docker build must pass.
+- Dashboard HTTP status must be `200`.
+- Browser smoke must produce a non-trivial PNG.
+
 ## 2026-06-04 - Issue 32 - Backup And Restore MVP
 
 Branch:
