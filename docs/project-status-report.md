@@ -10,8 +10,8 @@ OrdoStack is currently a local Customer Demo MVP. It is suitable for internal QA
 
 Current evidence:
 
-- Latest release tag before this report: `v0.24.0`.
-- Current product stage after Issue 27: environment-hardened Customer Demo MVP `v0.26.0`.
+- Previous release tag before environment hardening: `v0.25.0`.
+- Current release tag after Issue 27: environment-hardened Customer Demo MVP `v0.26.0`.
 - Main runnable entrypoint: `http://localhost:5173`.
 - Runtime: local Docker Compose.
 - Database: local MySQL container.

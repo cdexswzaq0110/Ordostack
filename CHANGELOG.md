@@ -8,6 +8,7 @@ All notable MVP changes are recorded here. This project follows incremental issu
 - Share configuration parsing between backend runtime, MySQL repository, service clients, and Alembic.
 - Expand `.env.example` and add environment configuration documentation.
 - Set explicit `ORDOSTACK_ENV=local` in Docker Compose.
+- Align project spec and PM report baseline references to Issue 27 / `v0.26.0`.
 
 Suggested commit:
 

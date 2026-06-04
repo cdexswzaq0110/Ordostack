@@ -16,6 +16,7 @@ Scope:
 - Expand `.env.example` with supported local settings.
 - Add environment configuration documentation.
 - Set explicit `ORDOSTACK_ENV=local` in Docker Compose.
+- Align project spec and PM report baseline references to Issue 27 / `v0.26.0`.
 
 MVP boundaries:
 
