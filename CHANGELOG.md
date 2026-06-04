@@ -2,6 +2,19 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.30.0 - 2026-06-04
+
+- Add request ID propagation for backend-api, scheduler-service, and ml-service.
+- Add structured JSON request logs without request bodies, query strings, authorization headers, cookies, or secret values.
+- Add readiness endpoints for backend-api, scheduler-service, and ml-service.
+- Add observability runbook and QA checks for local verification.
+
+Suggested commit:
+
+```text
+feat(observability): add request readiness baseline
+```
+
 ## 0.29.0 - 2026-06-04
 
 - Add production environment template with blank secret values.

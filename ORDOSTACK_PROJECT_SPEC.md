@@ -2,12 +2,12 @@
 
 Source document: `C:\Users\HUANG\Desktop\OrdoStack Project Specification.docx`
 
-This markdown file records the implementation baseline used by Codex for the repository. The project is developed incrementally by issue. As of Issue 30, the repository is a local Customer Demo MVP with authentication, user-scoped planner data, and deployment baseline documentation, not a production launch build.
+This markdown file records the implementation baseline used by Codex for the repository. The project is developed incrementally by issue. As of Issue 31, the repository is a local Customer Demo MVP with authentication, user-scoped planner data, deployment baseline documentation, and observability baseline, not a production launch build.
 
 ## Current Baseline
 
 ```text
-Version: 0.29.0
+Version: 0.30.0
 Stage: Customer Demo MVP
 Runtime: Local Docker Compose
 Primary UI: web-dashboard
@@ -40,19 +40,20 @@ OrdoStack is an AI daily planning product that lets users capture tasks and fixe
 ## Non-goals For Current MVP
 
 - No paid APIs.
-- No production-grade authentication or account management.
+- No production-grade authentication hardening or account management.
 - No native mobile app implementation yet.
 - No app store release.
 - No ClearML agent execution yet.
 - No production ML / DL model registry yet.
 - No DL completion-rate or focus-score service yet.
-- No AWS deployment, HTTPS, Nginx production reverse proxy, or production backup plan yet.
+- No hosted AWS deployment, HTTPS rollout, production Nginx rollout, or production backup plan yet.
+- No external observability vendor, hosted uptime monitor, metrics backend, tracing backend, or alerting workflow yet.
 - No full Google Calendar two-way sync.
 - No payment system.
 - No complex permission system.
 - No chatbot replacing the scheduling algorithm core.
 
-## Implemented Through Issue 30
+## Implemented Through Issue 31
 
 | Area | Current implementation |
 | --- | --- |
@@ -69,6 +70,7 @@ OrdoStack is an AI daily planning product that lets users capture tasks and fixe
 | Storage | Docker MySQL persistence with Alembic migration baseline and local compatibility bootstrap |
 | Auth | Local register, login, current-user API, PBKDF2 password hashes, HMAC bearer tokens, demo account, user-scoped planner APIs |
 | Deployment | Production env template, Nginx reverse-proxy skeleton, single-node deployment guide, hosted smoke checklist |
+| Observability | Request ID propagation, structured request logs, readiness endpoints, local observability runbook |
 | Demo support | Seeded demo data and demo-only reset control |
 | Quality gates | Python service tests, web-dashboard build, Docker Compose config, environment validation, local E2E smoke script, browser screenshot smoke, GitHub Actions baseline |
 | Documentation | API docs, QA plan, release process, branching strategy, development log, changelog, PM status report, environment configuration guide |
@@ -85,7 +87,7 @@ OrdoStack is an AI daily planning product that lets users capture tasks and fixe
 | mobile-app | Future React Native / Expo mobile client | Not implemented |
 | dl-service | Future completion-rate or focus-score prediction service | Not implemented |
 | clearml-agent | Future model training worker | Not implemented |
-| nginx | Future production reverse proxy | Not implemented |
+| nginx | Future production reverse proxy skeleton | Baseline skeleton only |
 
 ## Target Tech Stack
 
@@ -124,6 +126,7 @@ http://localhost:8000/api
 Core endpoint groups:
 
 - Health: `GET /api/health`
+- Readiness: `GET /api/ready`
 - Tasks: `GET /tasks`, `POST /tasks`, `PATCH /tasks/{task_id}`, `DELETE /tasks/{task_id}`, `POST /tasks/{task_id}/reopen`
 - Fixed events: `GET /fixed-events`, `POST /fixed-events`, `PATCH /fixed-events/{fixed_event_id}`, `DELETE /fixed-events/{fixed_event_id}`
 - Execution logs: `GET /task-execution-logs`, task start / pause / complete / skip endpoints
@@ -184,6 +187,10 @@ Before a release tag:
   - `http://localhost:8100/health`
   - `http://localhost:8200/health`
   - `http://localhost:5173`
+- Readiness checks pass:
+  - `http://localhost:8000/api/ready`
+  - `http://localhost:8100/ready`
+  - `http://localhost:8200/ready`
 - `python scripts/e2e_smoke.py` exits with status code `0`.
 - `python scripts/browser_smoke.py` exits with status code `0` when Edge or Chrome is available.
 - Secrets scan finds no committed credentials.
@@ -193,7 +200,7 @@ Before a release tag:
 - Production-grade authentication and authorization.
 - Real onboarding, user settings, timezone handling, and profile data.
 - Production-grade migration policy, backup, restore, and data retention.
-- Hosted deployment execution with HTTPS, domain, observability, and incident playbook.
+- Hosted deployment execution with HTTPS, domain, metrics, tracing, alerting, and incident playbook.
 - Mobile app implementation.
 - ClearML experiment tracking, model registry, agent execution, and deployment workflow.
 - DL completion-rate / focus-score service.
@@ -205,7 +212,7 @@ Before a release tag:
 
 ## Planned Phases
 
-1. Local Customer Demo MVP: complete through Issue 30.
+1. Local Customer Demo MVP: complete through Issue 31.
 2. Beta Hardening: auth, user isolation, deployment, observability, backup, a11y, and browser regression tests.
 3. MLOps Expansion: ClearML tracking, model registry, scheduled retraining, and model promotion.
 4. Intelligence Expansion: DL completion-rate or focus-score service.

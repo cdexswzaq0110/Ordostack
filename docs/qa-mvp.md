@@ -1,6 +1,6 @@
 # QA MVP Test Plan
 
-Scope: Issue 30 Deployment Baseline, Issue 29 User Isolation, Issue 28 Authentication Foundation, Issue 27 Environment Configuration Hardening, Issue 25 Browser Screenshot Smoke, Issue 24 Schedule Export, Issue 23 Schedule Diff, Issue 22 Schedule History Actions, Issue 21 Task Filter And Sort, Issue 20 Demo MVP Documentation Baseline, Issue 19 E2E Smoke Workflow, Demo Seed And Reset Control, Dashboard UX Polish, Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
+Scope: Issue 31 Observability Baseline, Issue 30 Deployment Baseline, Issue 29 User Isolation, Issue 28 Authentication Foundation, Issue 27 Environment Configuration Hardening, Issue 25 Browser Screenshot Smoke, Issue 24 Schedule Export, Issue 23 Schedule Diff, Issue 22 Schedule History Actions, Issue 21 Task Filter And Sort, Issue 20 Demo MVP Documentation Baseline, Issue 19 E2E Smoke Workflow, Demo Seed And Reset Control, Dashboard UX Polish, Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
 
 ## Environment
 
@@ -122,6 +122,35 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile produc
 ```
 
 5. Expected: config renders without creating AWS, domain, TLS, or paid-service resources.
+
+## Observability Baseline Checks
+
+1. Call backend readiness with a request ID:
+
+```powershell
+Invoke-RestMethod -Uri "http://localhost:8000/api/ready" -Headers @{ "X-Request-ID" = "qa-backend-ready" }
+```
+
+2. Expected: response returns `status: ready`.
+3. Expected: response header includes `X-Request-ID: qa-backend-ready`.
+4. Call scheduler and ML readiness:
+
+```powershell
+Invoke-RestMethod -Uri "http://localhost:8100/ready" -Headers @{ "X-Request-ID" = "qa-scheduler-ready" }
+Invoke-RestMethod -Uri "http://localhost:8200/ready" -Headers @{ "X-Request-ID" = "qa-ml-ready" }
+```
+
+5. Expected: both responses return `status: ready`.
+6. Review service logs:
+
+```powershell
+docker compose logs backend-api
+docker compose logs scheduler-service
+docker compose logs ml-service
+```
+
+7. Expected: logs contain JSON entries with `event`, `service`, `request_id`, `method`, `path`, `status_code`, and `duration_ms`.
+8. Expected: logs do not contain request bodies, query strings, authorization headers, cookies, database passwords, or token values.
 
 ## Auth Foundation Checks
 
@@ -454,6 +483,7 @@ Invoke-RestMethod -Uri "http://localhost:8200/model/info"
 - Task splitting is not implemented yet.
 - Duration prediction uses a local JSON training artifact, not a production model registry.
 - Core planner APIs require local bearer authentication and scope data to the current user.
+- Observability baseline provides request IDs, request logs, and readiness only; metrics, tracing, alerting, and hosted uptime checks are not implemented yet.
 - ML metrics are local sample metrics until a production model registry exists.
 - Schema bootstrap remains as a compatibility fallback; Alembic is the Docker startup path.
 - MySQL uses local development settings and no production credential management.

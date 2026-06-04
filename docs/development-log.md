@@ -1,5 +1,39 @@
 # Development Log
 
+## 2026-06-04 - Issue 31 - Observability Baseline MVP
+
+Branch:
+
+```text
+codex/issue-31-observability-baseline
+```
+
+Scope:
+
+- Add request ID propagation through `X-Request-ID`.
+- Add compact JSON request logs for backend-api, scheduler-service, and ml-service.
+- Add readiness endpoints separate from liveness health endpoints.
+- Add local observability runbook and QA checks.
+
+MVP boundaries:
+
+- No paid observability vendor.
+- No hosted uptime monitor, alerting, metrics backend, or tracing backend.
+- No request bodies, query strings, auth headers, cookies, or secrets are logged.
+
+Suggested git commit:
+
+```text
+feat(observability): add request readiness baseline
+```
+
+Verification:
+
+- backend-api, scheduler-service, and ml-service tests must pass locally.
+- Docker Compose config must pass.
+- Ready endpoints must return `status: ready`.
+- Secrets scan must find no committed credentials.
+
 ## 2026-06-04 - Issue 30 - Deployment Baseline MVP
 
 Branch:

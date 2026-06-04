@@ -2,7 +2,7 @@
 
 OrdoStack is an AI daily planning MVP for task capture, protected calendar blocks, persisted generated schedules, execution analytics, local duration prediction, and MySQL-backed persistence.
 
-This version is a local Customer Demo MVP: it implements task/fixed-event APIs, a scheduler-service MVP, persisted generated schedules, execution logs, daily analytics, local ML duration prediction, MySQL persistence in Docker, Alembic baseline migrations, a React dashboard, demo reset, local auth foundation, user-scoped planner APIs, deployment baseline docs, and local E2E smoke verification. Production-grade auth hardening, ClearML agent execution, mobile app implementation, and AWS deployment are not implemented yet.
+This version is a local Customer Demo MVP: it implements task/fixed-event APIs, a scheduler-service MVP, persisted generated schedules, execution logs, daily analytics, local ML duration prediction, MySQL persistence in Docker, Alembic baseline migrations, a React dashboard, demo reset, local auth foundation, user-scoped planner APIs, deployment baseline docs, observability baseline, and local E2E smoke verification. Production-grade auth hardening, ClearML agent execution, mobile app implementation, and AWS deployment are not implemented yet.
 
 ## Quick Start
 
@@ -26,6 +26,12 @@ After Docker Compose is running:
 - scheduler-service: http://localhost:8100/health
 - ml-service: http://localhost:8200/health
 - web-dashboard: http://localhost:5173
+
+Readiness endpoints:
+
+- backend-api: http://localhost:8000/api/ready
+- scheduler-service: http://localhost:8100/ready
+- ml-service: http://localhost:8200/ready
 
 Expected backend health response:
 
@@ -273,6 +279,14 @@ Covered in Issue 30 MVP:
 - Deployment guide with account requirements, HTTPS plan, validation commands, and hosted smoke checklist.
 - No AWS resources or external accounts are required for this issue.
 
+Covered in Issue 31 MVP:
+
+- `X-Request-ID` propagation for backend-api, scheduler-service, and ml-service.
+- Structured JSON request logs that exclude bodies, query strings, auth headers, cookies, and secrets.
+- Readiness endpoints separate from health endpoints.
+- Local observability runbook and QA checks.
+- No external observability account or paid monitoring API is required for this issue.
+
 Not covered yet:
 
 - Production ML / DL model registry.
@@ -280,6 +294,7 @@ Not covered yet:
 - Mobile app implementation.
 - AWS deployment.
 - Production-grade auth hardening and authorization.
+- Hosted monitoring, alerting, metrics backend, and tracing backend.
 
 ## No Secrets Policy
 
@@ -308,3 +323,4 @@ python scripts\browser_smoke.py
 - Version history: [CHANGELOG.md](CHANGELOG.md)
 - PM status report: [docs/project-status-report.md](docs/project-status-report.md)
 - Environment configuration: [docs/environment.md](docs/environment.md)
+- Observability baseline: [docs/observability.md](docs/observability.md)

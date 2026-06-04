@@ -16,11 +16,15 @@ Get a local token with `/auth/login` or `/auth/register`.
 
 ## Health
 
-| Service | Endpoint |
-| --- | --- |
-| backend-api | `GET /api/health` |
-| scheduler-service | `GET /health` |
-| ml-service | `GET /health` |
+Health endpoints are liveness checks. Readiness endpoints verify whether the service is ready to serve product traffic.
+
+| Service | Health endpoint | Readiness endpoint |
+| --- | --- | --- |
+| backend-api | `GET /api/health`, `GET /health` | `GET /api/ready`, `GET /ready` |
+| scheduler-service | `GET /health` | `GET /ready` |
+| ml-service | `GET /health` | `GET /ready` |
+
+All FastAPI services return `X-Request-ID`. If a valid `X-Request-ID` request header is provided, the same value is returned and written to the structured request log.
 
 ## Auth MVP
 

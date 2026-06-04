@@ -1,21 +1,21 @@
 # OrdoStack Project Status Report
 
 Date: 2026-06-04
-Version: 0.29.0
+Version: 0.30.0
 Report role: PM / project management
 
 ## Executive Summary
 
-OrdoStack is currently a local Customer Demo MVP with authentication, user-scoped planner data, and deployment baseline documentation. It is suitable for internal QA and customer reference demos on a developer machine through Docker Compose. It is not ready for public launch because hosted deployment execution, observability, backup, security review, mobile app, ClearML production workflow, and production model governance are not implemented yet.
+OrdoStack is currently a local Customer Demo MVP with authentication, user-scoped planner data, deployment baseline documentation, and observability baseline. It is suitable for internal QA and customer reference demos on a developer machine through Docker Compose. It is not ready for public launch because hosted deployment execution, backup/restore operations, security review, mobile app, ClearML production workflow, hosted monitoring, and production model governance are not implemented yet.
 
 Current evidence:
 
-- Previous release tag before deployment baseline: `v0.28.0`.
-- Current product stage after Issue 30: deployment-baseline Customer Demo MVP `v0.29.0`.
+- Previous release tag before observability baseline: `v0.29.0`.
+- Current product stage after Issue 31: observable Customer Demo MVP `v0.30.0`.
 - Main runnable entrypoint: `http://localhost:5173`.
 - Runtime: local Docker Compose.
 - Database: local MySQL container.
-- Verification gates available: Python tests, web build, Docker health checks, environment validation, E2E smoke, browser screenshot smoke, secrets scan.
+- Verification gates available: Python tests, web build, Docker health checks, readiness checks, environment validation, E2E smoke, browser screenshot smoke, secrets scan.
 
 ## PM Assessment
 
@@ -30,16 +30,16 @@ Public launch:
 
 ```text
 Status: Not ready
-Estimated remaining issue count: 17 to 23 focused issues
-Reason: auth, deployment, security, observability, backup, production data policy, accessibility, and operational workflows are missing
+Estimated remaining issue count: 16 to 22 focused issues
+Reason: hosted deployment, security, backup, production data policy, accessibility, hosted monitoring, and operational workflows are missing
 ```
 
 Private beta:
 
 ```text
 Status: Not ready yet
-Estimated remaining issue count: 5 to 8 focused issues
-Reason: beta can skip mobile and full MLOps, but still needs auth, deployment, backup, monitoring, and stricter QA
+Estimated remaining issue count: 4 to 7 focused issues
+Reason: beta can skip mobile and full MLOps, but still needs backup, hosted deployment execution, security hardening, hosted monitoring, and stricter QA
 ```
 
 The exact issue count depends on the launch definition. If launch means a controlled private beta for a small customer group, the smaller range applies. If launch means public SaaS or app-store-ready product, the larger range is more realistic.
@@ -63,6 +63,7 @@ Product capabilities already implemented:
 - Demo reset for bundled local demo user.
 - Local auth foundation with demo account, register, login, and current-user API.
 - User-scoped planner APIs for authenticated local users.
+- Observability baseline with request IDs, structured request logs, and readiness endpoints.
 - Dashboard empty states and retry behavior.
 - Local E2E smoke test.
 - Browser screenshot smoke test.
@@ -77,7 +78,7 @@ Launch-critical gaps:
 - Real onboarding and user profile settings.
 - Timezone and locale settings.
 - Production deployment with HTTPS, domain, reverse proxy, environment separation.
-- Observability: structured logs, metrics, traces, uptime checks, alerting.
+- Hosted observability: metrics, traces, uptime checks, alerting, retention.
 - Backup, restore, and data retention policy.
 - Production secrets management.
 - Security hardening and dependency audit gate.
@@ -104,21 +105,9 @@ Product gaps from the original specification:
 - Browser smoke verifies a nonblank PNG but does not detect visual regressions pixel-by-pixel.
 - The ML model is a local JSON artifact, not an operationally managed model.
 - Current CI validates build/test/config but does not run full Docker runtime E2E in GitHub Actions.
+- Observability is local baseline only; it has no metrics backend, tracing backend, hosted uptime monitor, alerting, or retention policy yet.
 
 ## Recommended Next Issues
-
-Issue 30: Deployment baseline
-
-- Add production deployment guide for single-node VPS/EC2.
-- Add reverse proxy / HTTPS plan.
-- Add smoke checklist for deployed environment.
-
-Issue 31: Observability baseline
-
-- Add structured logs.
-- Add request IDs.
-- Add health/readiness distinction.
-- Add basic operational runbook.
 
 Issue 32: Backup and restore MVP
 
@@ -217,4 +206,4 @@ Minimum next target for private beta:
 
 ## Next Execution Plan
 
-The next engineering pass should start with Issue 28 because environment hardening is now complete and authentication is the next major blocker before private beta.
+The next engineering pass should complete Issue 32 because backup and restore drill documentation is the next blocker before calling this a private-beta candidate.
