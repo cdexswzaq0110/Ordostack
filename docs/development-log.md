@@ -1,5 +1,37 @@
 # Development Log
 
+## 2026-06-04 - Issue 26 - PM Status Report And Baseline Corrections
+
+Branch:
+
+```text
+feature/issue-26-pm-status-report
+```
+
+Scope:
+
+- Add PM project status report.
+- Record customer demo readiness, public launch gaps, and next recommended issues.
+- Correct stale Issue 20 baseline references.
+- Correct QA migration expectation to Alembic revision `20260604_0002`.
+
+MVP boundaries:
+
+- Documentation and governance issue only.
+- No product runtime behavior changes.
+- No production launch implementation yet.
+
+Suggested git commit:
+
+```text
+docs(pm): add project status report
+```
+
+Verification:
+
+- Documentation diff must not introduce secrets.
+- `git diff --check` must pass.
+
 ## 2026-06-04 - Issue 25 - Browser Screenshot Smoke MVP
 
 Branch:

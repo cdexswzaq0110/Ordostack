@@ -2,6 +2,18 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.25.0 - 2026-06-04
+
+- Add PM project status report with launch-readiness assessment.
+- Correct documentation baseline references from Issue 20 to Issue 26.
+- Correct QA migration expectation to Alembic revision `20260604_0002`.
+
+Suggested commit:
+
+```text
+docs(pm): add project status report
+```
+
 ## 0.24.0 - 2026-06-04
 
 - Add local browser smoke script that captures a dashboard screenshot through headless Edge or Chrome.

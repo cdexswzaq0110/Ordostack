@@ -1,6 +1,6 @@
 # OrdoStack Architecture
 
-Issue 20 defines the current local Customer Demo MVP architecture. The system is runnable with Docker Compose and uses service boundaries that can later be hardened for production deployment.
+Issue 26 defines the current local Customer Demo MVP architecture. The system is runnable with Docker Compose and uses service boundaries that can later be hardened for production deployment.
 
 ```mermaid
 flowchart LR
@@ -61,6 +61,7 @@ Current local release gates:
 - Docker Compose config validation.
 - Docker Compose rebuild and health checks.
 - Local E2E smoke script.
+- Browser screenshot smoke script.
 - Secrets scan.
 
 GitHub Actions currently runs test, build, and config checks. Docker runtime E2E is still local-only.
@@ -73,4 +74,4 @@ GitHub Actions currently runs test, build, and config checks. Docker runtime E2E
 - No DL service.
 - No mobile app implementation.
 - No production backup, restore, monitoring, or incident workflow.
-- No browser screenshot regression suite.
+- Browser screenshot smoke exists, but no pixel-perfect visual regression suite exists yet.

@@ -238,6 +238,12 @@ Covered in Issue 25 MVP:
 - E2E smoke coverage for schedule rename, diff, and export APIs.
 - Generated browser smoke artifacts ignored from Git.
 
+Covered in Issue 26 MVP:
+
+- PM project status report.
+- Documentation baseline corrected from Issue 20 to Issue 26.
+- Migration expectation corrected to Alembic revision `20260604_0002`.
+
 Not covered yet:
 
 - Production ML / DL model registry.
@@ -271,3 +277,4 @@ python scripts\browser_smoke.py
 - Branching guide: [docs/branching-strategy.md](docs/branching-strategy.md)
 - Release process: [docs/release-process.md](docs/release-process.md)
 - Version history: [CHANGELOG.md](CHANGELOG.md)
+- PM status report: [docs/project-status-report.md](docs/project-status-report.md)

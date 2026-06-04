@@ -52,7 +52,7 @@ docker compose ps
 docker compose exec backend-api alembic current
 ```
 
-Expected: output contains `20260603_0001`.
+Expected: output contains `20260604_0002`.
 15. Click `Next day`.
 16. Expected: the date changes to June 4, 2026 and dashboard data reloads.
 17. Click `Previous day`.
