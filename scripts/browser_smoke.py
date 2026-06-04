@@ -7,6 +7,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+import tempfile
 from urllib.error import URLError
 from urllib.request import urlopen
 
@@ -24,17 +25,18 @@ def fetch_text(url: str) -> str:
 def browser_candidates() -> list[Path]:
     path_candidates = [
         shutil.which("msedge"),
+        shutil.which("microsoft-edge"),
         shutil.which("chrome"),
         shutil.which("google-chrome"),
         shutil.which("chromium"),
         shutil.which("chromium-browser"),
     ]
     windows_candidates = [
+        Path(os.environ.get("ProgramFiles", "C:/Program Files")) / "Microsoft/Edge/Application/msedge.exe",
+        Path(os.environ.get("ProgramFiles(x86)", "C:/Program Files (x86)")) / "Microsoft/Edge/Application/msedge.exe",
         Path(os.environ.get("ProgramFiles", "C:/Program Files")) / "Google/Chrome/Application/chrome.exe",
         Path(os.environ.get("ProgramFiles(x86)", "C:/Program Files (x86)")) / "Google/Chrome/Application/chrome.exe",
         Path(os.environ.get("LocalAppData", "")) / "Google/Chrome/Application/chrome.exe",
-        Path(os.environ.get("ProgramFiles", "C:/Program Files")) / "Microsoft/Edge/Application/msedge.exe",
-        Path(os.environ.get("ProgramFiles(x86)", "C:/Program Files (x86)")) / "Microsoft/Edge/Application/msedge.exe",
     ]
     return [Path(candidate) for candidate in path_candidates if candidate] + windows_candidates
 
@@ -48,7 +50,12 @@ def find_browser() -> Path:
 
 def capture_screenshot(browser_path: Path, screenshot_path: Path) -> None:
     screenshot_path = screenshot_path.resolve()
-    profile_dir = (OUTPUT_DIR / "profile").resolve()
+    profile_dir = Path(
+        os.getenv(
+            "ORDOSTACK_BROWSER_PROFILE_DIR",
+            tempfile.mkdtemp(prefix="ordostack-browser-smoke-"),
+        ),
+    ).resolve()
     profile_dir.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
     for headless_flag in ("--headless=new", "--headless"):
@@ -56,6 +63,13 @@ def capture_screenshot(browser_path: Path, screenshot_path: Path) -> None:
             str(browser_path),
             headless_flag,
             "--disable-gpu",
+            "--disable-gpu-compositing",
+            "--disable-accelerated-2d-canvas",
+            "--disable-dev-shm-usage",
+            "--disable-gpu-sandbox",
+            "--no-sandbox",
+            "--use-angle=swiftshader",
+            "--use-gl=swiftshader",
             "--hide-scrollbars",
             "--no-first-run",
             "--disable-extensions",
@@ -64,7 +78,15 @@ def capture_screenshot(browser_path: Path, screenshot_path: Path) -> None:
             f"--screenshot={screenshot_path}",
             DASHBOARD_URL,
         ]
-        completed = subprocess.run(command, check=False, capture_output=True, text=True, timeout=45)
+        completed = subprocess.run(
+            command,
+            check=False,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=45,
+        )
         if completed.returncode == 0:
             return
 
