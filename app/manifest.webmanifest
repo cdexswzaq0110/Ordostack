@@ -1,0 +1,10 @@
+{
+  "name": "OrdoStack Draft Edition",
+  "short_name": "OrdoStack",
+  "description": "A draft study planning app for organizing goals, tasks, priorities, and daily focus.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#fbfaf6",
+  "theme_color": "#fbfaf6",
+  "icons": []
+}
