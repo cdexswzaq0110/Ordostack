@@ -110,6 +110,7 @@ Create task example:
 | --- | --- | --- |
 | `GET` | `/fixed-events?target_date=2026-06-03` | List fixed events for the authenticated user |
 | `POST` | `/fixed-events` | Create a fixed event |
+| `POST` | `/fixed-events/recurring` | Create weekly recurring fixed events expanded into dated events |
 | `PATCH` | `/fixed-events/{fixed_event_id}` | Update a fixed event |
 | `DELETE` | `/fixed-events/{fixed_event_id}` | Soft delete a fixed event |
 
@@ -134,9 +135,11 @@ Backend entrypoint:
 | `GET` | `/schedules/latest?target_date=2026-06-03` | Load the latest persisted generated schedule |
 | `GET` | `/schedules/history?target_date=2026-06-03&limit=5` | Load recent persisted generated schedules |
 | `PATCH` | `/schedules/history/{schedule_run_id}` | Rename a schedule history item |
+| `PATCH` | `/schedules/history/{schedule_run_id}/items/{item_key}/lock` | Lock or unlock a schedule item |
+| `PATCH` | `/schedules/history/{schedule_run_id}/items/{item_key}/time` | Manually adjust a schedule item time |
 | `DELETE` | `/schedules/history/{schedule_run_id}` | Soft delete a schedule history item |
 | `GET` | `/schedules/history/{schedule_run_id}/diff?against_run_id=1` | Compare two schedule history items |
-| `GET` | `/schedules/history/{schedule_run_id}/export?format=markdown` | Export a schedule history item as Markdown or CSV text |
+| `GET` | `/schedules/history/{schedule_run_id}/export?format=markdown` | Export a schedule history item as Markdown, CSV, or PDF |
 
 Request example:
 
@@ -169,7 +172,9 @@ Response shape:
       "order_index": 0,
       "category": "study",
       "requires_focus": true,
-      "score": 72.5
+      "score": 72.5,
+      "locked": false,
+      "manual_override": false
     }
   ],
   "algorithm_summary": {
@@ -204,10 +209,65 @@ Generated schedule persistence:
 - `GET /schedules/latest` returns the latest generated schedule for the authenticated user and `target_date`.
 - `GET /schedules/history` returns recent non-deleted generated schedules for the authenticated user and `target_date`, newest first.
 - `PATCH /schedules/history/{schedule_run_id}` updates the history item title.
+- `PATCH /schedules/history/{schedule_run_id}/items/{item_key}/lock` updates `locked`.
+- `PATCH /schedules/history/{schedule_run_id}/items/{item_key}/time` updates start/end time, sets `locked=true`, sets `manual_override=true`, and rejects fixed-event conflicts.
 - `DELETE /schedules/history/{schedule_run_id}` soft deletes the history item.
 - `GET /schedules/history/{schedule_run_id}/diff` compares a selected generated run against another run.
-- `GET /schedules/history/{schedule_run_id}/export` returns a downloadable text payload for `markdown` or `csv`.
+- `GET /schedules/history/{schedule_run_id}/export` returns a downloadable payload for `markdown`, `csv`, or base64 `pdf`.
 - If no saved schedule exists, `GET /schedules/latest` returns `404`.
+
+Locked item key examples:
+
+```text
+task:1
+fixed_event:2
+```
+
+Manual time adjustment request:
+
+```json
+{
+  "start_time": "2026-06-03T11:00:00",
+  "end_time": "2026-06-03T12:15:00"
+}
+```
+
+Recurring fixed event example:
+
+```json
+{
+  "title": "Weekly planning",
+  "start_time": "2026-06-03T08:30:00",
+  "end_time": "2026-06-03T09:00:00",
+  "event_type": "planning",
+  "recurrence_days": [2],
+  "recurrence_until": "2026-06-17"
+}
+```
+
+`recurrence_days` uses weekday values from `0` Monday through `6` Sunday.
+
+## Schedule Templates MVP
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `GET` | `/schedule-templates` | List named planning templates |
+| `POST` | `/schedule-templates` | Create a named planning template |
+| `PATCH` | `/schedule-templates/{template_id}` | Update a planning template |
+| `DELETE` | `/schedule-templates/{template_id}` | Soft delete a planning template |
+
+Template request:
+
+```json
+{
+  "name": "Deep work morning",
+  "planning_mode": "focus-heavy",
+  "start_hour": 8,
+  "end_hour": 13,
+  "buffer_minutes": 15,
+  "include_fixed_events": true
+}
+```
 
 ## Execution Logs MVP
 
@@ -234,6 +294,7 @@ Execution event request:
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
 | `GET` | `/analytics/daily?target_date=2026-06-03` | Daily execution summary for the authenticated user |
+| `GET` | `/analytics/completion-forecast?target_date=2026-06-03` | Heuristic completion forecast |
 
 Response shape:
 
@@ -270,6 +331,7 @@ Backend entrypoint:
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
 | `GET` | `/ml/duration-predictions?target_date=2026-06-03` | Predict task duration for dashboard and scheduler |
+| `GET` | `/ml/duration-feedback?target_date=2026-06-03` | Export completed-task duration feedback as CSV |
 
 Response shape:
 
@@ -305,6 +367,12 @@ ML model info endpoint:
 GET http://localhost:8200/model/info
 ```
 
+ML model registry endpoint:
+
+```text
+GET http://localhost:8200/model/registry
+```
+
 Expected local artifact response:
 
 ```json
@@ -317,7 +385,7 @@ Expected local artifact response:
 
 ## Current Data Store
 
-Docker Compose runs backend-api with `DATA_STORE=mysql`, backed by the `mysql:8.4` service and the `ordostack` database. The persisted MVP tables are `tasks`, `fixed_events`, `execution_logs`, `schedule_runs`, and `schedule_items`.
+Docker Compose runs backend-api with `DATA_STORE=mysql`, backed by the `mysql:8.4` service and the `ordostack` database. The persisted MVP tables are `tasks`, `fixed_events`, `execution_logs`, `schedule_runs`, `schedule_items`, and `schedule_templates`.
 
 Local pytest runs use the in-memory seeded repository by default, so tests do not require a running database.
 

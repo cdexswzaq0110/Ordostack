@@ -1,6 +1,6 @@
 # QA MVP Test Plan
 
-Scope: Issue 33 Traditional Chinese Dashboard Locale, Issue 32 Backup And Restore MVP, Issue 31 Observability Baseline, Issue 30 Deployment Baseline, Issue 29 User Isolation, Issue 28 Authentication Foundation, Issue 27 Environment Configuration Hardening, Issue 25 Browser Screenshot Smoke, Issue 24 Schedule Export, Issue 23 Schedule Diff, Issue 22 Schedule History Actions, Issue 21 Task Filter And Sort, Issue 20 Demo MVP Documentation Baseline, Issue 19 E2E Smoke Workflow, Demo Seed And Reset Control, Dashboard UX Polish, Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
+Scope: Issues 34-45 Non-Docker Product Hardening, Issue 33 Traditional Chinese Dashboard Locale, Issue 32 Backup And Restore MVP, Issue 31 Observability Baseline, Issue 30 Deployment Baseline, Issue 29 User Isolation, Issue 28 Authentication Foundation, Issue 27 Environment Configuration Hardening, Issue 25 Browser Screenshot Smoke, Issue 24 Schedule Export, Issue 23 Schedule Diff, Issue 22 Schedule History Actions, Issue 21 Task Filter And Sort, Issue 20 Demo MVP Documentation Baseline, Issue 19 E2E Smoke Workflow, Demo Seed And Reset Control, Dashboard UX Polish, Schedule History Management, Date Picker Navigation, Fixed Event Editing, Task Editing, Task, Fixed Event, Scheduler, Persisted Schedule, Date Navigation, Execution Log, Analytics, Duration Prediction, Local ML Training, MySQL Persistence, and Migration Baseline MVP.
 
 ## Environment
 
@@ -52,7 +52,7 @@ docker compose ps
 docker compose exec backend-api alembic current
 ```
 
-Expected: output contains `20260604_0003`.
+Expected: output contains `20260610_0004`.
 15. Click `Next day`.
 16. Expected: the date changes to June 4, 2026 and dashboard data reloads.
 17. Click `Previous day`.
@@ -67,6 +67,72 @@ Windows PowerShell:
 ```powershell
 python scripts\e2e_smoke.py
 ```
+
+## Issue 34-45 Non-Docker Checks
+
+Run service tests from each service directory:
+
+```powershell
+cd backend-api
+python -m pytest tests
+cd ..\scheduler-service
+python -m pytest tests
+cd ..\ml-service
+python -m pytest tests
+cd ..
+```
+
+Run local audit scripts:
+
+```powershell
+python scripts\a11y_static_audit.py
+python scripts\security_audit.py --root .
+python scripts\visual_regression.py --baseline artifacts\visual-baseline\dashboard.png --candidate artifacts\browser-smoke\dashboard.png --threshold 0.01
+```
+
+Manual schedule control checks:
+
+1. Generate a schedule for June 3, 2026.
+2. Click the lock icon on a task schedule item.
+3. Expected: the item metadata shows locked state after refresh.
+4. Click `+15` or `-15` move control.
+5. Expected: the item moves, remains locked, and shows manual state.
+6. Try moving an item into a fixed event block.
+7. Expected: backend rejects the change with a conflict response.
+8. Generate a new plan.
+9. Expected: locked item remains in the preserved time range.
+
+Recurring fixed event checks:
+
+1. Call `POST /api/fixed-events/recurring`.
+2. Use `recurrence_days` with weekday values `0` to `6`.
+3. Expected: API returns dated fixed events with `recurrence_id` and `recurrence_rule`.
+4. Open each generated date.
+5. Expected: fixed event appears on those dates.
+
+Schedule template checks:
+
+1. Create a schedule template.
+2. Update its name or buffer.
+3. List templates.
+4. Delete the template.
+5. Expected: deleted template no longer appears.
+
+Export checks:
+
+1. Export a generated schedule as Markdown.
+2. Export the same schedule as CSV.
+3. Export the same schedule as PDF.
+4. Expected: PDF payload uses base64 and decodes to `%PDF-1.4`.
+
+ML and analytics checks:
+
+1. Call `GET /api/analytics/completion-forecast?target_date=2026-06-03`.
+2. Expected: response includes forecast completion rate, remaining minutes, projected done tasks, confidence, and reason.
+3. Call `GET /api/ml/duration-feedback?target_date=2026-06-03`.
+4. Expected: response contains CSV rows only for completed tasks with actual minutes.
+5. Call `GET http://localhost:8200/model/registry`.
+6. Expected: response reports local JSON registry metadata or fallback.
 
 Linux / WSL:
 
@@ -527,10 +593,11 @@ Invoke-RestMethod -Uri "http://localhost:8200/model/info"
 - Schedule history rename, deletion, and compact diff are implemented; side-by-side timeline diff is not implemented yet.
 - Active timers only affect actual minutes after pause, complete, or skip closes an interval.
 - Task splitting is not implemented yet.
-- Duration prediction uses a local JSON training artifact, not a production model registry.
+- Duration prediction uses a local JSON artifact and local registry abstraction, not a hosted production model promotion workflow.
 - Core planner APIs require local bearer authentication and scope data to the current user.
 - Observability baseline provides request IDs, request logs, and readiness only; metrics, tracing, alerting, and hosted uptime checks are not implemented yet.
 - Backup/restore baseline provides local SQL dump and verification only; scheduled jobs, encrypted off-host storage, and automated production restore are not implemented yet.
-- ML metrics are local sample metrics until a production model registry exists.
+- A11y, security, and visual regression gates are local MVP scripts; formal external audit and hosted regression governance are not implemented yet.
+- Docker finalization is intentionally deferred to a dedicated deployment hardening pass.
 - Schema bootstrap remains as a compatibility fallback; Alembic is the Docker startup path.
 - MySQL uses local development settings and no production credential management.

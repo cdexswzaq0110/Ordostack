@@ -63,6 +63,36 @@ def test_create_fixed_event_rejects_invalid_time_range() -> None:
     assert response.status_code == 422
 
 
+def test_create_recurring_fixed_event_expands_weekly_events() -> None:
+    store.reset()
+    client = TestClient(app)
+    headers = auth_headers(client)
+
+    response = client.post(
+        "/api/fixed-events/recurring",
+        headers=headers,
+        json={
+            "title": "Weekly planning",
+            "start_time": "2026-06-03T08:30:00",
+            "end_time": "2026-06-03T09:00:00",
+            "event_type": "planning",
+            "recurrence_days": [2],
+            "recurrence_until": "2026-06-17",
+        },
+    )
+
+    assert response.status_code == 201
+    events = response.json()
+    assert len(events) == 3
+    assert events[0]["recurrence_id"].startswith("rec-")
+    assert events[0]["recurrence_rule"] == "weekly:2:until:2026-06-17"
+    assert [event["start_time"] for event in events] == [
+        "2026-06-03T08:30:00",
+        "2026-06-10T08:30:00",
+        "2026-06-17T08:30:00",
+    ]
+
+
 def test_update_fixed_event_returns_updated_event() -> None:
     store.reset()
     client = TestClient(app)

@@ -25,3 +25,13 @@ class DailyAnalyticsRead(BaseModel):
     completion_rate: int
     focus_minutes: int
     task_summaries: list[TaskExecutionSummary]
+
+
+class CompletionForecastRead(BaseModel):
+    user_id: int
+    target_date: date
+    forecast_completion_rate: int
+    remaining_minutes: int
+    projected_done_tasks: int
+    confidence: float
+    reason: str

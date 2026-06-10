@@ -2,6 +2,143 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.44.0 - 2026-06-10
+
+- Add local security audit script for common secret and private-key patterns.
+- Add dependency update policy notes to QA and release documentation.
+- Keep Docker hardening out of this issue batch per product direction.
+
+Suggested commit:
+
+```text
+chore(security): add local audit gates
+```
+
+## 0.43.0 - 2026-06-10
+
+- Add deterministic PNG visual regression comparison script.
+- Add local baseline update and threshold compare workflow under ignored artifacts.
+
+Suggested commit:
+
+```text
+test(visual): add screenshot regression baseline
+```
+
+## 0.42.0 - 2026-06-10
+
+- Add non-Docker GitHub Actions browser smoke job using Vite preview.
+- Upload browser smoke screenshots as CI artifacts.
+
+Suggested commit:
+
+```text
+ci(browser): add dashboard smoke artifact
+```
+
+## 0.41.0 - 2026-06-10
+
+- Add completion forecast endpoint based on daily execution state and remaining workload.
+- Add dashboard-ready API coverage for forecast QA.
+
+Suggested commit:
+
+```text
+feat(analytics): add completion forecast
+```
+
+## 0.40.0 - 2026-06-10
+
+- Add duration feedback CSV export for completed tasks with actual minutes.
+- Keep training data updates manual so local datasets are not overwritten automatically.
+
+Suggested commit:
+
+```text
+feat(ml): export duration feedback
+```
+
+## 0.39.0 - 2026-06-10
+
+- Add local JSON model registry abstraction to ml-service.
+- Add `/model/registry` endpoint and registry example file.
+- Preserve duration artifact and heuristic fallback behavior.
+
+Suggested commit:
+
+```text
+feat(ml): add local model registry
+```
+
+## 0.38.0 - 2026-06-10
+
+- Add disabled-by-default ClearML local tracking baseline documentation.
+- Clarify that real ClearML server and agent execution belongs to a later deployment phase.
+
+Suggested commit:
+
+```text
+docs(mlops): add ClearML local tracking baseline
+```
+
+## 0.37.0 - 2026-06-10
+
+- Add a dashboard accessibility static audit script.
+- Extend focus-visible styling to select controls.
+- Label new schedule adjustment controls for keyboard and assistive technology use.
+
+Suggested commit:
+
+```text
+test(a11y): add dashboard static audit
+```
+
+## 0.36.0 - 2026-06-10
+
+- Add local PDF schedule export without paid APIs.
+- Add dashboard PDF export button and base64 download handling.
+
+Suggested commit:
+
+```text
+feat(export): add schedule PDF export
+```
+
+## 0.35.0 - 2026-06-10
+
+- Add named schedule template CRUD APIs.
+- Persist reusable planning mode, start/end hour, buffer, and fixed-event inclusion settings.
+
+Suggested commit:
+
+```text
+feat(schedules): add planning templates
+```
+
+## 0.34.0 - 2026-06-10
+
+- Add weekly recurring fixed event expansion endpoint.
+- Store recurrence metadata on generated dated fixed events.
+
+Suggested commit:
+
+```text
+feat(events): add recurring fixed events
+```
+
+## 0.33.0 - 2026-06-10
+
+- Add schedule item locking and manual time adjustment APIs.
+- Preserve locked schedule items during later schedule generation.
+- Add dashboard timeline controls for lock, move earlier, and move later.
+- Validate manual schedule adjustments against fixed-event conflicts.
+
+Suggested commit:
+
+```text
+feat(schedules): add manual schedule controls
+```
+
 ## 0.32.0 - 2026-06-04
 
 - Add dashboard language switcher with English as the default locale.

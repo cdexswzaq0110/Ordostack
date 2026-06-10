@@ -1,8 +1,8 @@
 # OrdoStack
 
-OrdoStack is an AI daily planning MVP for task capture, protected calendar blocks, persisted generated schedules, execution analytics, local duration prediction, and MySQL-backed persistence.
+OrdoStack is an AI daily planning MVP for task capture, protected calendar blocks, persisted generated schedules, manual schedule control, execution analytics, local duration prediction, and MySQL-backed persistence.
 
-This version is a local Customer Demo MVP: it implements task/fixed-event APIs, a scheduler-service MVP, persisted generated schedules, execution logs, daily analytics, local ML duration prediction, MySQL persistence in Docker, Alembic baseline migrations, a React dashboard, English / Traditional Chinese dashboard locale support, demo reset, local auth foundation, user-scoped planner APIs, deployment baseline docs, observability baseline, backup/restore drill baseline, and local E2E smoke verification. Production-grade auth hardening, ClearML agent execution, mobile app implementation, and AWS deployment are not implemented yet.
+This version is a local Customer Demo MVP: it implements task/fixed-event APIs, recurring fixed event expansion, schedule locking and manual adjustment, reusable schedule templates, scheduler-service MVP, persisted generated schedules, Markdown/CSV/PDF export, execution logs, daily analytics, completion forecast, local ML duration prediction, local model registry, duration feedback export, MySQL persistence in Docker, Alembic baseline migrations, a React dashboard, English / Traditional Chinese dashboard locale support, demo reset, local auth foundation, user-scoped planner APIs, deployment baseline docs, observability baseline, backup/restore drill baseline, local E2E smoke verification, browser smoke CI, visual regression script, a11y static audit, and security audit script. Production-grade auth hardening, ClearML agent execution, mobile app implementation, hosted monitoring, and AWS deployment are not implemented yet.
 
 ## Quick Start
 
@@ -303,10 +303,27 @@ Covered in Issue 33 MVP:
 - Selected language persists in local storage.
 - User-entered task and event content is not translated.
 
+Covered in Issues 34-45 MVP:
+
+- Schedule item lock/unlock and manual `-15/+15` dashboard adjustment controls.
+- Locked generated items are preserved during later schedule generation.
+- Manual schedule adjustment validates conflicts against fixed event blocks.
+- Weekly recurring fixed events expand into dated fixed event rows.
+- Named schedule templates store reusable planning settings.
+- Markdown, CSV, and local PDF schedule export are available without paid APIs.
+- Dashboard a11y static audit and select focus-visible coverage are included.
+- ClearML is documented as disabled-by-default local tracking only; no account is required.
+- ML service has a local JSON model registry abstraction and `/model/registry`.
+- Backend can export completed-task duration feedback CSV for local training review.
+- Completion forecast endpoint estimates likely daily completion from execution state.
+- GitHub Actions includes a non-Docker browser smoke job with screenshot artifact upload.
+- Visual regression and security audit scripts are available for local QA.
+- Docker implementation changes are intentionally deferred to the final deployment phase.
+
 Not covered yet:
 
 - Production ML / DL model registry.
-- ClearML agent execution.
+- Hosted model registry and ClearML agent execution.
 - Mobile app implementation.
 - AWS deployment.
 - Production-grade auth hardening and authorization.
@@ -320,6 +337,14 @@ Do not commit `.env`, API keys, ClearML credentials, AWS credentials, database p
 ## QA MVP
 
 Manual QA instructions are in [docs/qa-mvp.md](docs/qa-mvp.md).
+
+Non-Docker local QA scripts:
+
+```powershell
+python scripts\a11y_static_audit.py
+python scripts\security_audit.py --root .
+python scripts\visual_regression.py --baseline artifacts\visual-baseline\dashboard.png --candidate artifacts\browser-smoke\dashboard.png --threshold 0.01
+```
 
 Local E2E smoke after Docker Compose is running:
 

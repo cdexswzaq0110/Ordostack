@@ -1,4 +1,5 @@
 from typing import Any
+import base64
 
 from fastapi.testclient import TestClient
 
@@ -359,6 +360,10 @@ def test_schedule_history_export_returns_markdown_and_csv(monkeypatch) -> None:
         f"/api/schedules/history/{schedule_run_id}/export",
         params={"user_id": 1, "format": "csv"},
     )
+    pdf_response = client.get(
+        f"/api/schedules/history/{schedule_run_id}/export",
+        params={"user_id": 1, "format": "pdf"},
+    )
 
     assert markdown_response.status_code == 200
     assert markdown_response.json()["filename"].endswith(".md")
@@ -368,6 +373,131 @@ def test_schedule_history_export_returns_markdown_and_csv(monkeypatch) -> None:
     assert csv_response.status_code == 200
     assert csv_response.json()["filename"].endswith(".csv")
     assert csv_response.json()["content"].startswith("start_time,end_time,type,title,planned_minutes,category")
+
+    assert pdf_response.status_code == 200
+    assert pdf_response.json()["filename"].endswith(".pdf")
+    assert pdf_response.json()["encoding"] == "base64"
+    assert base64.b64decode(pdf_response.json()["content"]).startswith(b"%PDF-1.4")
+
+
+def test_schedule_item_lock_and_manual_adjustment_preserved_on_next_generation(monkeypatch) -> None:
+    store.reset()
+    captured_requests: list[dict[str, Any]] = []
+    schedule_payload = {
+        "schedule_date": "2026-06-03",
+        "planning_mode": "balanced",
+        "items": [
+            {
+                "type": "task",
+                "task_id": 1,
+                "fixed_event_id": None,
+                "title": "ML course chapter notes",
+                "start_time": "2026-06-03T09:00:00",
+                "end_time": "2026-06-03T10:00:00",
+                "planned_minutes": 60,
+                "order_index": 0,
+                "category": "study",
+                "requires_focus": True,
+                "score": 70,
+                "locked": False,
+                "manual_override": False,
+            },
+            {
+                "type": "fixed_event",
+                "task_id": None,
+                "fixed_event_id": 2,
+                "title": "Dinner break",
+                "start_time": "2026-06-03T18:20:00",
+                "end_time": "2026-06-03T19:00:00",
+                "planned_minutes": 40,
+                "order_index": 1,
+                "category": "rest",
+                "requires_focus": False,
+                "score": None,
+            },
+        ],
+        "algorithm_summary": {
+            "available_minutes": 600,
+            "selected_task_count": 1,
+            "scheduled_task_count": 1,
+            "skipped_task_count": 0,
+            "total_task_minutes": 60,
+            "applied_algorithms": ["priority-score"],
+            "warnings": [],
+        },
+    }
+
+    def fake_post(url: str, json: dict[str, Any], timeout: float) -> PayloadSchedulerResponse:
+        captured_requests.append(json)
+        return PayloadSchedulerResponse(schedule_payload)
+
+    def fake_predict_for_tasks(user_id, target_date, tasks) -> DurationPredictionResponse:
+        return DurationPredictionResponse(
+            user_id=user_id,
+            target_date=target_date,
+            model_name="heuristic-duration",
+            model_version="0.1.0",
+            predictions=[],
+        )
+
+    monkeypatch.setattr(schedule_service.httpx, "post", fake_post)
+    monkeypatch.setattr(schedule_service.prediction_service, "predict_for_tasks", fake_predict_for_tasks)
+    client = TestClient(app)
+    client.headers.update(auth_headers(client))
+
+    generate_response = client.post(
+        "/api/schedules/generate",
+        json={
+            "target_date": "2026-06-03",
+            "planning_mode": "balanced",
+            "start_hour": 9,
+            "end_hour": 23,
+            "buffer_minutes": 10,
+            "include_fixed_events": True,
+        },
+    )
+    assert generate_response.status_code == 200
+
+    history_response = client.get("/api/schedules/history", params={"target_date": "2026-06-03"})
+    schedule_run_id = history_response.json()[0]["id"]
+
+    lock_response = client.patch(
+        f"/api/schedules/history/{schedule_run_id}/items/task:1/lock",
+        json={"locked": True},
+    )
+    assert lock_response.status_code == 200
+    assert lock_response.json()["schedule"]["items"][0]["locked"] is True
+
+    conflict_response = client.patch(
+        f"/api/schedules/history/{schedule_run_id}/items/task:1/time",
+        json={"start_time": "2026-06-03T18:30:00", "end_time": "2026-06-03T19:00:00"},
+    )
+    assert conflict_response.status_code == 409
+
+    adjust_response = client.patch(
+        f"/api/schedules/history/{schedule_run_id}/items/task:1/time",
+        json={"start_time": "2026-06-03T11:00:00", "end_time": "2026-06-03T12:15:00"},
+    )
+    assert adjust_response.status_code == 200
+    adjusted_item = adjust_response.json()["schedule"]["items"][0]
+    assert adjusted_item["locked"] is True
+    assert adjusted_item["manual_override"] is True
+    assert adjusted_item["planned_minutes"] == 75
+
+    second_generate_response = client.post(
+        "/api/schedules/generate",
+        json={
+            "target_date": "2026-06-03",
+            "planning_mode": "balanced",
+            "start_hour": 9,
+            "end_hour": 23,
+            "buffer_minutes": 10,
+            "include_fixed_events": True,
+        },
+    )
+    assert second_generate_response.status_code == 200
+    assert captured_requests[-1]["locked_items"][0]["task_id"] == 1
+    assert captured_requests[-1]["locked_items"][0]["manual_override"] is True
 
 
 def test_schedule_history_title_update_and_soft_delete(monkeypatch) -> None:

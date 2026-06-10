@@ -2,7 +2,7 @@ from datetime import date, datetime
 from typing import Literal
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class ScheduleGenerateRequest(BaseModel):
@@ -32,6 +32,21 @@ class ScheduleHistoryUpdate(BaseModel):
     title: str = Field(min_length=1, max_length=120)
 
 
+class ScheduleItemLockUpdate(BaseModel):
+    locked: bool
+
+
+class ScheduleItemTimeUpdate(BaseModel):
+    start_time: datetime
+    end_time: datetime
+
+    @model_validator(mode="after")
+    def validate_time_range(self) -> "ScheduleItemTimeUpdate":
+        if self.end_time <= self.start_time:
+            raise ValueError("end_time must be later than start_time")
+        return self
+
+
 class ScheduleHistoryDeleteResponse(BaseModel):
     deleted: bool
 
@@ -59,6 +74,7 @@ class ScheduleDiffResponse(BaseModel):
 
 class ScheduleExportResponse(BaseModel):
     filename: str
-    format: Literal["markdown", "csv"]
+    format: Literal["markdown", "csv", "pdf"]
     content_type: str
     content: str
+    encoding: Literal["utf-8", "base64"] = "utf-8"

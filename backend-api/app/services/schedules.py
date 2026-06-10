@@ -1,4 +1,5 @@
-from datetime import date
+import base64
+from datetime import date, datetime
 from typing import Any
 
 import httpx
@@ -15,6 +16,8 @@ from app.schemas.schedules import (
     ScheduleHistoryDeleteResponse,
     ScheduleHistoryItem,
     ScheduleHistoryUpdate,
+    ScheduleItemLockUpdate,
+    ScheduleItemTimeUpdate,
 )
 from app.services import fixed_events as fixed_event_service
 from app.services import predictions as prediction_service
@@ -52,6 +55,10 @@ def generate_schedule(payload: ScheduleGenerateRequest) -> ScheduleGenerateRespo
         for task in tasks
     ]
     scheduler_payload["fixed_events"] = [event.model_dump(mode="json") for event in fixed_events]
+    scheduler_payload["locked_items"] = list_locked_schedule_items(
+        user_id=payload.user_id,
+        target_date=payload.target_date,
+    )
 
     scheduler_url = load_runtime_config().scheduler_service_url
     try:
@@ -113,6 +120,74 @@ def update_schedule_history_title(
     return ScheduleHistoryItem.model_validate(schedule)
 
 
+def update_schedule_item_lock(
+    user_id: int,
+    schedule_run_id: int,
+    item_key: str,
+    payload: ScheduleItemLockUpdate,
+) -> ScheduleHistoryItem:
+    schedule = get_store().update_generated_schedule_item(
+        user_id=user_id,
+        schedule_run_id=schedule_run_id,
+        item_key=item_key,
+        payload={"locked": payload.locked},
+    )
+    if schedule is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Schedule item not found")
+    return ScheduleHistoryItem.model_validate(schedule)
+
+
+def update_schedule_item_time(
+    user_id: int,
+    schedule_run_id: int,
+    item_key: str,
+    payload: ScheduleItemTimeUpdate,
+) -> ScheduleHistoryItem:
+    schedule_run = get_store().get_generated_schedule_history_item(user_id=user_id, schedule_run_id=schedule_run_id)
+    if schedule_run is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Generated schedule not found")
+
+    current_item = find_schedule_item(schedule_run["schedule"].get("items", []), item_key)
+    if current_item is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Schedule item not found")
+
+    fixed_event_items = [
+        {
+            "type": "fixed_event",
+            "fixed_event_id": event.id,
+            "title": event.title,
+            "start_time": event.start_time,
+            "end_time": event.end_time,
+        }
+        for event in fixed_event_service.list_fixed_events(
+            user_id=user_id,
+            target_date=date.fromisoformat(str(schedule_run["schedule"].get("schedule_date"))),
+        )
+    ]
+    validate_fixed_event_conflicts(
+        items=[*schedule_run["schedule"].get("items", []), *fixed_event_items],
+        item_key=item_key,
+        next_start_time=payload.start_time,
+        next_end_time=payload.end_time,
+    )
+
+    schedule = get_store().update_generated_schedule_item(
+        user_id=user_id,
+        schedule_run_id=schedule_run_id,
+        item_key=item_key,
+        payload={
+            "start_time": payload.start_time.isoformat(),
+            "end_time": payload.end_time.isoformat(),
+            "planned_minutes": minutes_between(payload.start_time, payload.end_time),
+            "locked": True,
+            "manual_override": True,
+        },
+    )
+    if schedule is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Schedule item not found")
+    return ScheduleHistoryItem.model_validate(schedule)
+
+
 def delete_schedule_history_item(user_id: int, schedule_run_id: int) -> ScheduleHistoryDeleteResponse:
     deleted = get_store().soft_delete_generated_schedule(user_id=user_id, schedule_run_id=schedule_run_id)
     if not deleted:
@@ -141,6 +216,14 @@ def export_schedule_history_item(user_id: int, schedule_run_id: int, export_form
             format="csv",
             content_type="text/csv",
             content=build_schedule_csv(schedule_run),
+        )
+    if export_format == "pdf":
+        return ScheduleExportResponse(
+            filename=f"ordostack-schedule-{schedule_run_id}.pdf",
+            format="pdf",
+            content_type="application/pdf",
+            content=base64.b64encode(build_schedule_pdf(schedule_run)).decode("ascii"),
+            encoding="base64",
         )
 
     return ScheduleExportResponse(
@@ -199,6 +282,65 @@ def schedule_item_key(item: dict[str, Any]) -> str:
     if item.get("type") == "fixed_event" and item.get("fixed_event_id") is not None:
         return f"fixed_event:{item['fixed_event_id']}"
     return f"{item.get('type', 'item')}:{item.get('title', '')}:{item.get('order_index', 0)}"
+
+
+def list_locked_schedule_items(user_id: int, target_date: date) -> list[dict[str, Any]]:
+    latest_schedule = get_store().get_latest_generated_schedule(user_id=user_id, target_date=target_date)
+    if latest_schedule is None:
+        return []
+
+    return [
+        item
+        for item in latest_schedule.get("items", [])
+        if item.get("locked") is True
+    ]
+
+
+def find_schedule_item(items: list[dict[str, Any]], item_key: str) -> dict[str, Any] | None:
+    for item in items:
+        if schedule_item_key(item) == item_key:
+            return item
+    return None
+
+
+def validate_fixed_event_conflicts(
+    items: list[dict[str, Any]],
+    item_key: str,
+    next_start_time: datetime,
+    next_end_time: datetime,
+) -> None:
+    for item in items:
+        if schedule_item_key(item) == item_key or item.get("type") != "fixed_event":
+            continue
+
+        fixed_start = parse_datetime(item.get("start_time"))
+        fixed_end = parse_datetime(item.get("end_time"))
+        if ranges_overlap(next_start_time, next_end_time, fixed_start, fixed_end):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Schedule item conflicts with fixed event: {item.get('title', 'Untitled')}",
+            )
+
+
+def ranges_overlap(
+    first_start: datetime,
+    first_end: datetime,
+    second_start: datetime,
+    second_end: datetime,
+) -> bool:
+    return first_start.replace(tzinfo=None) < second_end.replace(tzinfo=None) and second_start.replace(
+        tzinfo=None,
+    ) < first_end.replace(tzinfo=None)
+
+
+def parse_datetime(value: Any) -> datetime:
+    if isinstance(value, datetime):
+        return value
+    return datetime.fromisoformat(str(value))
+
+
+def minutes_between(start_time: datetime, end_time: datetime) -> int:
+    return max(0, int((end_time.replace(tzinfo=None) - start_time.replace(tzinfo=None)).total_seconds() // 60))
 
 
 def schedule_item_changed(base_item: dict[str, Any], compare_item: dict[str, Any]) -> bool:
@@ -271,6 +413,65 @@ def build_schedule_csv(schedule_run: dict[str, Any]) -> str:
             ],
         )
     return "\n".join(",".join(csv_escape(value) for value in row) for row in rows) + "\n"
+
+
+def build_schedule_pdf(schedule_run: dict[str, Any]) -> bytes:
+    schedule = schedule_run["schedule"]
+    text_lines = [
+        schedule_run["title"],
+        f"Date: {schedule.get('schedule_date')}",
+        f"Planning mode: {schedule.get('planning_mode')}",
+        "",
+    ]
+    for item in schedule.get("items", []):
+        text_lines.append(
+            f"{item.get('start_time', '')} - {item.get('end_time', '')} | "
+            f"{item.get('type', '')} | {item.get('title', '')} | {item.get('planned_minutes', '')} min",
+        )
+
+    stream_lines = ["BT", "/F1 11 Tf", "50 780 Td"]
+    for index, line in enumerate(text_lines[:42]):
+        if index > 0:
+            stream_lines.append("0 -16 Td")
+        stream_lines.append(f"({pdf_escape(line)}) Tj")
+    stream_lines.append("ET")
+    content_stream = "\n".join(stream_lines).encode("latin-1", errors="replace")
+
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        b"<< /Length " + str(len(content_stream)).encode("ascii") + b" >>\nstream\n" + content_stream + b"\nendstream",
+    ]
+    return assemble_pdf(objects)
+
+
+def assemble_pdf(objects: list[bytes]) -> bytes:
+    output = bytearray(b"%PDF-1.4\n")
+    offsets = [0]
+    for index, payload in enumerate(objects, start=1):
+        offsets.append(len(output))
+        output.extend(f"{index} 0 obj\n".encode("ascii"))
+        output.extend(payload)
+        output.extend(b"\nendobj\n")
+
+    xref_offset = len(output)
+    output.extend(f"xref\n0 {len(objects) + 1}\n".encode("ascii"))
+    output.extend(b"0000000000 65535 f \n")
+    for offset in offsets[1:]:
+        output.extend(f"{offset:010d} 00000 n \n".encode("ascii"))
+    output.extend(
+        (
+            f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\n"
+            f"startxref\n{xref_offset}\n%%EOF\n"
+        ).encode("ascii"),
+    )
+    return bytes(output)
+
+
+def pdf_escape(value: str) -> str:
+    return value.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
 
 
 def csv_escape(value: str) -> str:

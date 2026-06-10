@@ -18,6 +18,7 @@ import {
   ListTodo,
   LogIn,
   LogOut,
+  Lock,
   Loader2,
   MoreHorizontal,
   Pause,
@@ -32,6 +33,7 @@ import {
   Target,
   Timer,
   Trash2,
+  Unlock,
   UserCircle,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -101,6 +103,8 @@ type ApiScheduleItem = {
   category: string | null;
   requires_focus: boolean;
   score: number | null;
+  locked?: boolean;
+  manual_override?: boolean;
 };
 
 type ApiAlgorithmSummary = {
@@ -153,9 +157,10 @@ type ApiScheduleDiffResponse = {
 
 type ApiScheduleExportResponse = {
   filename: string;
-  format: "markdown" | "csv";
+  format: "markdown" | "csv" | "pdf";
   content_type: string;
   content: string;
+  encoding?: "utf-8" | "base64";
 };
 
 type ScheduleSource = "none" | "saved" | "generated" | "history";
@@ -219,6 +224,9 @@ type TimelineItem = {
   title: string;
   meta: string;
   type: "focus" | "fixed" | "admin" | "break";
+  itemKey?: string;
+  locked?: boolean;
+  manualOverride?: boolean;
 };
 
 type InsightItem = {
@@ -739,6 +747,10 @@ function buildTimeline(
 function buildTimelineFromSchedule(items: ApiScheduleItem[], locale: LocaleCode, t: Translator): TimelineItem[] {
   return items
     .map((item) => {
+      const stateLabels = [
+        item.locked ? t("Locked") : null,
+        item.manual_override ? t("Manual") : null,
+      ].filter(Boolean);
       const timelineItem: TimelineItem = {
         start: formatTime(item.start_time, locale),
         end: formatTime(item.end_time, locale),
@@ -748,13 +760,43 @@ function buildTimelineFromSchedule(items: ApiScheduleItem[], locale: LocaleCode,
             ? `${item.category ?? t("fixed")} | ${t("protected")}`
             : `${item.category ?? t("task")} | ${formatMinutes(item.planned_minutes, locale)} | ${t("score")} ${
                 item.score?.toFixed(1) ?? "n/a"
-              }`,
+              }${stateLabels.length > 0 ? ` | ${stateLabels.join(" | ")}` : ""}`,
         type: item.type === "fixed_event" ? "fixed" : item.requires_focus ? "focus" : "admin",
+        itemKey: scheduleItemKey(item),
+        locked: item.locked ?? false,
+        manualOverride: item.manual_override ?? false,
       };
 
       return timelineItem;
     })
     .sort((left, right) => left.start.localeCompare(right.start));
+}
+
+function scheduleItemKey(item: ApiScheduleItem): string {
+  if (item.type === "task" && item.task_id !== null) {
+    return `task:${item.task_id}`;
+  }
+  if (item.type === "fixed_event" && item.fixed_event_id !== null) {
+    return `fixed_event:${item.fixed_event_id}`;
+  }
+  return `${item.type}:${item.title}:${item.order_index}`;
+}
+
+function offsetDateTime(value: string, offsetMinutes: number): string {
+  const normalizedValue = value.length === 16 ? `${value}:00` : value.slice(0, 19);
+  const [datePart, timePart] = normalizedValue.split("T");
+  const [year, month, day] = datePart.split("-").map(Number);
+  const [hour, minute, second] = timePart.split(":").map(Number);
+  const nextDate = new Date(year, month - 1, day, hour, minute + offsetMinutes, second);
+  return [
+    nextDate.getFullYear(),
+    padDatePart(nextDate.getMonth() + 1),
+    padDatePart(nextDate.getDate()),
+  ].join("-") + `T${padDatePart(nextDate.getHours())}:${padDatePart(nextDate.getMinutes())}:${padDatePart(nextDate.getSeconds())}`;
+}
+
+function padDatePart(value: number): string {
+  return value.toString().padStart(2, "0");
 }
 
 async function sendJsonRequest<T>(url: string, options?: RequestInit, allowNotFound = false): Promise<T | null> {
@@ -788,6 +830,19 @@ async function requestOptionalJson<T>(url: string, options?: RequestInit): Promi
 
 function downloadTextFile(filename: string, content: string, contentType: string) {
   const blob = new Blob([content], { type: contentType });
+  downloadBlob(filename, blob);
+}
+
+function downloadBase64File(filename: string, content: string, contentType: string) {
+  const binary = window.atob(content);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  downloadBlob(filename, new Blob([bytes], { type: contentType }));
+}
+
+function downloadBlob(filename: string, blob: Blob) {
   const objectUrl = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = objectUrl;
@@ -1231,6 +1286,71 @@ export function App() {
     setScheduleDiff(null);
   }
 
+  function applyUpdatedScheduleRun(updatedScheduleRun: ApiScheduleHistoryItem) {
+    setScheduleHistory((currentHistory) =>
+      currentHistory.map((historyItem) =>
+        historyItem.id === updatedScheduleRun.id ? updatedScheduleRun : historyItem,
+      ),
+    );
+    if (selectedScheduleRunId === updatedScheduleRun.id) {
+      setSchedule(updatedScheduleRun.schedule);
+      setScheduleSource("history");
+    }
+  }
+
+  async function toggleScheduleItemLock(item: TimelineItem) {
+    if (selectedScheduleRunId === null || !item.itemKey) {
+      setError(t("Select a generated plan before editing schedule items"));
+      return;
+    }
+
+    setError(null);
+    try {
+      const updatedScheduleRun = await requestJson<ApiScheduleHistoryItem>(
+        `${API_BASE_URL}/schedules/history/${selectedScheduleRunId}/items/${encodeURIComponent(item.itemKey)}/lock`,
+        {
+          method: "PATCH",
+          headers: buildAuthHeaders(),
+          body: JSON.stringify({ locked: !item.locked }),
+        },
+      );
+      applyUpdatedScheduleRun(updatedScheduleRun);
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : t("Unable to update schedule item"));
+    }
+  }
+
+  async function moveScheduleItem(item: TimelineItem, offsetMinutes: number) {
+    if (selectedScheduleRunId === null || !item.itemKey || schedule === null) {
+      setError(t("Select a generated plan before editing schedule items"));
+      return;
+    }
+
+    const currentItem = schedule.items.find((scheduleItem) => scheduleItemKey(scheduleItem) === item.itemKey);
+    if (!currentItem) {
+      setError(t("Unable to update schedule item"));
+      return;
+    }
+
+    setError(null);
+    try {
+      const updatedScheduleRun = await requestJson<ApiScheduleHistoryItem>(
+        `${API_BASE_URL}/schedules/history/${selectedScheduleRunId}/items/${encodeURIComponent(item.itemKey)}/time`,
+        {
+          method: "PATCH",
+          headers: buildAuthHeaders(),
+          body: JSON.stringify({
+            start_time: offsetDateTime(currentItem.start_time, offsetMinutes),
+            end_time: offsetDateTime(currentItem.end_time, offsetMinutes),
+          }),
+        },
+      );
+      applyUpdatedScheduleRun(updatedScheduleRun);
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : t("Unable to update schedule item"));
+    }
+  }
+
   async function compareScheduleWithPrevious() {
     if (selectedScheduleRunId === null || previousScheduleHistoryItem === null) {
       setError(t("Select a generated plan with an older run to compare"));
@@ -1253,7 +1373,7 @@ export function App() {
     }
   }
 
-  async function exportSelectedSchedule(exportFormat: "markdown" | "csv") {
+  async function exportSelectedSchedule(exportFormat: "markdown" | "csv" | "pdf") {
     if (selectedScheduleRunId === null) {
       setError(t("Select a generated plan before exporting"));
       return;
@@ -1267,7 +1387,11 @@ export function App() {
         `${API_BASE_URL}/schedules/history/${selectedScheduleRunId}/export?format=${exportFormat}`,
         { headers: buildAuthHeaders() },
       );
-      downloadTextFile(exportedSchedule.filename, exportedSchedule.content, exportedSchedule.content_type);
+      if (exportedSchedule.encoding === "base64") {
+        downloadBase64File(exportedSchedule.filename, exportedSchedule.content, exportedSchedule.content_type);
+      } else {
+        downloadTextFile(exportedSchedule.filename, exportedSchedule.content, exportedSchedule.content_type);
+      }
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to export schedule"));
     } finally {
@@ -1913,9 +2037,38 @@ export function App() {
                             <h2>{item.title}</h2>
                             <p>{item.meta}</p>
                           </div>
-                          <button className="ghost-button" type="button" aria-label={`${t("More options for")} ${item.title}`}>
-                            <MoreHorizontal size={18} />
-                          </button>
+                          {item.itemKey ? (
+                            <div className="timeline-actions">
+                              <button
+                                className="ghost-button"
+                                type="button"
+                                aria-label={`${item.locked ? t("Unlock") : t("Lock")} ${item.title}`}
+                                onClick={() => void toggleScheduleItemLock(item)}
+                              >
+                                {item.locked ? <Unlock size={17} /> : <Lock size={17} />}
+                              </button>
+                              <button
+                                className="ghost-button"
+                                type="button"
+                                aria-label={`${t("Move earlier")} ${item.title}`}
+                                onClick={() => void moveScheduleItem(item, -15)}
+                              >
+                                <ChevronLeft size={17} />
+                              </button>
+                              <button
+                                className="ghost-button"
+                                type="button"
+                                aria-label={`${t("Move later")} ${item.title}`}
+                                onClick={() => void moveScheduleItem(item, 15)}
+                              >
+                                <ChevronRight size={17} />
+                              </button>
+                            </div>
+                          ) : (
+                            <button className="ghost-button" type="button" aria-label={`${t("More options for")} ${item.title}`}>
+                              <MoreHorizontal size={18} />
+                            </button>
+                          )}
                         </div>
                       </article>
                     ))}
@@ -2035,6 +2188,19 @@ export function App() {
                             <Download size={16} aria-hidden="true" />
                           )}
                           <span>{isExportingSchedule ? t("Exporting") : t("Export MD")}</span>
+                        </button>
+                        <button
+                          className="secondary-action"
+                          type="button"
+                          disabled={!authToken || isExportingSchedule || selectedScheduleRunId === null}
+                          onClick={() => void exportSelectedSchedule("pdf")}
+                        >
+                          {isExportingSchedule ? (
+                            <Loader2 className="spinning" size={16} aria-hidden="true" />
+                          ) : (
+                            <Download size={16} aria-hidden="true" />
+                          )}
+                          <span>{isExportingSchedule ? t("Exporting") : t("Export PDF")}</span>
                         </button>
                       </div>
                       {scheduleDiff ? (

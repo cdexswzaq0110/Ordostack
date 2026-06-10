@@ -1,21 +1,21 @@
 # OrdoStack Project Status Report
 
-Date: 2026-06-04
-Version: 0.32.0
+Date: 2026-06-10
+Version: 0.44.0
 Report role: PM / project management
 
 ## Executive Summary
 
-OrdoStack is currently a local Customer Demo MVP with authentication, user-scoped planner data, English / Traditional Chinese dashboard locale support, deployment baseline documentation, observability baseline, and backup/restore drill baseline. It is suitable for internal QA and customer reference demos on a developer machine through Docker Compose. It is not ready for public launch because hosted deployment execution, production backup automation, security review, mobile app, ClearML production workflow, hosted monitoring, and production model governance are not implemented yet.
+OrdoStack is currently a local Customer Demo MVP / Technical Preview with authentication, user-scoped planner data, English / Traditional Chinese dashboard locale support, manual schedule controls, recurring fixed events, reusable schedule templates, local PDF export, completion forecast, local model registry, duration feedback export, browser smoke CI, visual regression script, accessibility static audit, security audit script, deployment baseline documentation, observability baseline, and backup/restore drill baseline. It is suitable for internal QA and customer reference demos on a developer machine. It is not ready for public launch because final Docker/deployment hardening, hosted monitoring, production backup automation, production security review, mobile app, ClearML agent execution, and production model governance are not implemented yet.
 
 Current evidence:
 
-- Previous release tag before Traditional Chinese locale support: `v0.31.0`.
-- Current product stage after Issue 33: localized local Customer Demo MVP `v0.32.0`.
+- Previous release tag before this hardening batch: `v0.32.0`.
+- Current product stage after Issue 45: local Customer Demo MVP / Technical Preview `v0.44.0`.
 - Main runnable entrypoint: `http://localhost:5173`.
-- Runtime: local Docker Compose.
+- Runtime: local services; Docker finalization intentionally deferred.
 - Database: local MySQL container.
-- Verification gates available: Python tests, web build, Docker health checks, readiness checks, environment validation, E2E smoke, browser screenshot smoke, backup verification, secrets scan.
+- Verification gates available: Python tests, readiness checks, environment validation, E2E smoke, browser screenshot smoke, visual regression script, a11y static audit, security audit, backup verification, secrets scan, and non-Docker browser smoke CI.
 
 ## PM Assessment
 
@@ -30,16 +30,16 @@ Public launch:
 
 ```text
 Status: Not ready
-Estimated remaining issue count: 15 to 21 focused issues
-Reason: hosted deployment, security, production backup automation, production data policy, accessibility, hosted monitoring, and operational workflows are missing
+Estimated remaining issue count: 10 to 16 focused issues
+Reason: final Docker/deployment hardening, production security review, hosted monitoring, production backup automation, production data policy, and operational workflows are missing
 ```
 
 Private beta:
 
 ```text
 Status: Candidate after focused QA
-Estimated remaining issue count: 3 to 6 focused issues
-Reason: beta can skip mobile and full MLOps, but still needs hosted deployment execution, security hardening, hosted monitoring, and stricter QA
+Estimated remaining issue count: 4 to 8 focused issues
+Reason: beta can skip mobile and full MLOps, but still needs final Docker/deployment hardening, security hardening, hosted monitoring, and stricter QA sign-off
 ```
 
 The exact issue count depends on the launch definition. If launch means a controlled private beta for a small customer group, the smaller range applies. If launch means public SaaS or app-store-ready product, the larger range is more realistic.
@@ -50,17 +50,22 @@ Product capabilities already implemented:
 
 - Task create, edit, status transition, reopen, skip, soft delete.
 - Fixed event create, edit, soft delete.
+- Weekly recurring fixed event expansion.
 - Date navigation, date picker, Today shortcut.
 - Task queue search, status/category/focus filters, sorting.
 - English / Traditional Chinese dashboard language switcher.
 - Daily schedule generation.
+- Schedule item lock/unlock and manual `-15/+15` adjustment controls.
 - Scheduler algorithms: priority score, topological sort, knapsack-style capacity selection, priority queue ordering, fixed-event free-slot builder.
 - Execution logs and daily analytics.
 - Local duration prediction through ml-service.
+- Completion forecast.
+- Local JSON model registry and duration feedback CSV export.
 - MySQL persistence for Docker runtime.
 - Alembic migrations through revision `20260604_0003`.
 - Generated schedule latest view and history.
-- Schedule history rename, soft delete, diff, Markdown/CSV export.
+- Schedule history rename, soft delete, lock, manual adjustment, diff, Markdown/CSV/PDF export.
+- Named schedule templates.
 - Demo reset for bundled local demo user.
 - Local auth foundation with demo account, register, login, and current-user API.
 - User-scoped planner APIs for authenticated local users.
@@ -68,7 +73,10 @@ Product capabilities already implemented:
 - Backup/restore baseline with local MySQL backup scripts, backup verification, and non-destructive restore drill docs.
 - Dashboard empty states and retry behavior.
 - Local E2E smoke test.
-- Browser screenshot smoke test.
+- Browser screenshot smoke test and non-Docker CI browser smoke artifact.
+- Visual regression threshold script.
+- Accessibility static audit script.
+- Security audit script.
 - Version history, release process, QA plan, API docs, architecture docs.
 - Environment configuration docs and startup validation.
 
@@ -83,22 +91,20 @@ Launch-critical gaps:
 - Hosted observability: metrics, traces, uptime checks, alerting, retention.
 - Production backup automation, off-host encrypted storage, restore approval workflow, and data retention policy.
 - Production secrets management.
-- Security hardening and dependency audit gate.
-- Accessibility audit and keyboard workflow QA.
-- Browser regression test baseline beyond smoke screenshot.
+- Production security hardening, dependency governance, and formal security review.
+- Full manual accessibility audit and keyboard workflow QA sign-off.
+- Hosted browser regression governance beyond local threshold script.
 - Rate limiting and API abuse protection.
 - Production database migration rollback policy.
 
 Product gaps from the original specification:
 
 - Mobile app implementation.
-- ClearML experiment tracking and agent execution.
-- Production ML model registry and model promotion workflow.
+- ClearML agent execution and hosted tracking workflow.
+- Production ML model promotion workflow.
 - DL completion-rate or focus-score service.
-- Calendar integration and recurring fixed events.
-- Manual schedule editing / locking / drag-and-drop.
-- Named schedule templates.
-- PDF export and cloud share links.
+- Calendar integration and cloud share links.
+- Drag-and-drop schedule editing.
 
 ## Known Weak Points
 
@@ -112,72 +118,42 @@ Product gaps from the original specification:
 
 ## Recommended Next Issues
 
-Issue 33: Manual schedule locking
+Issue 46: Focused QA pass for Issues 34-45
 
-- Allow a generated schedule item to be locked.
-- Scheduler should preserve locked items in future generation.
+- Run manual QA for lock, manual move, recurrence, templates, export, forecast, model registry, and scripts.
+- Capture customer-demo screenshots in English and Traditional Chinese.
 
-Issue 34: Schedule manual adjustment
+Issue 47: Production auth hardening
 
-- Add simple time edit for schedule items.
-- Validate fixed event conflicts.
+- Add password policy, token expiry governance, refresh/session handling, and rate limiting.
+- Define account recovery and admin support boundaries.
 
-Issue 35: Recurring fixed events MVP
+Issue 48: Hosted monitoring baseline
 
-- Add weekly recurrence fields.
-- Expand recurrence into date-scoped fixed events.
+- Add metrics and uptime monitor plan.
+- Define alert routing and retention policy.
 
-Issue 36: Named schedule templates
+Issue 49: Production backup automation
 
-- Save planning settings as reusable templates.
-- Reuse start/end hour, buffer, mode, fixed-event inclusion.
+- Add scheduled backup design, encryption, off-host storage, restore approval workflow, and retention policy.
 
-Issue 37: PDF export
+Issue 50: Docker finalization and deployment hardening
 
-- Add local PDF export without paid APIs.
-- Keep Markdown/CSV as fallback.
+- Revisit Dockerfiles, Docker Compose, production compose, reverse proxy, health checks, image scanning, and deployment runbooks as one final deployment pass.
+- This is intentionally deferred until product behavior stabilizes.
 
-Issue 38: Accessibility pass
+Issue 51: Hosted beta deployment execution
 
-- Keyboard navigation QA.
-- Focus states.
-- ARIA label audit.
-- Color contrast review.
+- Provision target environment only after account decisions are confirmed.
+- Validate HTTPS, domain, runtime env, backup, monitoring, and rollback.
 
-Issue 39: ClearML local tracking baseline
+Issue 52: Manual accessibility QA
 
-- Add optional local ClearML tracking docs and disabled-by-default config.
-- No paid API dependency.
+- Run keyboard-only, screen reader, contrast, and responsive checks on real browser flows.
 
-Issue 40: Model registry abstraction
+Issue 53: Product beta readiness review
 
-- Add local model metadata registry interface.
-- Keep JSON artifact fallback.
-
-Issue 41: Duration feedback loop
-
-- Use completed task actual minutes to improve local model training data.
-
-Issue 42: Completion forecast MVP
-
-- Add heuristic completion-rate forecast before DL service.
-- Use execution history and workload.
-
-Issue 43: GitHub Actions browser smoke
-
-- Add CI path for browser smoke where feasible.
-- Upload screenshot artifact in CI.
-
-Issue 44: Visual regression baseline
-
-- Add deterministic screenshot baseline and threshold comparison.
-- Keep artifacts ignored locally.
-
-Issue 45: Security and dependency audit
-
-- Add dependency audit commands.
-- Add secret scan gate.
-- Add dependency update policy.
+- Review data policy, support workflow, customer onboarding, feedback collection, and launch messaging.
 
 ## Launch Recommendation
 
@@ -197,11 +173,11 @@ Private Beta Candidate
 
 Minimum next target for private beta:
 
-- Complete a focused QA pass on Issues 28 to 32.
-- Decide whether beta requires Issue 33 manual schedule locking before customer testing.
-- Keep Issues 33 to 38 as product polish if beta users need schedule editing and recurring events.
-- Keep Issues 39 to 42 as intelligence roadmap, not beta blockers unless ML capability is the primary sales claim.
+- Complete a focused QA pass on Issues 34 to 45.
+- Keep Docker finalization as a dedicated deployment hardening pass.
+- Decide whether hosted beta needs AWS or a simpler single-node environment.
+- Keep mobile and ClearML agent execution out of the first beta unless they become explicit customer blockers.
 
 ## Next Execution Plan
 
-The next engineering pass should start Issue 33 if beta users need manual control over generated schedule items. If schedule locking is not required for the first beta cohort, run a full QA pass across Issues 28 to 32 and then prepare a private-beta release checklist.
+The next engineering pass should run Issue 46 focused QA for Issues 34-45, then prepare Issue 50 Docker finalization and deployment hardening once the product behavior is accepted.

@@ -1,9 +1,9 @@
-from datetime import date
+from datetime import date, datetime, timedelta
 
 from fastapi import HTTPException, status
 
 from app.repositories.store import get_store
-from app.schemas.fixed_events import FixedEventCreate, FixedEventRead, FixedEventUpdate
+from app.schemas.fixed_events import FixedEventCreate, FixedEventRead, FixedEventUpdate, RecurringFixedEventCreate
 
 
 def list_fixed_events(user_id: int, target_date: date | None = None) -> list[FixedEventRead]:
@@ -18,6 +18,44 @@ def create_fixed_event(user_id: int, payload: FixedEventCreate) -> FixedEventRea
     fixed_event_payload["user_id"] = user_id
     fixed_event = store.create_fixed_event(fixed_event_payload)
     return FixedEventRead.model_validate(fixed_event)
+
+
+def create_recurring_fixed_events(user_id: int, payload: RecurringFixedEventCreate) -> list[FixedEventRead]:
+    store = get_store()
+    recurrence_id = payload.build_recurrence_id()
+    recurrence_rule = payload.build_recurrence_rule()
+    start_clock = payload.start_time.time()
+    end_clock = payload.end_time.time()
+    duration_days = (payload.end_time.date() - payload.start_time.date()).days
+
+    created_events: list[FixedEventRead] = []
+    current_date = payload.start_time.date()
+    recurrence_days = set(payload.recurrence_days)
+    while current_date <= payload.recurrence_until:
+        if current_date.weekday() in recurrence_days:
+            event_start = datetime.combine(current_date, start_clock)
+            event_end = datetime.combine(current_date + timedelta(days=duration_days), end_clock)
+            fixed_event = store.create_fixed_event(
+                {
+                    "user_id": user_id,
+                    "title": payload.title,
+                    "start_time": event_start,
+                    "end_time": event_end,
+                    "event_type": payload.event_type,
+                    "recurrence_id": recurrence_id,
+                    "recurrence_rule": recurrence_rule,
+                }
+            )
+            created_events.append(FixedEventRead.model_validate(fixed_event))
+        current_date += timedelta(days=1)
+
+    if not created_events:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="recurrence rule does not produce any events",
+        )
+
+    return created_events
 
 
 def update_fixed_event(user_id: int, fixed_event_id: int, payload: FixedEventUpdate) -> FixedEventRead:

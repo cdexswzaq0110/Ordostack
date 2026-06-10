@@ -1,5 +1,51 @@
 # Development Log
 
+## 2026-06-10 - Issues 34-45 - Non-Docker Product Hardening MVP
+
+Branch:
+
+```text
+codex/issues-34-45-non-docker
+```
+
+Implemented:
+
+- Issue 34: schedule item locking and scheduler locked-item preservation.
+- Issue 35: manual schedule item time adjustment with fixed-event conflict validation.
+- Issue 36: weekly recurring fixed event expansion into dated fixed event rows.
+- Issue 37: named schedule template CRUD APIs.
+- Issue 38: local PDF schedule export and dashboard PDF download support.
+- Issue 39: dashboard accessibility static audit and select focus-visible coverage.
+- Issue 40: disabled-by-default ClearML local tracking documentation.
+- Issue 41: local JSON model registry abstraction and `/model/registry`.
+- Issue 42: duration feedback CSV export for completed tasks.
+- Issue 43: heuristic completion forecast API.
+- Issue 44: non-Docker GitHub Actions browser smoke and local visual regression script.
+- Issue 45: local security audit script and dependency/security policy notes.
+
+Validation:
+
+- `python -m pytest tests` from `backend-api`: 54 passed.
+- `python -m pytest tests` from `scheduler-service`: 11 passed.
+- `python -m pytest tests` from `ml-service`: 9 passed.
+- `python scripts\a11y_static_audit.py`: passed.
+- `python scripts\security_audit.py --root .`: passed.
+- `python scripts\visual_regression.py --baseline artifacts\visual-baseline\dashboard.png --candidate artifacts\browser-smoke\dashboard.png --threshold 0.01`: passed after local baseline creation under ignored `artifacts/`.
+
+MVP boundaries:
+
+- No Dockerfile or Docker Compose implementation changes were made in this issue batch.
+- No paid APIs, cloud accounts, hosted ClearML server, or external model registry were used.
+- Local PDF export uses an internal minimal PDF generator.
+- Duration feedback export does not overwrite training datasets automatically.
+- Frontend build was not run in this local Windows environment because `npm` is not available and Docker verification is intentionally deferred.
+
+Suggested git commit:
+
+```text
+feat(product): complete issues 34 to 45 without docker changes
+```
+
 ## 2026-06-04 - Issue 33 - Traditional Chinese Dashboard Locale
 
 Branch:

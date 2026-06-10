@@ -89,3 +89,22 @@ def test_duration_predictions_falls_back_when_ml_service_is_unavailable(monkeypa
     assert response.status_code == 200
     assert response.json()["model_name"] == "estimate-fallback"
     assert response.json()["predictions"][0]["confidence"] == 0.2
+
+
+def test_duration_feedback_export_returns_completed_task_rows() -> None:
+    store.reset()
+    client = TestClient(app)
+    client.headers.update(auth_headers(client))
+
+    response = client.get(
+        "/api/ml/duration-feedback",
+        params={"target_date": "2026-06-03"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["filename"] == "duration-feedback-2026-06-03.csv"
+    assert payload["content_type"] == "text/csv"
+    assert payload["row_count"] == 1
+    assert payload["content"].startswith("category,estimated_minutes,priority,difficulty,requires_focus,actual_minutes")
+    assert "backend,50,3,3,false,47" in payload["content"]

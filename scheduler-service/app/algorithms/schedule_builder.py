@@ -1,7 +1,7 @@
 from datetime import date, datetime, time, timedelta
 
 from app.algorithms.priority_score import planned_minutes
-from app.schemas.schedule import FixedEventInput, ScheduleItem, TaskInput
+from app.schemas.schedule import FixedEventInput, LockedScheduleItemInput, ScheduleItem, TaskInput
 
 TimeSlot = tuple[datetime, datetime]
 
@@ -65,6 +65,7 @@ def total_slot_minutes(slots: list[TimeSlot]) -> int:
 def build_schedule_items(
     tasks: list[TaskInput],
     fixed_events: list[FixedEventInput],
+    locked_items: list[LockedScheduleItemInput],
     target_date: date,
     scores: dict[int, float],
     start_hour: int,
@@ -72,8 +73,19 @@ def build_schedule_items(
     buffer_minutes: int,
     include_fixed_events: bool,
 ) -> tuple[list[ScheduleItem], list[int]]:
-    free_slots = build_free_slots(target_date, fixed_events, start_hour, end_hour, include_fixed_events)
+    blocking_events = [
+        *(fixed_events if include_fixed_events else []),
+        *[locked_item_to_blocker(item) for item in locked_items],
+    ]
+    free_slots = build_free_slots(
+        target_date,
+        blocking_events,
+        start_hour,
+        end_hour,
+        include_fixed_events=bool(blocking_events),
+    )
     items = build_fixed_event_items(fixed_events) if include_fixed_events else []
+    items.extend(build_locked_schedule_items(locked_items))
     unscheduled_task_ids: list[int] = []
     order_index = len(items)
 
@@ -114,6 +126,39 @@ def build_schedule_items(
         item.order_index = index
 
     return ordered_items, unscheduled_task_ids
+
+
+def locked_item_to_blocker(item: LockedScheduleItemInput) -> FixedEventInput:
+    return FixedEventInput(
+        id=-(item.task_id or item.fixed_event_id or item.order_index + 1),
+        title=item.title,
+        start_time=item.start_time,
+        end_time=item.end_time,
+        event_type="locked",
+    )
+
+
+def build_locked_schedule_items(locked_items: list[LockedScheduleItemInput]) -> list[ScheduleItem]:
+    items: list[ScheduleItem] = []
+    for item in locked_items:
+        items.append(
+            ScheduleItem(
+                type=item.type,
+                task_id=item.task_id,
+                fixed_event_id=item.fixed_event_id,
+                title=item.title,
+                start_time=make_naive(item.start_time),
+                end_time=make_naive(item.end_time),
+                planned_minutes=item.planned_minutes,
+                order_index=item.order_index,
+                category=item.category,
+                requires_focus=item.requires_focus,
+                score=item.score,
+                locked=True,
+                manual_override=item.manual_override,
+            )
+        )
+    return items
 
 
 def build_fixed_event_items(fixed_events: list[FixedEventInput]) -> list[ScheduleItem]:

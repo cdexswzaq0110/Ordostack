@@ -2,14 +2,14 @@
 
 Source document: `C:\Users\HUANG\Desktop\OrdoStack Project Specification.docx`
 
-This markdown file records the implementation baseline used by Codex for the repository. The project is developed incrementally by issue. As of Issue 33, the repository is a local Customer Demo MVP with authentication, user-scoped planner data, English / Traditional Chinese dashboard locale support, deployment baseline documentation, observability baseline, and backup/restore drill baseline, not a production launch build.
+This markdown file records the implementation baseline used by Codex for the repository. The project is developed incrementally by issue. As of Issue 45, the repository is a local Customer Demo MVP with authentication, user-scoped planner data, English / Traditional Chinese dashboard locale support, manual schedule controls, recurring fixed events, schedule templates, PDF export, local model registry, completion forecast, accessibility/security/visual QA scripts, deployment baseline documentation, observability baseline, and backup/restore drill baseline, not a production launch build.
 
 ## Current Baseline
 
 ```text
-Version: 0.32.0
+Version: 0.44.0
 Stage: Customer Demo MVP
-Runtime: Local Docker Compose
+Runtime: Local services; Docker deployment hardening deferred
 Primary UI: web-dashboard
 Production readiness: Not ready for public launch
 ```
@@ -28,7 +28,9 @@ OrdoStack is an AI daily planning product that lets users capture tasks and fixe
 
 - Let users create, edit, complete, reopen, skip, and soft-delete daily tasks.
 - Let users create, edit, and soft-delete fixed events.
+- Let users expand weekly recurring fixed events into dated protected events.
 - Generate daily plans automatically without overlapping protected fixed events.
+- Let users lock and manually adjust generated schedule items.
 - Track task execution start, pause, completion, and skip events.
 - Compare estimated, predicted, and actual task duration.
 - Persist tasks, fixed events, execution logs, generated schedule runs, and schedule items in MySQL.
@@ -44,7 +46,7 @@ OrdoStack is an AI daily planning product that lets users capture tasks and fixe
 - No native mobile app implementation yet.
 - No app store release.
 - No ClearML agent execution yet.
-- No production ML / DL model registry yet.
+- No hosted production ML / DL model registry yet.
 - No DL completion-rate or focus-score service yet.
 - No hosted AWS deployment, HTTPS rollout, production Nginx rollout, or production backup plan yet.
 - No automated restore into the active production database.
@@ -54,27 +56,27 @@ OrdoStack is an AI daily planning product that lets users capture tasks and fixe
 - No complex permission system.
 - No chatbot replacing the scheduling algorithm core.
 
-## Implemented Through Issue 33
+## Implemented Through Issue 45
 
 | Area | Current implementation |
 | --- | --- |
 | Repository | Monorepo structure, README, project spec, rulebooks, architecture docs, Docker Compose, CI docs |
-| Web dashboard | React / Vite TypeScript dashboard with landing/demo product experience, English / Traditional Chinese locale support, task filters, and task sorting |
+| Web dashboard | React / Vite TypeScript dashboard with landing/demo product experience, English / Traditional Chinese locale support, task filters, task sorting, schedule lock, manual move controls, and PDF export |
 | Tasks | Create, list, edit, status transitions, reopen, soft delete |
-| Fixed events | Create, list, edit, soft delete, validation for `HH:MM` time ranges |
+| Fixed events | Create, list, edit, soft delete, weekly recurrence expansion, validation for `HH:MM` time ranges |
 | Date navigation | Previous day, next day, native date picker, Today shortcut |
-| Scheduler | Daily schedule generation with priority score, topological sort, knapsack selection, priority queue ordering, and fixed-event free-slot building |
-| Schedule persistence | Latest generated schedule, recent schedule history, schedule history rename, soft delete, diff, and text export |
+| Scheduler | Daily schedule generation with priority score, topological sort, knapsack selection, priority queue ordering, fixed-event free-slot building, and locked item preservation |
+| Schedule persistence | Latest generated schedule, recent schedule history, schedule history rename, soft delete, lock, manual time adjustment, diff, Markdown/CSV/PDF export, and named templates |
 | Execution tracking | Start, pause, complete, skip, execution log listing |
-| Analytics | Daily actual minutes, estimate delta, completion rate, focus minutes |
-| ML duration prediction | Local duration prediction API with bundled training artifact and heuristic fallback |
+| Analytics | Daily actual minutes, estimate delta, completion rate, focus minutes, completion forecast |
+| ML duration prediction | Local duration prediction API with bundled training artifact, local JSON model registry, duration feedback export, and heuristic fallback |
 | Storage | Docker MySQL persistence with Alembic migration baseline and local compatibility bootstrap |
 | Auth | Local register, login, current-user API, PBKDF2 password hashes, HMAC bearer tokens, demo account, user-scoped planner APIs |
 | Deployment | Production env template, Nginx reverse-proxy skeleton, single-node deployment guide, hosted smoke checklist |
 | Observability | Request ID propagation, structured request logs, readiness endpoints, local observability runbook |
 | Backup/restore | Local MySQL backup scripts, backup verification scripts, non-destructive restore drill docs |
 | Demo support | Seeded demo data and demo-only reset control |
-| Quality gates | Python service tests, web-dashboard build, Docker Compose config, environment validation, local E2E smoke script, browser screenshot smoke, backup verification, GitHub Actions baseline |
+| Quality gates | Python service tests, web-dashboard build path, environment validation, local E2E smoke script, browser screenshot smoke, visual regression script, a11y static audit, security audit, backup verification, GitHub Actions baseline |
 | Documentation | API docs, QA plan, release process, branching strategy, development log, changelog, PM status report, environment configuration guide, backup/restore runbook |
 
 ## System Components
@@ -115,7 +117,9 @@ OrdoStack is an AI daily planning product that lets users capture tasks and fixe
 7. User reviews the generated timeline and algorithm summary.
 8. User can switch to recent generated plans through schedule history.
 9. User can execute tasks and review actual-time analytics.
-10. For demos, user can reset bundled demo data after confirming the dashboard prompt.
+10. User can lock or manually move generated schedule items while avoiding fixed-event conflicts.
+11. User can export schedules as Markdown, CSV, or local PDF.
+12. For demos, user can reset bundled demo data after confirming the dashboard prompt.
 
 ## API Baseline
 
@@ -208,16 +212,15 @@ Before a release tag:
 - Mobile app implementation.
 - ClearML experiment tracking, model registry, agent execution, and deployment workflow.
 - DL completion-rate / focus-score service.
-- Calendar integration and recurring event support.
-- Schedule manual editing and named schedule templates.
-- Pixel-perfect browser visual regression baseline.
-- PDF export and cloud share links.
-- Load, security, and accessibility audits.
+- Calendar two-way sync and cloud share links.
+- Hosted visual regression service.
+- Load testing and production penetration testing.
+- Docker deployment hardening, image scan, and cloud rollout execution.
 
 ## Planned Phases
 
-1. Local Customer Demo MVP: complete through Issue 32.
-2. Beta Hardening: auth, user isolation, deployment, observability, backup, a11y, and browser regression tests.
+1. Local Customer Demo MVP: complete through Issue 45.
+2. Beta Hardening: production auth, hosted deployment, monitoring, backup automation, Docker finalization, and browser regression governance.
 3. MLOps Expansion: ClearML tracking, model registry, scheduled retraining, and model promotion.
 4. Intelligence Expansion: DL completion-rate or focus-score service.
 5. Mobile Product: React Native / Expo mobile client.
@@ -230,7 +233,7 @@ A feature is done only when:
 - Code is implemented where required.
 - Tests exist where meaningful.
 - Tests pass.
-- Docker can start the affected service.
+- Local service tests or build checks pass; Docker runtime verification is deferred to final deployment hardening unless the issue explicitly targets Docker.
 - API, QA, or README documentation is updated when behavior changes.
 - Version history is recorded.
 - No secrets are committed.

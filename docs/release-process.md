@@ -5,7 +5,7 @@ OrdoStack uses MVP issue releases until production deployment exists.
 ## Current Version
 
 ```text
-0.32.0
+0.44.0
 ```
 
 ## Release Types
@@ -36,7 +36,7 @@ This baseline includes:
 - Alembic migration baseline.
 - CI quality gate and branch strategy.
 
-## Release Checklist
+## Current Non-Docker Release Checklist
 
 Windows PowerShell:
 
@@ -48,16 +48,12 @@ cd ..\scheduler-service
 cd ..\ml-service
 ..\.venv\Scripts\python.exe -m pytest tests
 cd ..
-docker compose config
-docker compose up --build -d
-docker compose ps
 cd web-dashboard
 npm run build
 cd ..
-python scripts\e2e_smoke.py
-python scripts\browser_smoke.py
-powershell -ExecutionPolicy Bypass -File scripts\backup_mysql.ps1
-powershell -ExecutionPolicy Bypass -File scripts\verify_mysql_backup.ps1 -Path artifacts\backups\<backup-file>.sql
+python scripts\a11y_static_audit.py
+python scripts\security_audit.py --root .
+python scripts\visual_regression.py --baseline artifacts\visual-baseline\dashboard.png --candidate artifacts\browser-smoke\dashboard.png --threshold 0.01
 ```
 
 Linux / WSL:
@@ -70,16 +66,26 @@ cd ../scheduler-service
 cd ../ml-service
 ../.venv/bin/python -m pytest tests
 cd ..
-docker compose config
-docker compose up --build -d
-docker compose ps
 cd web-dashboard
 npm run build
 cd ..
-python scripts/e2e_smoke.py
-python scripts/browser_smoke.py
-bash scripts/backup_mysql.sh
-bash scripts/verify_mysql_backup.sh artifacts/backups/<backup-file>.sql
+python scripts/a11y_static_audit.py
+python scripts/security_audit.py --root .
+python scripts/visual_regression.py --baseline artifacts/visual-baseline/dashboard.png --candidate artifacts/browser-smoke/dashboard.png --threshold 0.01
+```
+
+## Deferred Docker Deployment Checklist
+
+Run this checklist during the dedicated Docker finalization issue, not during product behavior iteration:
+
+```powershell
+docker compose config
+docker compose up --build -d
+docker compose ps
+python scripts\e2e_smoke.py
+python scripts\browser_smoke.py
+powershell -ExecutionPolicy Bypass -File scripts\backup_mysql.ps1
+powershell -ExecutionPolicy Bypass -File scripts\verify_mysql_backup.ps1 -Path artifacts\backups\<backup-file>.sql
 ```
 
 ## Tagging
@@ -87,7 +93,7 @@ bash scripts/verify_mysql_backup.sh artifacts/backups/<backup-file>.sql
 After a clean release commit:
 
 ```bash
-git tag v0.32.0
+git tag v0.44.0
 ```
 
 Tags should point only to commits that passed the release checklist.

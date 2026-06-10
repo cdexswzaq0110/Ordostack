@@ -451,7 +451,8 @@ a {
 
 button:focus-visible,
 a:focus-visible,
-input:focus-visible {
+input:focus-visible,
+select:focus-visible {
   outline: 3px solid #7da7e8;
   outline-offset: 2px;
 }
@@ -710,6 +711,17 @@ h3 {
   border-left: 4px solid #8d98a8;
   border-radius: 8px;
   background: #f7f8fa;
+}
+
+.timeline-actions {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 6px;
+}
+
+.timeline-actions .ghost-button {
+  width: 34px;
+  height: 34px;
 }
 
 .timeline-block p {

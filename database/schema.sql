@@ -28,6 +28,8 @@ CREATE TABLE IF NOT EXISTS fixed_events (
   start_time DATETIME(6) NOT NULL,
   end_time DATETIME(6) NOT NULL,
   event_type VARCHAR(50) NULL,
+  recurrence_id VARCHAR(64) NULL,
+  recurrence_rule VARCHAR(255) NULL,
   created_at DATETIME(6) NOT NULL,
   updated_at DATETIME(6) NULL,
   deleted_at DATETIME(6) NULL,
@@ -77,8 +79,25 @@ CREATE TABLE IF NOT EXISTS schedule_items (
   category VARCHAR(50) NULL,
   requires_focus BOOLEAN NOT NULL,
   score DOUBLE NULL,
+  locked BOOLEAN NOT NULL DEFAULT FALSE,
+  manual_override BOOLEAN NOT NULL DEFAULT FALSE,
   INDEX idx_schedule_items_run_order (schedule_run_id, order_index),
   CONSTRAINT fk_schedule_items_run
     FOREIGN KEY (schedule_run_id) REFERENCES schedule_runs(id)
     ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS schedule_templates (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  name VARCHAR(120) NOT NULL,
+  planning_mode VARCHAR(50) NOT NULL,
+  start_hour INT NOT NULL,
+  end_hour INT NOT NULL,
+  buffer_minutes INT NOT NULL,
+  include_fixed_events BOOLEAN NOT NULL,
+  created_at DATETIME(6) NOT NULL,
+  updated_at DATETIME(6) NULL,
+  deleted_at DATETIME(6) NULL,
+  INDEX idx_schedule_templates_user_active (user_id, deleted_at, name)
 );

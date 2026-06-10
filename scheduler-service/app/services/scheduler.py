@@ -11,6 +11,7 @@ APPLIED_ALGORITHMS = [
     "knapsack-capacity",
     "priority-queue",
     "fixed-event-free-slot-builder",
+    "locked-item-preservation",
 ]
 
 
@@ -19,10 +20,15 @@ class ScheduleGenerationError(Exception):
 
 
 def generate_schedule(payload: ScheduleGenerateRequest) -> ScheduleGenerateResponse:
+    locked_task_ids = {
+        item.task_id
+        for item in payload.locked_items
+        if item.type == "task" and item.task_id is not None
+    }
     candidate_tasks = [
         task
         for task in payload.tasks
-        if task.status not in {"completed", "skipped"} and not task.is_fixed
+        if task.status not in {"completed", "skipped"} and not task.is_fixed and task.id not in locked_task_ids
     ]
     scores = score_tasks(candidate_tasks, payload.target_date)
     priority_ordered_tasks = order_tasks_by_priority(candidate_tasks, scores)
@@ -55,6 +61,7 @@ def generate_schedule(payload: ScheduleGenerateRequest) -> ScheduleGenerateRespo
     schedule_items, unscheduled_task_ids = build_schedule_items(
         tasks=[task_by_id[task_id] for task_id in ordered_ids],
         fixed_events=payload.fixed_events,
+        locked_items=payload.locked_items,
         target_date=payload.target_date,
         scores=scores,
         start_hour=payload.start_hour,
@@ -65,7 +72,7 @@ def generate_schedule(payload: ScheduleGenerateRequest) -> ScheduleGenerateRespo
 
     scheduled_task_count = sum(1 for item in schedule_items if item.type == "task")
     selected_task_count = len(dependency_safe_tasks)
-    skipped_task_count = max(0, len(candidate_tasks) - scheduled_task_count)
+    skipped_task_count = max(0, len(candidate_tasks) - (scheduled_task_count - len(locked_task_ids)))
     warnings = build_warnings(
         candidate_count=len(candidate_tasks),
         selected_count=selected_task_count,

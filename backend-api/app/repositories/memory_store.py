@@ -24,11 +24,13 @@ class InMemoryStore:
             self._next_fixed_event_id = 1
             self._next_execution_log_id = 1
             self._next_schedule_run_id = 1
+            self._next_schedule_template_id = 1
             self._users: dict[int, dict[str, Any]] = {}
             self._tasks: dict[int, dict[str, Any]] = {}
             self._fixed_events: dict[int, dict[str, Any]] = {}
             self._execution_logs: dict[int, dict[str, Any]] = {}
             self._schedule_runs: dict[int, dict[str, Any]] = {}
+            self._schedule_templates: dict[int, dict[str, Any]] = {}
             self._seed_demo_user()
             self._seed_demo_data()
 
@@ -302,6 +304,31 @@ class InMemoryStore:
             schedule_run["updated_at"] = datetime.now(UTC)
             return self._build_schedule_history_item(deepcopy(schedule_run))
 
+    def update_generated_schedule_item(
+        self,
+        user_id: int,
+        schedule_run_id: int,
+        item_key: str,
+        payload: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        with self._lock:
+            schedule_run = self._schedule_runs.get(schedule_run_id)
+            if (
+                schedule_run is None
+                or schedule_run["user_id"] != user_id
+                or schedule_run["deleted_at"] is not None
+            ):
+                return None
+
+            items = schedule_run["schedule"].get("items", [])
+            for item in items:
+                if self._schedule_item_key(item) == item_key:
+                    item.update(payload)
+                    schedule_run["updated_at"] = datetime.now(UTC)
+                    return self._build_schedule_history_item(deepcopy(schedule_run))
+
+            return None
+
     def soft_delete_generated_schedule(self, user_id: int, schedule_run_id: int) -> bool:
         with self._lock:
             schedule_run = self._schedule_runs.get(schedule_run_id)
@@ -317,6 +344,63 @@ class InMemoryStore:
             schedule_run["deleted_at"] = now
             return True
 
+    def list_schedule_templates(self, user_id: int) -> list[dict[str, Any]]:
+        with self._lock:
+            templates = [
+                deepcopy(template)
+                for template in self._schedule_templates.values()
+                if template["user_id"] == user_id and template["deleted_at"] is None
+            ]
+        return sorted(templates, key=lambda template: (template["name"].lower(), template["id"]))
+
+    def get_schedule_template(self, user_id: int, template_id: int) -> dict[str, Any] | None:
+        with self._lock:
+            template = self._schedule_templates.get(template_id)
+            if template is None or template["user_id"] != user_id or template["deleted_at"] is not None:
+                return None
+            return deepcopy(template)
+
+    def create_schedule_template(self, payload: dict[str, Any]) -> dict[str, Any]:
+        now = datetime.now(UTC)
+        with self._lock:
+            template_id = self._next_schedule_template_id
+            self._next_schedule_template_id += 1
+            template = {
+                "id": template_id,
+                "created_at": now,
+                "updated_at": None,
+                "deleted_at": None,
+                **payload,
+            }
+            self._schedule_templates[template_id] = template
+            return deepcopy(template)
+
+    def update_schedule_template(
+        self,
+        user_id: int,
+        template_id: int,
+        payload: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        with self._lock:
+            template = self._schedule_templates.get(template_id)
+            if template is None or template["user_id"] != user_id or template["deleted_at"] is not None:
+                return None
+
+            template.update(payload)
+            template["updated_at"] = datetime.now(UTC)
+            return deepcopy(template)
+
+    def soft_delete_schedule_template(self, user_id: int, template_id: int) -> bool:
+        with self._lock:
+            template = self._schedule_templates.get(template_id)
+            if template is None or template["user_id"] != user_id or template["deleted_at"] is not None:
+                return False
+
+            now = datetime.now(UTC)
+            template["updated_at"] = now
+            template["deleted_at"] = now
+            return True
+
     def _build_schedule_history_item(self, schedule_run: dict[str, Any]) -> dict[str, Any]:
         schedule = schedule_run["schedule"]
         algorithm_summary = schedule.get("algorithm_summary", {})
@@ -330,6 +414,13 @@ class InMemoryStore:
             "item_count": len(items),
             "schedule": deepcopy(schedule),
         }
+
+    def _schedule_item_key(self, item: dict[str, Any]) -> str:
+        if item.get("type") == "task" and item.get("task_id") is not None:
+            return f"task:{item['task_id']}"
+        if item.get("type") == "fixed_event" and item.get("fixed_event_id") is not None:
+            return f"fixed_event:{item['fixed_event_id']}"
+        return f"{item.get('type', 'item')}:{item.get('title', '')}:{item.get('order_index', 0)}"
 
     def _default_schedule_title(self, schedule: dict[str, Any], created_at: datetime) -> str:
         planning_mode = str(schedule.get("planning_mode", "balanced")).replace("-", " ").title()

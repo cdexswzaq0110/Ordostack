@@ -192,6 +192,8 @@ class MySqlStore:
         self._ensure_ready()
         now = datetime.now(UTC)
         row = {
+            "recurrence_id": None,
+            "recurrence_rule": None,
             "created_at": now,
             "updated_at": None,
             "deleted_at": None,
@@ -203,6 +205,8 @@ class MySqlStore:
             "start_time",
             "end_time",
             "event_type",
+            "recurrence_id",
+            "recurrence_rule",
             "created_at",
             "updated_at",
             "deleted_at",
@@ -357,9 +361,11 @@ class MySqlStore:
                           order_index,
                           category,
                           requires_focus,
-                          score
+                          score,
+                          locked,
+                          manual_override
                         )
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         """,
                         (
                             schedule_run_id,
@@ -374,6 +380,8 @@ class MySqlStore:
                             item.get("category"),
                             int(bool(item.get("requires_focus", False))),
                             item.get("score"),
+                            int(bool(item.get("locked", False))),
+                            int(bool(item.get("manual_override", False))),
                         ),
                     )
 
@@ -517,6 +525,53 @@ class MySqlStore:
 
         return self._normalize_schedule_history_item(schedule_run, schedule_items)
 
+    def update_generated_schedule_item(
+        self,
+        user_id: int,
+        schedule_run_id: int,
+        item_key: str,
+        payload: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        self._ensure_ready()
+        allowed_fields = {"start_time", "end_time", "planned_minutes", "locked", "manual_override"}
+        update_payload = {key: value for key, value in payload.items() if key in allowed_fields}
+        if not update_payload:
+            return self.get_generated_schedule_history_item(user_id=user_id, schedule_run_id=schedule_run_id)
+
+        with self._connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT id
+                    FROM schedule_runs
+                    WHERE id=%s AND user_id=%s AND deleted_at IS NULL
+                    """,
+                    (schedule_run_id, user_id),
+                )
+                if cursor.fetchone() is None:
+                    return None
+
+                where_clause, where_params = self._schedule_item_where_clause(item_key)
+                assignments = ", ".join([f"{field}=%s" for field in update_payload])
+                values = [self._serialize_value(field, value) for field, value in update_payload.items()]
+                cursor.execute(
+                    f"""
+                    UPDATE schedule_items
+                    SET {assignments}
+                    WHERE schedule_run_id=%s AND {where_clause}
+                    """,
+                    values + [schedule_run_id] + where_params,
+                )
+                if cursor.rowcount == 0:
+                    return None
+
+                cursor.execute(
+                    "UPDATE schedule_runs SET updated_at=%s WHERE id=%s AND user_id=%s",
+                    (datetime.now(UTC).replace(tzinfo=None), schedule_run_id, user_id),
+                )
+
+        return self.get_generated_schedule_history_item(user_id=user_id, schedule_run_id=schedule_run_id)
+
     def soft_delete_generated_schedule(self, user_id: int, schedule_run_id: int) -> bool:
         self._ensure_ready()
         now = datetime.now(UTC).replace(tzinfo=None)
@@ -529,6 +584,111 @@ class MySqlStore:
                     WHERE id=%s AND user_id=%s AND deleted_at IS NULL
                     """,
                     (now, now, schedule_run_id, user_id),
+                )
+                return cursor.rowcount > 0
+
+    def list_schedule_templates(self, user_id: int) -> list[dict[str, Any]]:
+        self._ensure_ready()
+        with self._connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT *
+                    FROM schedule_templates
+                    WHERE user_id=%s AND deleted_at IS NULL
+                    ORDER BY LOWER(name) ASC, id ASC
+                    """,
+                    (user_id,),
+                )
+                return list(cursor.fetchall())
+
+    def get_schedule_template(self, user_id: int, template_id: int) -> dict[str, Any] | None:
+        self._ensure_ready()
+        with self._connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT *
+                    FROM schedule_templates
+                    WHERE id=%s AND user_id=%s AND deleted_at IS NULL
+                    """,
+                    (template_id, user_id),
+                )
+                return cursor.fetchone()
+
+    def create_schedule_template(self, payload: dict[str, Any]) -> dict[str, Any]:
+        self._ensure_ready()
+        now = datetime.now(UTC).replace(tzinfo=None)
+        row = {"created_at": now, "updated_at": None, "deleted_at": None, **payload}
+        fields = [
+            "user_id",
+            "name",
+            "planning_mode",
+            "start_hour",
+            "end_hour",
+            "buffer_minutes",
+            "include_fixed_events",
+            "created_at",
+            "updated_at",
+            "deleted_at",
+        ]
+        values = [self._serialize_value(field, row[field]) for field in fields]
+        placeholders = ", ".join(["%s"] * len(fields))
+        with self._connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    f"INSERT INTO schedule_templates ({', '.join(fields)}) VALUES ({placeholders})",
+                    values,
+                )
+                template_id = cursor.lastrowid
+
+        template = self.get_schedule_template(user_id=payload["user_id"], template_id=template_id)
+        if template is None:
+            raise RuntimeError("Created schedule template could not be loaded")
+        return template
+
+    def update_schedule_template(
+        self,
+        user_id: int,
+        template_id: int,
+        payload: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        self._ensure_ready()
+        if not payload:
+            return self.get_schedule_template(user_id=user_id, template_id=template_id)
+
+        updated_payload = {**payload, "updated_at": datetime.now(UTC).replace(tzinfo=None)}
+        assignments = ", ".join([f"{field}=%s" for field in updated_payload])
+        values = [self._serialize_value(field, value) for field, value in updated_payload.items()]
+        values.extend([template_id, user_id])
+
+        with self._connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    f"""
+                    UPDATE schedule_templates
+                    SET {assignments}
+                    WHERE id=%s AND user_id=%s AND deleted_at IS NULL
+                    """,
+                    values,
+                )
+                if cursor.rowcount == 0:
+                    return None
+
+        return self.get_schedule_template(user_id=user_id, template_id=template_id)
+
+    def soft_delete_schedule_template(self, user_id: int, template_id: int) -> bool:
+        self._ensure_ready()
+        now = datetime.now(UTC).replace(tzinfo=None)
+        with self._connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    UPDATE schedule_templates
+                    SET deleted_at=%s, updated_at=%s
+                    WHERE id=%s AND user_id=%s AND deleted_at IS NULL
+                    """,
+                    (now, now, template_id, user_id),
                 )
                 return cursor.rowcount > 0
 
@@ -548,6 +708,7 @@ class MySqlStore:
                 cursor.execute("DELETE FROM execution_logs WHERE user_id=%s", (user_id,))
                 cursor.execute("DELETE FROM tasks WHERE user_id=%s", (user_id,))
                 cursor.execute("DELETE FROM fixed_events WHERE user_id=%s", (user_id,))
+                cursor.execute("DELETE FROM schedule_templates WHERE user_id=%s", (user_id,))
 
         created_tasks = [self.create_task(task) for task in demo_task_seed()]
         completed_task = created_tasks[2]
@@ -720,7 +881,22 @@ class MySqlStore:
             "category": row["category"],
             "requires_focus": bool(row["requires_focus"]),
             "score": row["score"],
+            "locked": bool(row.get("locked", False)),
+            "manual_override": bool(row.get("manual_override", False)),
         }
+
+    def _schedule_item_where_clause(self, item_key: str) -> tuple[str, list[Any]]:
+        if item_key.startswith("task:"):
+            return "item_type='task' AND task_id=%s", [int(item_key.removeprefix("task:"))]
+        if item_key.startswith("fixed_event:"):
+            return "item_type='fixed_event' AND fixed_event_id=%s", [int(item_key.removeprefix("fixed_event:"))]
+
+        parts = item_key.split(":", 2)
+        if len(parts) == 3:
+            item_type, title, order_index = parts
+            return "item_type=%s AND title=%s AND order_index=%s", [item_type, title, int(order_index)]
+
+        return "id=%s", [int(item_key)]
 
     def _deserialize_json(self, value: Any, fallback: Any) -> Any:
         if value is None:
@@ -748,6 +924,8 @@ class MySqlStore:
             return int(value)
         if isinstance(value, datetime):
             return value.replace(tzinfo=None)
+        if field in {"start_time", "end_time"} and isinstance(value, str):
+            return datetime.fromisoformat(value).replace(tzinfo=None)
         return value
 
 
@@ -875,6 +1053,8 @@ SCHEMA_STATEMENTS = [
       start_time DATETIME(6) NOT NULL,
       end_time DATETIME(6) NOT NULL,
       event_type VARCHAR(50) NULL,
+      recurrence_id VARCHAR(64) NULL,
+      recurrence_rule VARCHAR(255) NULL,
       created_at DATETIME(6) NOT NULL,
       updated_at DATETIME(6) NULL,
       deleted_at DATETIME(6) NULL,
@@ -927,10 +1107,28 @@ SCHEMA_STATEMENTS = [
       category VARCHAR(50) NULL,
       requires_focus BOOLEAN NOT NULL,
       score DOUBLE NULL,
+      locked BOOLEAN NOT NULL DEFAULT FALSE,
+      manual_override BOOLEAN NOT NULL DEFAULT FALSE,
       INDEX idx_schedule_items_run_order (schedule_run_id, order_index),
       CONSTRAINT fk_schedule_items_run
         FOREIGN KEY (schedule_run_id) REFERENCES schedule_runs(id)
         ON DELETE CASCADE
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS schedule_templates (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      name VARCHAR(120) NOT NULL,
+      planning_mode VARCHAR(50) NOT NULL,
+      start_hour INT NOT NULL,
+      end_hour INT NOT NULL,
+      buffer_minutes INT NOT NULL,
+      include_fixed_events BOOLEAN NOT NULL,
+      created_at DATETIME(6) NOT NULL,
+      updated_at DATETIME(6) NULL,
+      deleted_at DATETIME(6) NULL,
+      INDEX idx_schedule_templates_user_active (user_id, deleted_at, name)
     )
     """,
 ]

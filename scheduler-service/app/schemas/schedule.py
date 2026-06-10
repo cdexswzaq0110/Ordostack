@@ -34,6 +34,28 @@ class FixedEventInput(BaseModel):
         return self
 
 
+class LockedScheduleItemInput(BaseModel):
+    type: Literal["task", "fixed_event"]
+    title: str = Field(min_length=1, max_length=255)
+    start_time: datetime
+    end_time: datetime
+    planned_minutes: int = Field(gt=0)
+    order_index: int = Field(ge=0)
+    task_id: int | None = None
+    fixed_event_id: int | None = None
+    category: str | None = None
+    requires_focus: bool = False
+    score: float | None = None
+    locked: bool = True
+    manual_override: bool = False
+
+    @model_validator(mode="after")
+    def validate_time_range(self) -> "LockedScheduleItemInput":
+        if self.end_time <= self.start_time:
+            raise ValueError("end_time must be later than start_time")
+        return self
+
+
 class ScheduleGenerateRequest(BaseModel):
     user_id: int = 1
     target_date: date
@@ -44,6 +66,7 @@ class ScheduleGenerateRequest(BaseModel):
     include_fixed_events: bool = True
     tasks: list[TaskInput] = Field(default_factory=list)
     fixed_events: list[FixedEventInput] = Field(default_factory=list)
+    locked_items: list[LockedScheduleItemInput] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_planning_window(self) -> "ScheduleGenerateRequest":
@@ -64,6 +87,8 @@ class ScheduleItem(BaseModel):
     category: str | None = None
     requires_focus: bool = False
     score: float | None = None
+    locked: bool = False
+    manual_override: bool = False
 
 
 class AlgorithmSummary(BaseModel):

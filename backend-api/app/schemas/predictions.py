@@ -20,4 +20,11 @@ class DurationPredictionResponse(BaseModel):
     predictions: list[DurationPredictionRead]
 
 
+class DurationFeedbackExportResponse(BaseModel):
+    filename: str
+    content_type: str
+    row_count: int
+    content: str
+
+
 DurationPredictionPayload = dict[str, Any]

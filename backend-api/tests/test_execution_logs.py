@@ -72,6 +72,25 @@ def test_complete_task_closes_running_interval_and_updates_status() -> None:
     assert task_summary["actual_minutes"] == 70
 
 
+def test_completion_forecast_uses_daily_execution_state() -> None:
+    store.reset()
+    client = TestClient(app)
+    headers = auth_headers(client)
+
+    response = client.get(
+        "/api/analytics/completion-forecast",
+        headers=headers,
+        params={"target_date": "2026-06-03"},
+    )
+
+    assert response.status_code == 200
+    forecast = response.json()
+    assert forecast["target_date"] == "2026-06-03"
+    assert forecast["forecast_completion_rate"] >= 0
+    assert forecast["remaining_minutes"] > 0
+    assert forecast["confidence"] > 0
+
+
 def test_pause_requires_in_progress_task() -> None:
     store.reset()
     client = TestClient(app)

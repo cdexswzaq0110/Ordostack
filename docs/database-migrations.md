@@ -5,7 +5,7 @@ Issue 9 introduces Alembic as the database migration tool for `backend-api`.
 ## Current Revision
 
 ```text
-20260604_0003_auth_users
+20260610_0004_product_mvp_hardening
 ```
 
 ## Docker Startup

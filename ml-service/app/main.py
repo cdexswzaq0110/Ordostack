@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, status
 
 from app.observability import configure_request_observability
+from app.model_registry import model_registry_info
 from app.predict import get_active_model_metadata, predict_duration
 from app.schemas import DurationPredictRequest, DurationPredictResponse
 
@@ -76,3 +77,8 @@ def model_info() -> dict[str, str]:
         "model_version": model_version,
         "source": source,
     }
+
+
+@app.get("/model/registry", tags=["model"])
+def model_registry() -> dict[str, object]:
+    return model_registry_info()

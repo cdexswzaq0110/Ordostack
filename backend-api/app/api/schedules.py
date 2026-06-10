@@ -12,6 +12,8 @@ from app.schemas.schedules import (
     ScheduleHistoryDeleteResponse,
     ScheduleHistoryItem,
     ScheduleHistoryUpdate,
+    ScheduleItemLockUpdate,
+    ScheduleItemTimeUpdate,
 )
 from app.services import schedules as schedule_service
 
@@ -57,6 +59,36 @@ def update_schedule_history_title(
     )
 
 
+@router.patch("/history/{schedule_run_id}/items/{item_key}/lock", response_model=ScheduleHistoryItem)
+def update_schedule_item_lock(
+    schedule_run_id: int,
+    item_key: str,
+    payload: ScheduleItemLockUpdate,
+    current_user: UserRead = Depends(get_current_user),
+) -> ScheduleHistoryItem:
+    return schedule_service.update_schedule_item_lock(
+        user_id=current_user.id,
+        schedule_run_id=schedule_run_id,
+        item_key=item_key,
+        payload=payload,
+    )
+
+
+@router.patch("/history/{schedule_run_id}/items/{item_key}/time", response_model=ScheduleHistoryItem)
+def update_schedule_item_time(
+    schedule_run_id: int,
+    item_key: str,
+    payload: ScheduleItemTimeUpdate,
+    current_user: UserRead = Depends(get_current_user),
+) -> ScheduleHistoryItem:
+    return schedule_service.update_schedule_item_time(
+        user_id=current_user.id,
+        schedule_run_id=schedule_run_id,
+        item_key=item_key,
+        payload=payload,
+    )
+
+
 @router.delete("/history/{schedule_run_id}", response_model=ScheduleHistoryDeleteResponse)
 def delete_schedule_history_item(
     schedule_run_id: int,
@@ -81,7 +113,7 @@ def get_schedule_history_diff(
 @router.get("/history/{schedule_run_id}/export", response_model=ScheduleExportResponse)
 def export_schedule_history_item(
     schedule_run_id: int,
-    export_format: str = Query(default="markdown", alias="format", pattern="^(markdown|csv)$"),
+    export_format: str = Query(default="markdown", alias="format", pattern="^(markdown|csv|pdf)$"),
     current_user: UserRead = Depends(get_current_user),
 ) -> ScheduleExportResponse:
     return schedule_service.export_schedule_history_item(

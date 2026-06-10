@@ -1,15 +1,13 @@
 import json
-import os
 from functools import lru_cache
-from pathlib import Path
 from typing import Any
 
 from app.features import category_multiplier
+from app.model_registry import active_model_path
 from app.schemas import DurationPrediction, DurationTaskInput
 
 HEURISTIC_MODEL_NAME = "heuristic-duration"
 HEURISTIC_MODEL_VERSION = "0.1.0"
-DEFAULT_MODEL_PATH = Path(__file__).resolve().parents[1] / "training" / "artifacts" / "duration_model.json"
 
 
 def predict_duration(task: DurationTaskInput) -> DurationPrediction:
@@ -78,7 +76,7 @@ def clamp_minutes(value: int) -> int:
 
 @lru_cache(maxsize=1)
 def load_duration_model() -> dict[str, Any] | None:
-    model_path = Path(os.getenv("DURATION_MODEL_PATH", str(DEFAULT_MODEL_PATH)))
+    model_path = active_model_path()
     if not model_path.exists():
         return None
 
