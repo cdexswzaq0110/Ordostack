@@ -17,6 +17,7 @@ def main() -> int:
         "select_focus_visible": "select:focus-visible" in styles_text,
         "keyboard_focus_visible": ":focus-visible" in styles_text,
         "timeline_actions_are_labeled": "Move earlier" in app_text and "Move later" in app_text,
+        "auth_status_uses_live_region": 'role="status"' in app_text and 'aria-live="polite"' in app_text,
     }
     failed = [name for name, passed in checks.items() if not passed]
     if failed:

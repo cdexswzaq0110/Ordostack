@@ -11,6 +11,11 @@ VALID_DATA_STORES = {"memory", "mysql"}
 DEFAULT_SCHEDULER_SERVICE_URL = "http://scheduler-service:8100"
 DEFAULT_ML_SERVICE_URL = "http://ml-service:8200"
 DEFAULT_LOCAL_AUTH_TOKEN_SECRET = "ordostack-local-dev-auth-token-secret"
+DEFAULT_AUTH_TOKEN_TTL_MINUTES = "10080"
+DEFAULT_AUTH_LOGIN_MAX_FAILURES = "5"
+DEFAULT_AUTH_LOGIN_WINDOW_SECONDS = "300"
+DEFAULT_AUTH_LOGIN_LOCKOUT_SECONDS = "300"
+DEFAULT_AUTH_PASSWORD_MIN_LENGTH = "12"
 
 
 class ConfigurationError(RuntimeError):
@@ -29,6 +34,11 @@ class RuntimeConfig:
     scheduler_service_url: str
     ml_service_url: str
     auth_token_secret: str
+    auth_token_ttl_minutes: int
+    auth_login_max_failures: int
+    auth_login_window_seconds: int
+    auth_login_lockout_seconds: int
+    auth_password_min_length: int
 
 
 def load_runtime_config(environment: Mapping[str, str] | None = None) -> RuntimeConfig:
@@ -54,6 +64,26 @@ def load_runtime_config(environment: Mapping[str, str] | None = None) -> Runtime
         scheduler_service_url=normalize_url(scheduler_service_url, "SCHEDULER_SERVICE_URL"),
         ml_service_url=normalize_url(ml_service_url, "ML_SERVICE_URL"),
         auth_token_secret=get_non_empty_value(values, "AUTH_TOKEN_SECRET", DEFAULT_LOCAL_AUTH_TOKEN_SECRET),
+        auth_token_ttl_minutes=parse_positive_int(
+            get_value(values, "AUTH_TOKEN_TTL_MINUTES", DEFAULT_AUTH_TOKEN_TTL_MINUTES),
+            "AUTH_TOKEN_TTL_MINUTES",
+        ),
+        auth_login_max_failures=parse_positive_int(
+            get_value(values, "AUTH_LOGIN_MAX_FAILURES", DEFAULT_AUTH_LOGIN_MAX_FAILURES),
+            "AUTH_LOGIN_MAX_FAILURES",
+        ),
+        auth_login_window_seconds=parse_positive_int(
+            get_value(values, "AUTH_LOGIN_WINDOW_SECONDS", DEFAULT_AUTH_LOGIN_WINDOW_SECONDS),
+            "AUTH_LOGIN_WINDOW_SECONDS",
+        ),
+        auth_login_lockout_seconds=parse_positive_int(
+            get_value(values, "AUTH_LOGIN_LOCKOUT_SECONDS", DEFAULT_AUTH_LOGIN_LOCKOUT_SECONDS),
+            "AUTH_LOGIN_LOCKOUT_SECONDS",
+        ),
+        auth_password_min_length=parse_positive_int(
+            get_value(values, "AUTH_PASSWORD_MIN_LENGTH", DEFAULT_AUTH_PASSWORD_MIN_LENGTH),
+            "AUTH_PASSWORD_MIN_LENGTH",
+        ),
     )
     validate_runtime_config(config=config, explicit_values=values)
     return config
@@ -70,6 +100,10 @@ def validate_runtime_config(config: RuntimeConfig, explicit_values: Mapping[str,
         require_explicit(explicit_values, "SCHEDULER_SERVICE_URL")
         require_explicit(explicit_values, "ML_SERVICE_URL")
         require_explicit(explicit_values, "AUTH_TOKEN_SECRET")
+        if config.auth_token_secret == DEFAULT_LOCAL_AUTH_TOKEN_SECRET:
+            raise ConfigurationError("AUTH_TOKEN_SECRET must not use the local fallback when ORDOSTACK_ENV=production")
+        if len(config.auth_token_secret) < 32:
+            raise ConfigurationError("AUTH_TOKEN_SECRET must be at least 32 characters when ORDOSTACK_ENV=production")
         if config.data_store == "mysql":
             require_non_empty(config.db_password, "DB_PASSWORD")
 
@@ -103,6 +137,17 @@ def parse_port(value: str, key: str) -> int:
     if port < 1 or port > 65535:
         raise ConfigurationError(f"{key} must be between 1 and 65535")
     return port
+
+
+def parse_positive_int(value: str, key: str) -> int:
+    try:
+        number = int(value)
+    except ValueError as error:
+        raise ConfigurationError(f"{key} must be an integer") from error
+
+    if number < 1:
+        raise ConfigurationError(f"{key} must be greater than 0")
+    return number
 
 
 def normalize_url(value: str, key: str) -> str:

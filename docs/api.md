@@ -28,7 +28,7 @@ All FastAPI services return `X-Request-ID`. If a valid `X-Request-ID` request he
 
 ## Auth MVP
 
-Issue 28 adds local bearer-token authentication. It does not use AWS, OAuth, email delivery, or paid APIs.
+Issue 28 adds local bearer-token authentication. Issue 47 adds local production-auth hardening controls for password policy, token lifetime configuration, production secret validation, and failed-login rate limiting. It does not use AWS, OAuth, email delivery, or paid APIs.
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
@@ -53,12 +53,26 @@ Register request:
 }
 ```
 
+Registration password policy:
+
+- At least `AUTH_PASSWORD_MIN_LENGTH` characters.
+- At least one letter.
+- At least one number or symbol.
+- Must not contain the email username.
+
+Failed login policy:
+
+- Failed attempts are counted per email and client address.
+- `AUTH_LOGIN_MAX_FAILURES`, `AUTH_LOGIN_WINDOW_SECONDS`, and `AUTH_LOGIN_LOCKOUT_SECONDS` control the local lockout behavior.
+- Lockout responses return HTTP `429`.
+
 Auth response:
 
 ```json
 {
   "access_token": "local-hmac-token",
   "token_type": "bearer",
+  "expires_at": "2026-06-11T12:00:00Z",
   "user": {
     "id": 2,
     "email": "qa@example.com",

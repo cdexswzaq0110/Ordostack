@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.repositories.memory_store import DEMO_AUTH_EMAIL, DEMO_AUTH_PASSWORD, store
+from app.services import auth as auth_service
 
 
 def test_register_user_returns_token_and_me() -> None:
@@ -21,6 +22,7 @@ def test_register_user_returns_token_and_me() -> None:
     token_payload = register_response.json()
     assert token_payload["token_type"] == "bearer"
     assert token_payload["access_token"]
+    assert token_payload["expires_at"]
     assert token_payload["user"]["email"] == "qa@example.com"
 
     me_response = client.get(
@@ -62,6 +64,23 @@ def test_register_rejects_duplicate_email() -> None:
     assert client.post("/api/auth/register", json=payload).status_code == 409
 
 
+def test_register_rejects_weak_password() -> None:
+    store.reset()
+    client = TestClient(app)
+
+    response = client.post(
+        "/api/auth/register",
+        json={
+            "email": "weak@example.com",
+            "display_name": "Weak Password",
+            "password": "weakpass",
+        },
+    )
+
+    assert response.status_code == 422
+    assert "Password must include" in response.json()["detail"]
+
+
 def test_login_rejects_wrong_password() -> None:
     store.reset()
     client = TestClient(app)
@@ -75,6 +94,27 @@ def test_login_rejects_wrong_password() -> None:
     )
 
     assert response.status_code == 401
+
+
+def test_login_rate_limit_locks_repeated_failures(monkeypatch) -> None:
+    store.reset()
+    auth_service.clear_login_rate_limit()
+    monkeypatch.setenv("AUTH_LOGIN_MAX_FAILURES", "2")
+    monkeypatch.setenv("AUTH_LOGIN_WINDOW_SECONDS", "60")
+    monkeypatch.setenv("AUTH_LOGIN_LOCKOUT_SECONDS", "60")
+    client = TestClient(app)
+
+    payload = {
+        "email": DEMO_AUTH_EMAIL,
+        "password": "wrong-password",
+    }
+
+    assert client.post("/api/auth/login", json=payload).status_code == 401
+    locked_response = client.post("/api/auth/login", json=payload)
+
+    assert locked_response.status_code == 429
+    assert locked_response.json()["detail"]["message"] == "Too many failed login attempts"
+    auth_service.clear_login_rate_limit()
 
 
 def test_me_requires_bearer_token() -> None:

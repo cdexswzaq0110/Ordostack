@@ -11,6 +11,9 @@ def test_default_runtime_config_is_local_memory() -> None:
     assert config.scheduler_service_url == "http://scheduler-service:8100"
     assert config.ml_service_url == "http://ml-service:8200"
     assert config.auth_token_secret
+    assert config.auth_token_ttl_minutes == 10080
+    assert config.auth_login_max_failures == 5
+    assert config.auth_password_min_length == 12
 
 
 def test_blank_local_auth_token_secret_uses_fallback() -> None:
@@ -57,6 +60,11 @@ def test_invalid_service_url_is_rejected() -> None:
         load_runtime_config({"ML_SERVICE_URL": "ml-service:8200"})
 
 
+def test_invalid_auth_numeric_setting_is_rejected() -> None:
+    with pytest.raises(ConfigurationError, match="AUTH_TOKEN_TTL_MINUTES"):
+        load_runtime_config({"AUTH_TOKEN_TTL_MINUTES": "0"})
+
+
 def test_production_requires_explicit_service_urls() -> None:
     with pytest.raises(ConfigurationError, match="SCHEDULER_SERVICE_URL"):
         load_runtime_config(
@@ -80,7 +88,7 @@ def test_production_mysql_requires_password() -> None:
                 "DB_PASSWORD": "",
                 "SCHEDULER_SERVICE_URL": "http://scheduler-service:8100",
                 "ML_SERVICE_URL": "http://ml-service:8200",
-                "AUTH_TOKEN_SECRET": "production-secret",
+                "AUTH_TOKEN_SECRET": "production-secret-value-with-32-chars",
             },
         )
 
@@ -93,5 +101,18 @@ def test_production_requires_auth_token_secret() -> None:
                 "DATA_STORE": "memory",
                 "SCHEDULER_SERVICE_URL": "http://scheduler-service:8100",
                 "ML_SERVICE_URL": "http://ml-service:8200",
+            },
+        )
+
+
+def test_production_rejects_short_auth_token_secret() -> None:
+    with pytest.raises(ConfigurationError, match="AUTH_TOKEN_SECRET"):
+        load_runtime_config(
+            {
+                "ORDOSTACK_ENV": "production",
+                "DATA_STORE": "memory",
+                "SCHEDULER_SERVICE_URL": "http://scheduler-service:8100",
+                "ML_SERVICE_URL": "http://ml-service:8200",
+                "AUTH_TOKEN_SECRET": "short-secret",
             },
         )

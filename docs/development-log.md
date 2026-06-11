@@ -1,5 +1,35 @@
 # Development Log
 
+## 2026-06-11 - Issues 46-49 And 52-53 - Non-Docker Beta Hardening
+
+Branch:
+
+```text
+codex/issues-46-53-non-docker
+```
+
+Scope:
+
+- Issue 46: non-Docker release QA gate for service tests, static audits, translation coverage, backup policy, and beta readiness checks.
+- Issue 47: auth hardening baseline with password policy, configurable token lifetime, production secret validation, and failed-login rate limiting.
+- Issue 48: hosted monitoring baseline plan and local health/readiness probe script.
+- Issue 49: production backup policy audit for encryption, off-host storage, retention, restore approval, and temporary restore target requirements.
+- Issue 52: manual accessibility QA checklist.
+- Issue 53: beta readiness review and automated readiness check.
+
+MVP boundaries:
+
+- Issue 50 Docker finalization remains deferred.
+- Issue 51 hosted beta deployment remains deferred until account and hosting decisions are confirmed.
+- No paid API, cloud account, or hosted monitoring vendor was configured.
+- No destructive restore or file deletion was performed.
+
+Suggested commit:
+
+```text
+feat(beta): add non-docker readiness hardening
+```
+
 ## 2026-06-10 - Issues 34-45 - Non-Docker Product Hardening MVP
 
 Branch:

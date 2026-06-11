@@ -2,6 +2,75 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.50.0 - 2026-06-11
+
+- Add beta readiness review and automated beta readiness check.
+- Document remaining Issue 50 Docker finalization and Issue 51 hosted deployment gates.
+- Keep the repository positioned as Customer Demo MVP / Technical Preview.
+
+Suggested commit:
+
+```text
+docs(beta): add readiness gate
+```
+
+## 0.49.0 - 2026-06-11
+
+- Add manual accessibility QA checklist for keyboard, screen reader, contrast, and responsive checks.
+- Keep formal third-party accessibility audit out of the local MVP scope.
+
+Suggested commit:
+
+```text
+docs(a11y): add manual qa checklist
+```
+
+## 0.48.0 - 2026-06-11
+
+- Add production backup policy audit.
+- Document encryption, off-host storage, retention, restore approval, and temporary restore target requirements.
+- Keep scheduled backup execution and cloud storage setup deferred until hosted deployment decisions exist.
+
+Suggested commit:
+
+```text
+chore(backup): add policy audit
+```
+
+## 0.47.0 - 2026-06-11
+
+- Add hosted monitoring baseline plan.
+- Add local monitoring probe for health and readiness endpoints.
+- Keep hosted monitoring vendor configuration deferred.
+
+Suggested commit:
+
+```text
+docs(observability): define hosted monitoring baseline
+```
+
+## 0.46.0 - 2026-06-11
+
+- Add auth hardening baseline with password policy, configurable token lifetime, production secret validation, and failed-login rate limiting.
+- Extend auth and configuration tests.
+
+Suggested commit:
+
+```text
+feat(auth): harden local auth baseline
+```
+
+## 0.45.0 - 2026-06-11
+
+- Add non-Docker release QA gate for service tests, static audits, translation coverage, backup policy, and beta readiness checks.
+- Keep frontend build and visual regression strictness configurable for environments without `npm` or reviewed screenshots.
+
+Suggested commit:
+
+```text
+test(release): add non-docker qa gate
+```
+
 ## 0.44.0 - 2026-06-10
 
 - Add local security audit script for common secret and private-key patterns.

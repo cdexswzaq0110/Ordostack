@@ -5,7 +5,7 @@ OrdoStack uses MVP issue releases until production deployment exists.
 ## Current Version
 
 ```text
-0.44.0
+0.50.0
 ```
 
 ## Release Types
@@ -53,7 +53,15 @@ npm run build
 cd ..
 python scripts\a11y_static_audit.py
 python scripts\security_audit.py --root .
+python scripts\backup_policy_audit.py --root .
+python scripts\beta_readiness_check.py --root .
 python scripts\visual_regression.py --baseline artifacts\visual-baseline\dashboard.png --candidate artifacts\browser-smoke\dashboard.png --threshold 0.01
+```
+
+Combined non-Docker gate:
+
+```powershell
+python scripts\release_qa_gate.py
 ```
 
 Linux / WSL:
@@ -71,6 +79,8 @@ npm run build
 cd ..
 python scripts/a11y_static_audit.py
 python scripts/security_audit.py --root .
+python scripts/backup_policy_audit.py --root .
+python scripts/beta_readiness_check.py --root .
 python scripts/visual_regression.py --baseline artifacts/visual-baseline/dashboard.png --candidate artifacts/browser-smoke/dashboard.png --threshold 0.01
 ```
 
@@ -93,7 +103,7 @@ powershell -ExecutionPolicy Bypass -File scripts\verify_mysql_backup.ps1 -Path a
 After a clean release commit:
 
 ```bash
-git tag v0.44.0
+git tag v0.50.0
 ```
 
 Tags should point only to commits that passed the release checklist.

@@ -27,9 +27,14 @@ Issue 30 adds `.env.production.example` as a hosted deployment template. Copy it
 | `DB_PASSWORD` | Production MySQL only | empty | Empty is allowed for local Docker only |
 | `SCHEDULER_SERVICE_URL` | Production explicit | `http://scheduler-service:8100` | Must be `http` or `https` |
 | `ML_SERVICE_URL` | Production explicit | `http://ml-service:8200` | Must be `http` or `https` |
-| `AUTH_TOKEN_SECRET` | Production explicit | local-only fallback | HMAC signing secret for local bearer tokens |
+| `AUTH_TOKEN_SECRET` | Production explicit | local-only fallback | HMAC signing secret for local bearer tokens; production requires at least 32 characters |
+| `AUTH_TOKEN_TTL_MINUTES` | No | `10080` | Access token lifetime in minutes |
+| `AUTH_LOGIN_MAX_FAILURES` | No | `5` | Failed login attempts allowed inside the login window |
+| `AUTH_LOGIN_WINDOW_SECONDS` | No | `300` | Failed login counting window |
+| `AUTH_LOGIN_LOCKOUT_SECONDS` | No | `300` | Lockout duration after too many failed login attempts |
+| `AUTH_PASSWORD_MIN_LENGTH` | No | `12` | Registration password minimum length |
 
-Production mode requires explicit `DATA_STORE`, `SCHEDULER_SERVICE_URL`, `ML_SERVICE_URL`, and `AUTH_TOKEN_SECRET`. If production uses MySQL, `DB_PASSWORD` must not be empty.
+Production mode requires explicit `DATA_STORE`, `SCHEDULER_SERVICE_URL`, `ML_SERVICE_URL`, and `AUTH_TOKEN_SECRET`. The production auth token secret cannot use the local fallback and must be at least 32 characters. If production uses MySQL, `DB_PASSWORD` must not be empty.
 
 ## Web Dashboard Configuration
 
@@ -57,6 +62,11 @@ DB_USER=root
 DB_PASSWORD=
 SCHEDULER_SERVICE_URL=http://scheduler-service:8100
 ML_SERVICE_URL=http://ml-service:8200
+AUTH_TOKEN_TTL_MINUTES=10080
+AUTH_LOGIN_MAX_FAILURES=5
+AUTH_LOGIN_WINDOW_SECONDS=300
+AUTH_LOGIN_LOCKOUT_SECONDS=300
+AUTH_PASSWORD_MIN_LENGTH=12
 ```
 
 The empty MySQL password and fallback auth token secret are intentionally local-only. Do not reuse either behavior for production.
@@ -72,4 +82,6 @@ Current validation coverage:
 - Invalid `DB_PORT` is rejected.
 - Invalid scheduler or ML service URLs are rejected.
 - Production mode requires explicit service URLs.
+- Production mode rejects the local auth fallback secret and short auth token secrets.
+- Auth numeric policy values must be positive integers.
 - Production MySQL mode requires a non-empty database password.

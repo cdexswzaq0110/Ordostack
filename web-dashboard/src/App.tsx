@@ -215,6 +215,7 @@ type ApiUser = {
 type ApiAuthToken = {
   access_token: string;
   token_type: "bearer";
+  expires_at: string;
   user: ApiUser;
 };
 
@@ -1859,6 +1860,7 @@ export function App() {
                     <span>{t("Email")}</span>
                     <input
                       type="email"
+                      autoComplete="email"
                       value={authForm.email}
                       disabled={isAuthenticating}
                       onChange={(event) =>
@@ -1870,6 +1872,7 @@ export function App() {
                     <label>
                       <span>{t("Name")}</span>
                       <input
+                        autoComplete="name"
                         value={authForm.displayName}
                         disabled={isAuthenticating}
                         onChange={(event) =>
@@ -1882,6 +1885,7 @@ export function App() {
                     <span>{t("Password")}</span>
                     <input
                       type="password"
+                      autoComplete={authMode === "register" ? "new-password" : "current-password"}
                       value={authForm.password}
                       disabled={isAuthenticating}
                       onChange={(event) =>
@@ -1903,7 +1907,11 @@ export function App() {
                   </button>
                 </form>
               )}
-              {authStatus ? <p className="auth-status">{authStatus}</p> : null}
+              {authStatus ? (
+                <p className="auth-status" role="status" aria-live="polite">
+                  {authStatus}
+                </p>
+              ) : null}
             </section>
             <label className="language-switcher" aria-label={t("Language")}>
               <span>{t("Language")}</span>

@@ -2,12 +2,12 @@
 
 Source document: `C:\Users\HUANG\Desktop\OrdoStack Project Specification.docx`
 
-This markdown file records the implementation baseline used by Codex for the repository. The project is developed incrementally by issue. As of Issue 45, the repository is a local Customer Demo MVP with authentication, user-scoped planner data, English / Traditional Chinese dashboard locale support, manual schedule controls, recurring fixed events, schedule templates, PDF export, local model registry, completion forecast, accessibility/security/visual QA scripts, deployment baseline documentation, observability baseline, and backup/restore drill baseline, not a production launch build.
+This markdown file records the implementation baseline used by Codex for the repository. The project is developed incrementally by issue. As of Issue 53 non-Docker beta hardening, the repository is a local Customer Demo MVP with authentication, user-scoped planner data, English / Traditional Chinese dashboard locale support, manual schedule controls, recurring fixed events, schedule templates, PDF export, local model registry, completion forecast, auth hardening baseline, accessibility/security/visual QA scripts, non-Docker release QA gate, deployment baseline documentation, observability baseline, backup/restore drill baseline, backup policy audit, and beta readiness review, not a production launch build.
 
 ## Current Baseline
 
 ```text
-Version: 0.44.0
+Version: 0.50.0
 Stage: Customer Demo MVP
 Runtime: Local services; Docker deployment hardening deferred
 Primary UI: web-dashboard
@@ -42,13 +42,13 @@ OrdoStack is an AI daily planning product that lets users capture tasks and fixe
 ## Non-goals For Current MVP
 
 - No paid APIs.
-- No production-grade authentication hardening or account management.
+- No hosted refresh-token/session store, account recovery workflow, or admin support tooling.
 - No native mobile app implementation yet.
 - No app store release.
 - No ClearML agent execution yet.
 - No hosted production ML / DL model registry yet.
 - No DL completion-rate or focus-score service yet.
-- No hosted AWS deployment, HTTPS rollout, production Nginx rollout, or production backup plan yet.
+- No hosted AWS deployment, HTTPS rollout, production Nginx rollout, or production backup implementation yet.
 - No automated restore into the active production database.
 - No external observability vendor, hosted uptime monitor, metrics backend, tracing backend, or alerting workflow yet.
 - No full Google Calendar two-way sync.
@@ -56,7 +56,7 @@ OrdoStack is an AI daily planning product that lets users capture tasks and fixe
 - No complex permission system.
 - No chatbot replacing the scheduling algorithm core.
 
-## Implemented Through Issue 45
+## Implemented Through Issue 53 Non-Docker Beta Hardening
 
 | Area | Current implementation |
 | --- | --- |
@@ -71,13 +71,13 @@ OrdoStack is an AI daily planning product that lets users capture tasks and fixe
 | Analytics | Daily actual minutes, estimate delta, completion rate, focus minutes, completion forecast |
 | ML duration prediction | Local duration prediction API with bundled training artifact, local JSON model registry, duration feedback export, and heuristic fallback |
 | Storage | Docker MySQL persistence with Alembic migration baseline and local compatibility bootstrap |
-| Auth | Local register, login, current-user API, PBKDF2 password hashes, HMAC bearer tokens, demo account, user-scoped planner APIs |
+| Auth | Local register, login, current-user API, PBKDF2 password hashes, HMAC bearer tokens, token expiry governance, password policy, failed-login rate limiting, demo account, user-scoped planner APIs |
 | Deployment | Production env template, Nginx reverse-proxy skeleton, single-node deployment guide, hosted smoke checklist |
-| Observability | Request ID propagation, structured request logs, readiness endpoints, local observability runbook |
-| Backup/restore | Local MySQL backup scripts, backup verification scripts, non-destructive restore drill docs |
+| Observability | Request ID propagation, structured request logs, readiness endpoints, local observability runbook, hosted monitoring baseline plan, local monitoring probe |
+| Backup/restore | Local MySQL backup scripts, backup verification scripts, non-destructive restore drill docs, production backup policy audit |
 | Demo support | Seeded demo data and demo-only reset control |
-| Quality gates | Python service tests, web-dashboard build path, environment validation, local E2E smoke script, browser screenshot smoke, visual regression script, a11y static audit, security audit, backup verification, GitHub Actions baseline |
-| Documentation | API docs, QA plan, release process, branching strategy, development log, changelog, PM status report, environment configuration guide, backup/restore runbook |
+| Quality gates | Python service tests, web-dashboard build path, environment validation, local E2E smoke script, browser screenshot smoke, visual regression script, a11y static audit, security audit, backup verification, backup policy audit, beta readiness check, non-Docker release QA gate, GitHub Actions baseline |
+| Documentation | API docs, QA plan, release process, branching strategy, development log, changelog, PM status report, environment configuration guide, backup/restore runbook, accessibility QA checklist, beta readiness review |
 
 ## System Components
 
@@ -161,9 +161,8 @@ Implemented algorithms:
 Future algorithm work:
 
 - Weighted interval scheduling for richer event conflict scenarios.
-- Manual schedule lock / drag-and-drop adjustment.
-- Named schedule templates.
-- Recurring fixed event expansion.
+- Drag-and-drop schedule editing.
+- Timezone-aware scheduling preferences.
 
 ## Current Data Ownership
 
@@ -180,12 +179,19 @@ Future algorithm work:
 
 ## Quality Gates
 
-Before a release tag:
+Before the current non-Docker beta hardening tag:
 
 - backend-api tests pass.
 - scheduler-service tests pass.
 - ml-service tests pass.
-- web-dashboard production build passes.
+- `python scripts/release_qa_gate.py` exits with status code `0`.
+- web-dashboard production build passes when `npm` is available; otherwise it is explicitly recorded as skipped.
+- Backup policy audit passes.
+- Beta readiness check passes.
+- Secrets scan finds no committed credentials.
+
+Deferred final deployment gate:
+
 - `docker compose config` passes.
 - `docker compose up --build -d` starts all services.
 - Health checks pass:
@@ -201,14 +207,13 @@ Before a release tag:
 - `python scripts/browser_smoke.py` exits with status code `0` when Edge or Chrome is available.
 - Backup script creates a SQL file under `artifacts/backups`.
 - Backup verification script returns `status: ok` for the generated SQL file.
-- Secrets scan finds no committed credentials.
 
 ## Remaining Gaps Before Public Launch
 
-- Production-grade authentication and authorization.
+- Hosted refresh-token/session storage, account recovery, admin support tooling, and complex authorization.
 - Real onboarding, user settings, timezone handling, and profile data.
-- Production-grade migration policy, off-host backup, automated restore, and data retention.
-- Hosted deployment execution with HTTPS, domain, metrics, tracing, alerting, and incident playbook.
+- Production-grade migration policy, off-host backup implementation, automated restore, and data retention.
+- Hosted deployment execution with HTTPS, domain, metrics backend, tracing, alerting, and incident playbook.
 - Mobile app implementation.
 - ClearML experiment tracking, model registry, agent execution, and deployment workflow.
 - DL completion-rate / focus-score service.
@@ -220,11 +225,12 @@ Before a release tag:
 ## Planned Phases
 
 1. Local Customer Demo MVP: complete through Issue 45.
-2. Beta Hardening: production auth, hosted deployment, monitoring, backup automation, Docker finalization, and browser regression governance.
-3. MLOps Expansion: ClearML tracking, model registry, scheduled retraining, and model promotion.
-4. Intelligence Expansion: DL completion-rate or focus-score service.
-5. Mobile Product: React Native / Expo mobile client.
-6. Production Launch: cloud deployment, security review, monitoring, support process, and release governance.
+2. Non-Docker Beta Hardening: complete through Issue 53 except Docker finalization and hosted deployment execution.
+3. Deployment Hardening: Docker finalization, hosted deployment, monitoring implementation, backup automation, and browser regression governance.
+4. MLOps Expansion: ClearML tracking, model registry, scheduled retraining, and model promotion.
+5. Intelligence Expansion: DL completion-rate or focus-score service.
+6. Mobile Product: React Native / Expo mobile client.
+7. Production Launch: cloud deployment, security review, monitoring, support process, and release governance.
 
 ## Definition Of Done
 

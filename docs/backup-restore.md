@@ -97,3 +97,11 @@ Before production launch, replace this MVP baseline with:
 - Retention policy.
 - Backup integrity monitoring.
 - Access logging for backup artifacts.
+
+Minimum production backup policy:
+
+- Encryption: every backup artifact must be encrypted before leaving the host.
+- Off-host storage: at least one backup copy must be stored outside the application host.
+- Retention: define daily, weekly, and monthly retention windows before private beta.
+- Approval: any restore into a live database requires explicit written approval naming the target database and data that will be replaced.
+- Restore isolation: every routine restore drill must use a temporary target, never the active production database.

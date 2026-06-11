@@ -2,7 +2,7 @@
 
 OrdoStack is an AI daily planning MVP for task capture, protected calendar blocks, persisted generated schedules, manual schedule control, execution analytics, local duration prediction, and MySQL-backed persistence.
 
-This version is a local Customer Demo MVP: it implements task/fixed-event APIs, recurring fixed event expansion, schedule locking and manual adjustment, reusable schedule templates, scheduler-service MVP, persisted generated schedules, Markdown/CSV/PDF export, execution logs, daily analytics, completion forecast, local ML duration prediction, local model registry, duration feedback export, MySQL persistence in Docker, Alembic baseline migrations, a React dashboard, English / Traditional Chinese dashboard locale support, demo reset, local auth foundation, user-scoped planner APIs, deployment baseline docs, observability baseline, backup/restore drill baseline, local E2E smoke verification, browser smoke CI, visual regression script, a11y static audit, and security audit script. Production-grade auth hardening, ClearML agent execution, mobile app implementation, hosted monitoring, and AWS deployment are not implemented yet.
+This version is a local Customer Demo MVP: it implements task/fixed-event APIs, recurring fixed event expansion, schedule locking and manual adjustment, reusable schedule templates, scheduler-service MVP, persisted generated schedules, Markdown/CSV/PDF export, execution logs, daily analytics, completion forecast, local ML duration prediction, local model registry, duration feedback export, MySQL persistence in Docker, Alembic baseline migrations, a React dashboard, English / Traditional Chinese dashboard locale support, demo reset, local auth foundation, user-scoped planner APIs, password policy, token expiry governance, failed-login rate limiting, deployment baseline docs, observability baseline, backup/restore drill baseline, local E2E smoke verification, browser smoke CI, visual regression script, a11y static audit, security audit script, non-Docker release QA gate, backup policy audit, monitoring probe, accessibility QA checklist, and beta readiness review. ClearML agent execution, mobile app implementation, hosted deployment, hosted monitoring implementation, and AWS deployment are not implemented yet.
 
 ## Quick Start
 
@@ -320,13 +320,23 @@ Covered in Issues 34-45 MVP:
 - Visual regression and security audit scripts are available for local QA.
 - Docker implementation changes are intentionally deferred to the final deployment phase.
 
+Covered in Issues 46-49 and 52-53 non-Docker beta hardening:
+
+- Non-Docker release QA gate for service tests, static audits, translation coverage, backup policy, and beta readiness checks.
+- Auth hardening baseline with password policy, configurable token lifetime, production secret validation, and failed-login rate limiting.
+- Hosted monitoring baseline plan and local health/readiness probe script.
+- Production backup policy audit covering encryption, off-host storage, retention, approval, and temporary restore target requirements.
+- Manual accessibility QA checklist for keyboard, screen reader, contrast, and responsive checks.
+- Beta readiness review documenting launch gates, customer demo boundaries, and account decisions needed later.
+- Issue 50 Docker finalization and Issue 51 hosted deployment execution remain deferred.
+
 Not covered yet:
 
 - Production ML / DL model registry.
 - Hosted model registry and ClearML agent execution.
 - Mobile app implementation.
 - AWS deployment.
-- Production-grade auth hardening and authorization.
+- Hosted refresh-token/session storage, account recovery, admin support tooling, and complex authorization.
 - Hosted monitoring, alerting, metrics backend, and tracing backend.
 - Encrypted off-host backups, scheduled backup jobs, and production restore automation.
 
@@ -341,8 +351,11 @@ Manual QA instructions are in [docs/qa-mvp.md](docs/qa-mvp.md).
 Non-Docker local QA scripts:
 
 ```powershell
+python scripts\release_qa_gate.py
 python scripts\a11y_static_audit.py
 python scripts\security_audit.py --root .
+python scripts\backup_policy_audit.py --root .
+python scripts\beta_readiness_check.py --root .
 python scripts\visual_regression.py --baseline artifacts\visual-baseline\dashboard.png --candidate artifacts\browser-smoke\dashboard.png --threshold 0.01
 ```
 
@@ -367,3 +380,5 @@ python scripts\browser_smoke.py
 - Environment configuration: [docs/environment.md](docs/environment.md)
 - Observability baseline: [docs/observability.md](docs/observability.md)
 - Backup and restore baseline: [docs/backup-restore.md](docs/backup-restore.md)
+- Accessibility QA: [docs/accessibility-qa.md](docs/accessibility-qa.md)
+- Beta readiness review: [docs/beta-readiness.md](docs/beta-readiness.md)

@@ -90,6 +90,64 @@ python scripts\security_audit.py --root .
 python scripts\visual_regression.py --baseline artifacts\visual-baseline\dashboard.png --candidate artifacts\browser-smoke\dashboard.png --threshold 0.01
 ```
 
+## Issue 46-53 Non-Docker Beta Hardening Checks
+
+Run the combined non-Docker release QA gate:
+
+```powershell
+python scripts\release_qa_gate.py
+```
+
+Expected:
+
+- Backend, scheduler, and ML tests pass.
+- A11y static audit passes.
+- Security audit passes.
+- Backup policy audit passes.
+- Beta readiness check passes.
+- Translation coverage passes.
+- Frontend build is either passed or explicitly skipped because `npm` is unavailable.
+- Visual regression is either passed or explicitly skipped because screenshots are unavailable.
+
+Run strict mode only after frontend tooling and reviewed screenshots exist:
+
+```powershell
+python scripts\release_qa_gate.py --require-frontend --require-visual
+```
+
+Auth hardening checks:
+
+1. Register a user with a password shorter than `AUTH_PASSWORD_MIN_LENGTH`.
+2. Expected: API returns HTTP `422`.
+3. Register a user with a password containing the email username.
+4. Expected: API returns HTTP `422`.
+5. Submit repeated wrong login attempts until the configured limit is reached.
+6. Expected: API returns HTTP `429` with a lockout detail.
+7. Confirm successful login returns `access_token`, `token_type`, `expires_at`, and `user`.
+
+Monitoring baseline checks:
+
+```powershell
+python scripts\monitoring_baseline.py
+```
+
+Expected:
+
+- All running local service health and readiness endpoints return `PASS`.
+- If services are not running, the script fails clearly without starting Docker.
+
+Backup and beta policy checks:
+
+```powershell
+python scripts\backup_policy_audit.py --root .
+python scripts\beta_readiness_check.py --root .
+```
+
+Expected:
+
+- Backup policy includes encryption, off-host storage, retention, approval, and temporary restore target requirements.
+- Beta readiness report still marks Issue 50 Docker finalization and Issue 51 hosted deployment as deferred.
+
 Manual schedule control checks:
 
 1. Generate a schedule for June 3, 2026.
@@ -569,7 +627,7 @@ docker compose up --build -d
 docker compose exec backend-api alembic current
 ```
 
-3. Expected: current revision is `20260604_0003`.
+3. Expected: current revision is `20260610_0004`.
 4. Expected: backend health remains `ok`.
 
 ## API Checks
