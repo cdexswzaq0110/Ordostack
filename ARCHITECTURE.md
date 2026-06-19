@@ -1,6 +1,6 @@
 # OrdoStack Architecture
 
-Issue 28 defines the current local Customer Demo MVP architecture. The system is runnable with Docker Compose and uses service boundaries that can later be hardened for production deployment.
+Issue 53 defines the current local Customer Demo MVP architecture. The system is runnable with Docker Compose and uses service boundaries that can later be hardened for production deployment.
 
 ```mermaid
 flowchart LR
@@ -21,10 +21,11 @@ flowchart LR
 - `backend-api` is the public API gateway for product features.
 - `backend-api` owns auth, task, fixed event, execution log, analytics, schedule persistence, and demo reset workflows.
 - `backend-api` validates runtime environment configuration during startup.
+- `backend-api` owns schedule templates, schedule exports, completion forecast, and duration feedback export.
 - `scheduler-service` owns scheduling algorithm internals and returns generated schedule blocks.
 - `ml-service` owns duration prediction behavior and model metadata.
 - `mysql` stores local Docker MVP data.
-- `scripts/e2e_smoke.py` verifies the demo path after Docker Compose is running.
+- `scripts/ponytail.py` runs the compact clean gate for docs, service tests, audits, and optional Docker Compose config.
 
 ## Data Flow
 
@@ -36,6 +37,8 @@ flowchart LR
 6. scheduler-service returns generated timeline items and algorithm summary.
 7. backend-api persists the generated schedule run and schedule items.
 8. The dashboard can reload the latest schedule or switch to a recent schedule history item.
+9. The dashboard can lock or manually move generated schedule items.
+10. Export endpoints return Markdown, CSV, or base64 PDF schedule artifacts.
 
 ## Persistence
 
@@ -47,6 +50,7 @@ Docker Compose uses MySQL for:
 - `execution_logs`
 - `schedule_runs`
 - `schedule_items`
+- `schedule_templates`
 
 Alembic migrations run before backend-api starts in Docker. The older automatic schema bootstrap remains as a non-destructive local compatibility fallback.
 
@@ -65,16 +69,24 @@ Current local release gates:
 - Docker Compose rebuild and health checks.
 - Local E2E smoke script.
 - Browser screenshot smoke script.
+- Visual regression script.
+- A11y static audit.
+- Security audit.
+- Backup policy audit.
+- Beta readiness check.
+- Documentation completeness check.
+- Ponytail clean gate through `python scripts/ponytail.py`.
 - Secrets scan.
 
 GitHub Actions currently runs test, build, and config checks. Docker runtime E2E is still local-only.
 
 ## Current Limitations
 
-- Local auth foundation exists, but no production-grade auth or tenant isolation.
-- No deployed production infrastructure.
+- Local auth hardening exists, but no hosted refresh-token/session store, account recovery, or admin support tooling.
+- User-scoped planner data exists, but no enterprise permission system.
+- No deployed hosted production infrastructure.
 - No ClearML agent or production model registry.
 - No DL service.
 - No mobile app implementation.
-- No production backup, restore, monitoring, or incident workflow.
-- Browser screenshot smoke exists, but no pixel-perfect visual regression suite exists yet.
+- No implemented off-host backup destination, hosted monitoring backend, or incident workflow.
+- Browser screenshot smoke and local visual regression exist, but no hosted visual regression governance exists yet.

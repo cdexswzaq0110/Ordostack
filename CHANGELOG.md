@@ -2,6 +2,19 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.51.0 - 2026-06-19
+
+- Add Ponytail clean gate for documentation completeness, release QA, and Git whitespace checks.
+- Complete system analysis and documentation completeness matrix.
+- Add GitHub-facing contribution, security, and support documents.
+- Expand README with problem statement, core features, quick start, clean check, and documentation map.
+
+Suggested commit:
+
+```text
+docs(github): complete launch documentation
+```
+
 ## 0.50.0 - 2026-06-11
 
 - Add beta readiness review and automated beta readiness check.

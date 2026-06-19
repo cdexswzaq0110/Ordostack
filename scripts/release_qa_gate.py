@@ -33,6 +33,15 @@ def run_optional_frontend_build(root: Path, require_frontend: bool) -> GateResul
             detail="npm is not available in this environment",
         )
 
+    tsc_path = root / "web-dashboard" / "node_modules" / ".bin" / ("tsc.cmd" if sys.platform == "win32" else "tsc")
+    if not tsc_path.exists():
+        status = "failed" if require_frontend else "skipped"
+        return GateResult(
+            name="web-dashboard build",
+            status=status,
+            detail="dashboard dependencies are not installed; run npm ci in web-dashboard",
+        )
+
     return run_command("web-dashboard build", [npm_path, "run", "build"], root / "web-dashboard")
 
 
@@ -90,6 +99,7 @@ def build_gate_results(root: Path, require_frontend: bool, require_visual: bool)
         run_optional_frontend_build(root, require_frontend),
         run_command("a11y static audit", [sys.executable, "scripts/a11y_static_audit.py"], root),
         run_command("security audit", [sys.executable, "scripts/security_audit.py", "--root", "."], root),
+        run_command("documentation completeness", [sys.executable, "scripts/docs_completeness_check.py", "--root", "."], root),
         run_command("backup policy audit", [sys.executable, "scripts/backup_policy_audit.py", "--root", "."], root),
         run_command("beta readiness check", [sys.executable, "scripts/beta_readiness_check.py", "--root", "."], root),
         verify_translation_coverage(root),

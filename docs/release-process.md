@@ -41,6 +41,12 @@ This baseline includes:
 Windows PowerShell:
 
 ```powershell
+python scripts\ponytail.py
+```
+
+Expanded commands:
+
+```powershell
 cd backend-api
 ..\.venv\Scripts\python.exe -m pytest tests
 cd ..\scheduler-service
@@ -62,6 +68,20 @@ Combined non-Docker gate:
 
 ```powershell
 python scripts\release_qa_gate.py
+```
+
+## Clean Check
+
+Use this before final delivery or commit:
+
+```powershell
+python scripts\ponytail.py
+```
+
+Use this when Docker is available:
+
+```powershell
+python scripts\ponytail.py --include-compose-config
 ```
 
 Linux / WSL:

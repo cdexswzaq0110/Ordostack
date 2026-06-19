@@ -2,6 +2,42 @@
 
 Operational scripts for local development and QA.
 
+## Ponytail Clean Gate
+
+Windows PowerShell:
+
+```powershell
+python scripts\ponytail.py
+```
+
+Linux / WSL:
+
+```bash
+python scripts/ponytail.py
+```
+
+The clean gate runs documentation completeness, the non-Docker release QA gate, and Git whitespace checks. Add Docker Compose config validation when Docker is available:
+
+```powershell
+python scripts\ponytail.py --include-compose-config
+```
+
+## Documentation Completeness
+
+Windows PowerShell:
+
+```powershell
+python scripts\docs_completeness_check.py --root .
+```
+
+Linux / WSL:
+
+```bash
+python scripts/docs_completeness_check.py --root .
+```
+
+This check verifies that testing, system design, and GitHub-facing documents exist and contain the required launch-facing sections.
+
 ## Non-Docker Release QA Gate
 
 Windows PowerShell:
@@ -16,11 +52,14 @@ Linux / WSL:
 python scripts/release_qa_gate.py
 ```
 
-The gate runs service tests, static audits, translation coverage, backup policy audit, and beta readiness checks. Frontend build is skipped when `npm` is not available unless `--require-frontend` is passed. Visual regression is skipped when screenshot artifacts are missing unless `--require-visual` is passed.
+The gate runs service tests, static audits, translation coverage, backup policy audit, and beta readiness checks. Frontend build is skipped when `npm` or dashboard dependencies are not available unless `--require-frontend` is passed. Visual regression is skipped when screenshot artifacts are missing unless `--require-visual` is passed.
 
 Strict mode after local frontend tooling and screenshots are available:
 
 ```powershell
+cd web-dashboard
+npm ci
+cd ..
 python scripts\release_qa_gate.py --require-frontend --require-visual
 ```
 
