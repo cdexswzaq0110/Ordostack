@@ -93,9 +93,21 @@ def extract_translation_keys(text: str) -> list[str]:
 
 def build_gate_results(root: Path, require_frontend: bool, require_visual: bool) -> list[GateResult]:
     return [
-        run_command("backend-api tests", [sys.executable, "-m", "pytest", "tests"], root / "backend-api"),
-        run_command("scheduler-service tests", [sys.executable, "-m", "pytest", "tests"], root / "scheduler-service"),
-        run_command("ml-service tests", [sys.executable, "-m", "pytest", "tests"], root / "ml-service"),
+        run_command(
+            "backend-api tests",
+            [sys.executable, "-m", "pytest", "-p", "no:cacheprovider", "tests"],
+            root / "backend-api",
+        ),
+        run_command(
+            "scheduler-service tests",
+            [sys.executable, "-m", "pytest", "-p", "no:cacheprovider", "tests"],
+            root / "scheduler-service",
+        ),
+        run_command(
+            "ml-service tests",
+            [sys.executable, "-m", "pytest", "-p", "no:cacheprovider", "tests"],
+            root / "ml-service",
+        ),
         run_optional_frontend_build(root, require_frontend),
         run_command("a11y static audit", [sys.executable, "scripts/a11y_static_audit.py"], root),
         run_command("security audit", [sys.executable, "scripts/security_audit.py", "--root", "."], root),
