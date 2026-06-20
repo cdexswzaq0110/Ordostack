@@ -1,7 +1,7 @@
 # OrdoStack Project Status Report
 
 Date: 2026-06-11
-Version: 0.50.0
+Version: 0.51.3
 Report role: PM / project management
 
 ## Executive Summary
@@ -11,7 +11,7 @@ OrdoStack is currently a local Customer Demo MVP / Technical Preview with authen
 Current evidence:
 
 - Previous release tag before this hardening batch: `v0.44.0`.
-- Current product stage after non-Docker Issue 53: local Customer Demo MVP / Technical Preview `v0.50.0`.
+- Current product stage: local Customer Demo MVP / Technical Preview `v0.51.3`.
 - Main runnable entrypoint: `http://localhost:5173`.
 - Runtime: local services; Docker finalization intentionally deferred.
 - Database: local MySQL container.

@@ -1,4 +1,4 @@
-# Development Log
+﻿# Development Log
 
 ## 2026-06-11 - Issues 46-49 And 52-53 - Non-Docker Beta Hardening
 
@@ -23,12 +23,6 @@ MVP boundaries:
 - Issue 51 hosted beta deployment remains deferred until account and hosting decisions are confirmed.
 - No paid API, cloud account, or hosted monitoring vendor was configured.
 - No destructive restore or file deletion was performed.
-
-Suggested commit:
-
-```text
-feat(beta): add non-docker readiness hardening
-```
 
 ## 2026-06-10 - Issues 34-45 - Non-Docker Product Hardening MVP
 
@@ -70,12 +64,6 @@ MVP boundaries:
 - Duration feedback export does not overwrite training datasets automatically.
 - Frontend build was not run in this local Windows environment because `npm` is not available and Docker verification is intentionally deferred.
 
-Suggested git commit:
-
-```text
-feat(product): complete issues 34 to 45 without docker changes
-```
-
 ## 2026-06-04 - Issue 33 - Traditional Chinese Dashboard Locale
 
 Branch:
@@ -98,12 +86,6 @@ MVP boundaries:
 - Backend API error payloads are not fully localized.
 - Demo seed data remains unchanged.
 - No paid translation API is used.
-
-Suggested git commit:
-
-```text
-feat(i18n): add Traditional Chinese dashboard locale
-```
 
 Verification:
 
@@ -132,12 +114,6 @@ MVP boundaries:
 - No cloud storage, AWS account, paid API, or external backup vendor.
 - No automated restore into the active `ordostack` database.
 - No destructive restore command is provided.
-
-Suggested git commit:
-
-```text
-docs(backup): add backup and restore drill
-```
 
 Verification:
 
@@ -168,12 +144,6 @@ MVP boundaries:
 - No hosted uptime monitor, alerting, metrics backend, or tracing backend.
 - No request bodies, query strings, auth headers, cookies, or secrets are logged.
 
-Suggested git commit:
-
-```text
-feat(observability): add request readiness baseline
-```
-
 Verification:
 
 - backend-api, scheduler-service, and ml-service tests must pass locally.
@@ -201,12 +171,6 @@ MVP boundaries:
 - No AWS resources are created.
 - No domain, TLS certificate, or hosted server is provisioned.
 - No production secrets are committed.
-
-Suggested git commit:
-
-```text
-docs(deploy): add deployment baseline
-```
 
 Verification:
 
@@ -236,12 +200,6 @@ MVP boundaries:
 - No complex team/tenant permission model.
 - Demo reset remains a local demo-only endpoint.
 
-Suggested git commit:
-
-```text
-feat(auth): scope planner data to current user
-```
-
 Verification:
 
 - backend-api tests must pass locally.
@@ -269,12 +227,6 @@ MVP boundaries:
 - No external identity provider.
 - No AWS, OAuth, email verification, payment, or paid API.
 - User isolation across planner data remains Issue 29.
-
-Suggested git commit:
-
-```text
-feat(auth): add local authentication foundation
-```
 
 Verification:
 
@@ -305,12 +257,6 @@ MVP boundaries:
 - No authentication or user isolation yet.
 - Production secrets are still external to the repository.
 
-Suggested git commit:
-
-```text
-chore(config): harden environment validation
-```
-
 Verification:
 
 - backend-api tests must pass locally.
@@ -338,12 +284,6 @@ MVP boundaries:
 - No product runtime behavior changes.
 - No production launch implementation yet.
 
-Suggested git commit:
-
-```text
-docs(pm): add project status report
-```
-
 Verification:
 
 - Documentation diff must not introduce secrets.
@@ -370,12 +310,6 @@ MVP boundaries:
 - No paid browser testing service.
 - No cloud artifact upload.
 
-Suggested git commit:
-
-```text
-test(browser): add dashboard screenshot smoke
-```
-
 Verification:
 
 - `python -m py_compile scripts/e2e_smoke.py scripts/browser_smoke.py` must pass.
@@ -401,12 +335,6 @@ MVP boundaries:
 - No PDF export.
 - No cloud share link.
 
-Suggested git commit:
-
-```text
-feat(schedule): add schedule export
-```
-
 Verification:
 
 - Schedule API tests must pass locally.
@@ -431,12 +359,6 @@ MVP boundaries:
 - Diff is read-only.
 - Diff compares generated schedule items, not raw task field history.
 - No side-by-side timeline view yet.
-
-Suggested git commit:
-
-```text
-feat(schedule): add schedule history diff
-```
 
 Verification:
 
@@ -465,12 +387,6 @@ MVP boundaries:
 - No schedule diff yet.
 - No named schedule templates.
 
-Suggested git commit:
-
-```text
-feat(schedule): add history rename and delete actions
-```
-
 Verification:
 
 - Schedule API tests must pass locally.
@@ -496,12 +412,6 @@ MVP boundaries:
 - No saved user filter presets.
 - No backend query contract changes.
 
-Suggested git commit:
-
-```text
-feat(dashboard): add task filters and sorting
-```
-
 Verification:
 
 - web-dashboard production build must pass.
@@ -525,12 +435,6 @@ MVP boundaries:
 - Documentation-only issue.
 - No production deployment work.
 - No new product behavior.
-
-Suggested git commit:
-
-```text
-docs(product): refresh demo mvp specification
-```
 
 Verification:
 
@@ -557,12 +461,6 @@ MVP boundaries:
 - No GitHub Actions Docker runtime E2E yet.
 - Smoke script creates local test records and does not clean them up.
 
-Suggested git commit:
-
-```text
-test(e2e): add local smoke workflow
-```
-
 Verification:
 
 - Run after `docker compose up --build -d`.
@@ -587,12 +485,6 @@ MVP boundaries:
 - Demo reset is not a production user-data feature.
 - No per-tenant data retention policy.
 - No cloud backup restore flow.
-
-Suggested git commit:
-
-```text
-feat(demo): add demo data reset control
-```
 
 Verification:
 
@@ -620,12 +512,6 @@ MVP boundaries:
 - No new design system package.
 - No animation-heavy marketing UI.
 
-Suggested git commit:
-
-```text
-feat(dashboard): polish demo empty states
-```
-
 Verification:
 
 - web-dashboard production build must pass.
@@ -651,12 +537,6 @@ MVP boundaries:
 - No schedule diff view.
 - No schedule deletion.
 - No named schedule versions.
-
-Suggested git commit:
-
-```text
-feat(schedule): add schedule history view
-```
 
 Verification:
 
@@ -684,12 +564,6 @@ MVP boundaries:
 - No recurring event expansion.
 - No timezone settings UI.
 
-Suggested git commit:
-
-```text
-feat(dashboard): add date picker navigation
-```
-
 Verification:
 
 - web-dashboard production build must pass.
@@ -715,12 +589,6 @@ MVP boundaries:
 - No recurring fixed events.
 - No drag-and-drop schedule editing.
 - No calendar sync.
-
-Suggested git commit:
-
-```text
-feat(fixed-events): add edit and delete workflows
-```
 
 Verification:
 
@@ -751,12 +619,6 @@ MVP boundaries:
 - No recurring task edit workflow.
 - No arbitrary date picker.
 
-Suggested git commit:
-
-```text
-feat(tasks): add dashboard task editing
-```
-
 Verification:
 
 - Python service tests must pass locally.
@@ -784,12 +646,6 @@ MVP boundaries:
 - No week or month calendar view.
 - No arbitrary date picker yet.
 - No cross-day recurring events.
-
-Suggested git commit:
-
-```text
-feat(dashboard): add date navigation
-```
 
 Verification:
 
@@ -819,12 +675,6 @@ MVP boundaries:
 - No GitHub branch protection is configured locally.
 - No files or database volumes are deleted.
 
-Suggested git commit:
-
-```text
-chore(repo): establish ordostack mvp baseline
-```
-
 Verification:
 
 - Python service tests must pass locally.
@@ -853,12 +703,6 @@ MVP boundaries:
 - No full Docker runtime e2e in GitHub Actions yet.
 - No deployment pipeline yet.
 
-Suggested git commit:
-
-```text
-ci(github): add quality gate workflow
-```
-
 Verification:
 
 - Python service tests must pass locally.
@@ -879,12 +723,6 @@ MVP boundaries:
 - No destructive downgrade.
 - No SQLAlchemy ORM refactor yet.
 - No production credential management.
-
-Suggested git commit:
-
-```text
-chore(db): add alembic migration baseline
-```
 
 Verification:
 
@@ -909,12 +747,6 @@ MVP boundaries:
 - No deletion or cleanup job.
 - No production migration chain yet.
 
-Suggested git commit:
-
-```text
-feat(schedule): persist generated schedule runs
-```
-
 Verification:
 
 - Backend tests must pass.
@@ -928,9 +760,3 @@ Scope:
 - Add local MySQL service.
 - Persist tasks, fixed events, and execution logs.
 - Keep local tests on memory store by default.
-
-Suggested git commit:
-
-```text
-feat(storage): add mysql persistence for mvp data
-```

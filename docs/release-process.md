@@ -1,11 +1,11 @@
 # Release Process
 
-OrdoStack uses MVP issue releases until production deployment exists.
+OrdoStack uses small tagged releases until production deployment exists.
 
 ## Current Version
 
 ```text
-0.50.0
+0.51.3
 ```
 
 ## Release Types
@@ -123,7 +123,7 @@ powershell -ExecutionPolicy Bypass -File scripts\verify_mysql_backup.ps1 -Path a
 After a clean release commit:
 
 ```bash
-git tag v0.50.0
+git tag v0.51.3
 ```
 
 Tags should point only to commits that passed the release checklist.

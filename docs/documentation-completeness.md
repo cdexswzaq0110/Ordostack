@@ -1,41 +1,60 @@
-# Documentation Completeness
+# Documentation Index
 
-This is the index used to check whether the repository has the documents needed for a local release candidate.
+This repository keeps several Markdown files because the project has product, engineering, QA, and operations concerns. For GitHub readers, the entry points are intentionally small:
+
+- [README.md](../README.md) for project overview and local setup.
+- [ARCHITECTURE.md](../ARCHITECTURE.md) for service boundaries and data flow.
+- [ORDOSTACK_PROJECT_SPEC.md](../ORDOSTACK_PROJECT_SPEC.md) for current product scope.
+- [docs/qa-mvp.md](qa-mvp.md) for verification.
+- [docs/api.md](api.md) for endpoint behavior.
 
 ## Testing Documents
 
 | Document | Status | Purpose |
 | --- | --- | --- |
-| `docs/qa-mvp.md` | Present | Manual smoke, API, schedule, auth, export, backup, a11y, and beta checks |
-| `scripts/ponytail.py` | Present | Compact docs, tests, audits, and optional Docker Compose config runner |
-| `scripts/release_qa_gate.py` | Present | Python service tests, a11y, security, backup policy, beta readiness, translations, and visual regression |
-| `scripts/e2e_smoke.py` | Present | End-to-end API and dashboard smoke after Docker Compose is running |
-| `scripts/browser_smoke.py` | Present | Dashboard screenshot smoke with local Edge or Chrome |
-| `.github/workflows/ci.yml` | Present | Python tests, dashboard build, browser smoke, and compose config |
+| `docs/qa-mvp.md` | Present | Manual QA and API smoke coverage |
+| `scripts/ponytail.py` | Present | Compact local clean gate |
+| `scripts/release_qa_gate.py` | Present | Tests, audits, build, translations, and visual regression |
+| `scripts/e2e_smoke.py` | Present | Docker runtime API smoke |
+| `scripts/browser_smoke.py` | Present | Dashboard browser smoke |
+| `.github/workflows/ci.yml` | Present | CI baseline |
 
 ## System Design Documents
 
 | Document | Status | Purpose |
 | --- | --- | --- |
-| `ORDOSTACK_PROJECT_SPEC.md` | Present | Product specification, scope, implemented areas, gaps, and definition of done |
-| `ARCHITECTURE.md` | Present | Runtime boundaries, data flow, persistence, quality gates, and limitations |
-| `docs/system-analysis.md` | Present | Problem, actors, functional scope, data ownership, and acceptance baseline |
-| `docs/api.md` | Present | Endpoint groups, request/response behavior, auth, persistence, and service contracts |
-| `docs/algorithms.md` | Present | Scheduling pipeline and algorithm responsibilities |
-| `docs/database-migrations.md` | Present | Alembic expectations and non-destructive rollback notes |
-| `docs/environment.md` | Present | Local and production environment variables and validation rules |
-| `docs/deployment.md` | Present | Single-node target, production env setup, reverse proxy, and smoke checklist |
+| `ORDOSTACK_PROJECT_SPEC.md` | Present | Product scope and launch gaps |
+| `ARCHITECTURE.md` | Present | Runtime boundaries, data flow, persistence, and gates |
+| `docs/system-analysis.md` | Present | Problem, actors, data ownership, and acceptance baseline |
+| `docs/api.md` | Present | Endpoint behavior |
+| `docs/algorithms.md` | Present | Scheduling algorithm notes |
+| `docs/database-migrations.md` | Present | Alembic and migration policy |
+| `docs/environment.md` | Present | Runtime variables |
+| `docs/deployment.md` | Present | Future hosted deployment checklist |
 
 ## GitHub Documents
 
 | Document | Status | Purpose |
 | --- | --- | --- |
-| `README.md` | Present | Overview, quick start, health checks, clean checks, docs map, and support links |
-| `CONTRIBUTING.md` | Present | Local setup, branching, quality gate, and no-secrets policy |
-| `SECURITY.md` | Present | Supported version, reporting guidance, and secrets policy |
-| `SUPPORT.md` | Present | Support scope, required debug info, and known limits |
-| `.github/pull_request_template.md` | Present | Verification and release checklist |
+| `README.md` | Present | First-read project page |
+| `CONTRIBUTING.md` | Present | Local setup and quality gate |
+| `SECURITY.md` | Present | Vulnerability and secrets policy |
+| `SUPPORT.md` | Present | Support scope and known limits |
+| `.github/pull_request_template.md` | Present | PR checklist |
 | `.github/ISSUE_TEMPLATE/*` | Present | Bug, feature, and ML experiment templates |
+
+## Cleanup Note
+
+The files below are useful during development but are candidates for consolidation before a public launch:
+
+- `AI_RULEBOOK.md`
+- `DEVELOPMENT_RULEBOOK.md`
+- `docs/development-log.md`
+- `docs/project-status-report.md`
+- `docs/beta-readiness.md`
+- `docs/branching-strategy.md`
+
+They were not deleted in this cleanup because repository file deletion requires explicit owner approval.
 
 ## Verification
 
@@ -43,12 +62,12 @@ Run:
 
 ```powershell
 python scripts\docs_completeness_check.py --root .
-python scripts\ponytail.py
+python scripts\ponytail.py --include-compose-config
 ```
 
 Expected:
 
-- Documentation completeness check passes.
-- Release QA gate passes.
-- Git whitespace check passes.
-- Optional Docker Compose config passes when `--include-compose-config` is used.
+- documentation completeness passes,
+- release QA gate passes,
+- Git whitespace check passes,
+- Docker Compose config validation passes.

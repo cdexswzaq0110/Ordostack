@@ -4,7 +4,7 @@
 
 | Version | Status |
 | --- | --- |
-| `0.50.x` | Local Customer Demo MVP / Technical Preview |
+| `0.51.x` | Local Customer Demo MVP / Technical Preview |
 
 ## Reporting
 

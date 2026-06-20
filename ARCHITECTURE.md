@@ -1,92 +1,104 @@
-# OrdoStack Architecture
+# Architecture
 
-Issue 53 defines the current local Customer Demo MVP architecture. The system is runnable with Docker Compose and uses service boundaries that can later be hardened for production deployment.
+OrdoStack is a small service-oriented local application. The dashboard talks to one backend API. The backend owns product data and calls two internal services: one for scheduling and one for duration prediction.
 
 ```mermaid
 flowchart LR
-  user["User Browser"] --> dashboard["web-dashboard :5173"]
-  dashboard --> api["backend-api :8000"]
-  api --> db["mysql :3306 container / :3307 host"]
-  api --> scheduler["scheduler-service :8100"]
-  api --> ml["ml-service :8200"]
-  smoke["scripts/e2e_smoke.py"] --> dashboard
-  smoke --> api
-  smoke --> scheduler
-  smoke --> ml
+  browser["Browser"] --> dashboard["web-dashboard\nReact / Vite\n:5173"]
+  dashboard --> api["backend-api\nFastAPI\n:8000"]
+  api --> mysql["MySQL\n:3306 container\n:3307 host"]
+  api --> scheduler["scheduler-service\nFastAPI\n:8100"]
+  api --> ml["ml-service\nFastAPI\n:8200"]
 ```
 
 ## Runtime Boundaries
 
-- `web-dashboard` is the browser-facing customer demo UI.
-- `backend-api` is the public API gateway for product features.
-- `backend-api` owns auth, task, fixed event, execution log, analytics, schedule persistence, and demo reset workflows.
-- `backend-api` validates runtime environment configuration during startup.
-- `backend-api` owns schedule templates, schedule exports, completion forecast, and duration feedback export.
-- `scheduler-service` owns scheduling algorithm internals and returns generated schedule blocks.
-- `ml-service` owns duration prediction behavior and model metadata.
-- `mysql` stores local Docker MVP data.
-- `scripts/ponytail.py` runs the compact clean gate for docs, service tests, audits, and optional Docker Compose config.
+| Component | Responsibility |
+| --- | --- |
+| `web-dashboard` | Browser UI, task forms, schedule review, history controls, export actions, language switcher |
+| `backend-api` | Auth, task data, fixed events, execution logs, analytics, schedule persistence, exports, demo reset |
+| `scheduler-service` | Scheduling algorithms and timeline generation |
+| `ml-service` | Local duration prediction and model metadata |
+| `mysql` | Docker persistence for product data |
+
+The backend is the only public product API. The dashboard does not call MySQL, scheduler-service, or ml-service directly.
 
 ## Data Flow
 
-1. The dashboard loads date-scoped tasks, fixed events, analytics, duration predictions, latest schedule, and schedule history from backend-api.
-2. backend-api reads and writes product data through the configured store implementation.
-3. In Docker, `DATA_STORE=mysql` persists data in MySQL.
-4. During schedule generation, backend-api requests duration predictions from ml-service.
-5. backend-api sends tasks, fixed events, and planning settings to scheduler-service.
-6. scheduler-service returns generated timeline items and algorithm summary.
-7. backend-api persists the generated schedule run and schedule items.
-8. The dashboard can reload the latest schedule or switch to a recent schedule history item.
-9. The dashboard can lock or manually move generated schedule items.
-10. Export endpoints return Markdown, CSV, or base64 PDF schedule artifacts.
+1. The dashboard loads tasks, fixed events, analytics, duration predictions, latest schedule, and schedule history for the selected date.
+2. `backend-api` reads and writes through its repository layer.
+3. In Docker, the repository layer uses MySQL. In tests, it uses the in-memory store.
+4. When the user generates a plan, `backend-api` requests duration predictions from `ml-service`.
+5. `backend-api` sends tasks, fixed events, and planning settings to `scheduler-service`.
+6. `scheduler-service` returns schedule items and an algorithm summary.
+7. `backend-api` saves the generated run and schedule items.
+8. The dashboard can reload, rename, compare, lock, move, or export saved schedule runs.
+
+## Scheduling
+
+The scheduler service keeps planning logic out of backend routes. Current algorithms are intentionally small and readable:
+
+- priority scoring for task value,
+- topological sorting for dependencies,
+- capacity selection for tasks that fit available time,
+- priority-queue ordering,
+- free-slot construction around fixed events,
+- locked-item preservation for manually adjusted schedules.
+
+The scheduler returns a generated timeline. It does not persist data.
+
+## Duration Prediction
+
+`ml-service` predicts task duration from:
+
+- estimated minutes,
+- category,
+- priority,
+- difficulty,
+- focus requirement,
+- actual minutes when available.
+
+The service first looks for a local JSON model artifact. If none is available, it uses a deterministic heuristic. No paid API or hosted model endpoint is required.
 
 ## Persistence
 
 Docker Compose uses MySQL for:
 
-- `users`
-- `tasks`
-- `fixed_events`
-- `execution_logs`
-- `schedule_runs`
-- `schedule_items`
-- `schedule_templates`
+- users,
+- tasks,
+- fixed events,
+- execution logs,
+- schedule runs,
+- schedule items,
+- schedule templates.
 
-Alembic migrations run before backend-api starts in Docker. The older automatic schema bootstrap remains as a non-destructive local compatibility fallback.
-
-Local pytest runs use the in-memory store by default, so service tests do not require a running database.
+Alembic migrations run before `backend-api` starts in Docker. The older schema bootstrap remains only as a local compatibility fallback.
 
 ## Quality Gates
 
-Current local release gates:
+Local verification is split into two levels.
 
-- backend-api pytest suite.
-- scheduler-service pytest suite.
-- ml-service pytest suite.
-- web-dashboard production build.
-- Docker Compose config validation.
-- Runtime environment validation.
-- Docker Compose rebuild and health checks.
-- Local E2E smoke script.
-- Browser screenshot smoke script.
-- Visual regression script.
-- A11y static audit.
-- Security audit.
-- Backup policy audit.
-- Beta readiness check.
-- Documentation completeness check.
-- Ponytail clean gate through `python scripts/ponytail.py`.
-- Secrets scan.
+Fast gate:
 
-GitHub Actions currently runs test, build, and config checks. Docker runtime E2E is still local-only.
+```powershell
+python scripts\ponytail.py --include-compose-config
+```
 
-## Current Limitations
+Runtime gate:
 
-- Local auth hardening exists, but no hosted refresh-token/session store, account recovery, or admin support tooling.
-- User-scoped planner data exists, but no enterprise permission system.
-- No deployed hosted production infrastructure.
-- No ClearML agent or production model registry.
-- No DL service.
-- No mobile app implementation.
-- No implemented off-host backup destination, hosted monitoring backend, or incident workflow.
-- Browser screenshot smoke and local visual regression exist, but no hosted visual regression governance exists yet.
+```powershell
+docker compose up --build -d
+python scripts\e2e_smoke.py
+python scripts\browser_smoke.py
+```
+
+The runtime gate checks the full path through dashboard, backend, scheduler, ml-service, and MySQL.
+
+## Current Limits
+
+- No hosted infrastructure is included.
+- No production secret store is configured.
+- No off-host backup destination is wired.
+- No external monitoring vendor is configured.
+- No production ML model registry or ClearML agent is running.
+- The mobile app folder is not an implemented mobile client.
