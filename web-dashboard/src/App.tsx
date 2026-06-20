@@ -802,11 +802,11 @@ function padDatePart(value: number): string {
 
 async function sendJsonRequest<T>(url: string, options?: RequestInit, allowNotFound = false): Promise<T | null> {
   const response = await fetch(url, {
+    ...options,
     headers: {
       "Content-Type": "application/json",
       ...(options?.headers ?? {}),
     },
-    ...options,
   });
 
   if (allowNotFound && response.status === 404) {

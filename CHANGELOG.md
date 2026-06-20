@@ -2,6 +2,17 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.51.2 - 2026-06-20
+
+- Fix authenticated dashboard JSON requests so `Content-Type: application/json` is preserved when `Authorization` headers are added.
+- Restore the Generate plan flow, which was sending schedule payloads as plain text and triggering backend 422 validation errors.
+
+Suggested commit:
+
+```text
+fix(dashboard): preserve json content type with auth headers
+```
+
 ## 0.51.1 - 2026-06-19
 
 - Fix MySQL Alembic migration startup by replacing unsupported `ADD COLUMN IF NOT EXISTS` DDL with inspected `add_column` calls.
