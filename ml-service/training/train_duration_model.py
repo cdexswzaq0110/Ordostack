@@ -1,0 +1,119 @@
+import csv
+import json
+from datetime import UTC, datetime
+from pathlib import Path
+from statistics import mean
+
+MODEL_NAME = "local-duration-regressor"
+MODEL_VERSION = "0.1.0"
+DIFFICULTY_WEIGHT = 0.04
+PRIORITY_WEIGHT = 0.015
+FOCUS_MULTIPLIER = 1.05
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_INPUT_PATH = PROJECT_ROOT / "training" / "data" / "duration_training_samples.csv"
+DEFAULT_ARTIFACT_DIR = PROJECT_ROOT / "training" / "artifacts"
+
+
+def train_duration_model(
+    input_path: Path = DEFAULT_INPUT_PATH,
+    artifact_dir: Path = DEFAULT_ARTIFACT_DIR,
+) -> dict:
+    rows = load_training_rows(input_path)
+    category_multipliers = build_category_multipliers(rows)
+    global_multiplier = round(mean(row["actual_minutes"] / row["estimated_minutes"] for row in rows), 4)
+
+    model = {
+        "model_name": MODEL_NAME,
+        "model_version": MODEL_VERSION,
+        "source": "local-artifact",
+        "trained_at": datetime.now(UTC).isoformat(),
+        "training_rows": len(rows),
+        "global_multiplier": global_multiplier,
+        "category_multipliers": category_multipliers,
+        "difficulty_weight": DIFFICULTY_WEIGHT,
+        "priority_weight": PRIORITY_WEIGHT,
+        "focus_multiplier": FOCUS_MULTIPLIER,
+    }
+    metrics = evaluate_model(rows, model)
+
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    write_json(artifact_dir / "duration_model.json", model)
+    write_json(artifact_dir / "duration_metrics.json", metrics)
+    return {"model": model, "metrics": metrics}
+
+
+def load_training_rows(input_path: Path) -> list[dict]:
+    with input_path.open("r", encoding="utf-8", newline="") as training_file:
+        reader = csv.DictReader(training_file)
+        rows = [
+            {
+                "category": row["category"],
+                "estimated_minutes": int(row["estimated_minutes"]),
+                "priority": int(row["priority"]),
+                "difficulty": int(row["difficulty"]),
+                "requires_focus": row["requires_focus"].strip().lower() == "true",
+                "actual_minutes": int(row["actual_minutes"]),
+            }
+            for row in reader
+        ]
+
+    if not rows:
+        raise ValueError("training dataset is empty")
+    return rows
+
+
+def build_category_multipliers(rows: list[dict]) -> dict[str, float]:
+    ratios_by_category: dict[str, list[float]] = {}
+    for row in rows:
+        ratios_by_category.setdefault(row["category"], []).append(
+            row["actual_minutes"] / row["estimated_minutes"]
+        )
+
+    return {
+        category: round(clamp(mean(ratios), 0.75, 1.45), 4)
+        for category, ratios in sorted(ratios_by_category.items())
+    }
+
+
+def evaluate_model(rows: list[dict], model: dict) -> dict:
+    baseline_errors = []
+    model_errors = []
+    for row in rows:
+        baseline_errors.append(abs(row["estimated_minutes"] - row["actual_minutes"]))
+        model_errors.append(abs(predict_row(row, model) - row["actual_minutes"]))
+
+    return {
+        "model_name": MODEL_NAME,
+        "model_version": MODEL_VERSION,
+        "training_rows": len(rows),
+        "baseline_mae": round(mean(baseline_errors), 2),
+        "model_mae": round(mean(model_errors), 2),
+    }
+
+
+def predict_row(row: dict, model: dict) -> int:
+    category_multiplier = model["category_multipliers"].get(
+        row["category"],
+        model["global_multiplier"],
+    )
+    prediction = row["estimated_minutes"] * category_multiplier
+    prediction *= 1 + ((row["difficulty"] - 3) * model["difficulty_weight"])
+    prediction *= 1 + max(0, row["priority"] - 3) * model["priority_weight"]
+    if row["requires_focus"]:
+        prediction *= model["focus_multiplier"]
+
+    return round(clamp(prediction, 1, 480))
+
+
+def clamp(value: float, minimum: float, maximum: float) -> float:
+    return min(maximum, max(minimum, value))
+
+
+def write_json(path: Path, payload: dict) -> None:
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+if __name__ == "__main__":
+    result = train_duration_model()
+    print(json.dumps(result["metrics"], indent=2, sort_keys=True))

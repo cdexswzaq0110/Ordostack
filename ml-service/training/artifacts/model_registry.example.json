@@ -1,0 +1,16 @@
+{
+  "registry_type": "local-json",
+  "active_model": {
+    "name": "local-duration-regressor",
+    "version": "0.1.0",
+    "path": "duration_model.json"
+  },
+  "models": [
+    {
+      "name": "local-duration-regressor",
+      "version": "0.1.0",
+      "path": "duration_model.json",
+      "stage": "candidate"
+    }
+  ]
+}
