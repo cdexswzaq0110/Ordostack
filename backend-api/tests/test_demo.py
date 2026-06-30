@@ -1,7 +1,10 @@
+from types import SimpleNamespace
+
 from fastapi.testclient import TestClient
 
 from app.main import app
 from app.repositories.memory_store import store
+from app.services import demo as demo_service
 from tests.helpers import auth_headers
 
 
@@ -45,3 +48,16 @@ def test_demo_reset_restores_seed_data() -> None:
     titles = [task["title"] for task in task_response.json()]
     assert "Temporary demo pollution" not in titles
     assert "ML course chapter notes" in titles
+
+
+def test_demo_reset_is_not_available_in_production(monkeypatch) -> None:
+    monkeypatch.setattr(
+        demo_service,
+        "load_runtime_config",
+        lambda: SimpleNamespace(ordostack_env="production"),
+    )
+
+    response = TestClient(app).post("/api/demo/reset", params={"user_id": 1})
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Not found"}

@@ -4,14 +4,12 @@ import {
   Activity,
   AlertCircle,
   BarChart3,
-  Bell,
   Brain,
   CalendarDays,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Clock3,
-  Command,
   Download,
   LayoutDashboard,
   ListFilter,
@@ -20,14 +18,12 @@ import {
   LogOut,
   Lock,
   Loader2,
-  MoreHorizontal,
   Pause,
   Pencil,
   Play,
   Plus,
   RotateCcw,
   Search,
-  Settings,
   SkipForward,
   Sparkles,
   Target,
@@ -50,6 +46,7 @@ import {
 type NavigationItem = {
   label: string;
   icon: LucideIcon;
+  target: string;
   isActive?: boolean;
 };
 
@@ -269,12 +266,12 @@ const DEFAULT_SELECTED_DATE = "2026-06-03";
 const AUTH_TOKEN_STORAGE_KEY = "ordostack.authToken";
 
 const navigationItems: NavigationItem[] = [
-  { label: "Today", icon: LayoutDashboard, isActive: true },
-  { label: "Tasks", icon: ListTodo },
-  { label: "Schedule", icon: CalendarDays },
-  { label: "Analytics", icon: BarChart3 },
-  { label: "MLOps", icon: Brain },
-  { label: "Settings", icon: Settings },
+  { label: "Today", icon: LayoutDashboard, target: "#today", isActive: true },
+  { label: "Tasks", icon: ListTodo, target: "#tasks" },
+  { label: "Schedule", icon: CalendarDays, target: "#schedule" },
+  { label: "Analytics", icon: BarChart3, target: "#analytics" },
+  { label: "MLOps", icon: Brain, target: "#mlops" },
+  { label: "Account", icon: UserCircle, target: "#account" },
 ];
 
 const emptyTaskForm: TaskFormState = {
@@ -299,8 +296,6 @@ const emptyAuthForm: AuthFormState = {
   displayName: "Demo User",
   password: DEMO_AUTH_PASSWORD,
 };
-
-const serviceHealth = ["backend-api", "scheduler-service", "ml-service"];
 
 type TaskMutationPayload = {
   title: string;
@@ -876,6 +871,7 @@ export function App() {
   const [isComparing, setIsComparing] = useState(false);
   const [isExportingSchedule, setIsExportingSchedule] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [isFixedEventFormOpen, setIsFixedEventFormOpen] = useState(false);
   const [taskForm, setTaskForm] = useState<TaskFormState>(emptyTaskForm);
@@ -1316,6 +1312,7 @@ export function App() {
         },
       );
       applyUpdatedScheduleRun(updatedScheduleRun);
+      setNotice(t("Schedule item updated."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to update schedule item"));
     }
@@ -1347,6 +1344,7 @@ export function App() {
         },
       );
       applyUpdatedScheduleRun(updatedScheduleRun);
+      setNotice(t("Schedule item updated."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to update schedule item"));
     }
@@ -1367,6 +1365,7 @@ export function App() {
         { headers: buildAuthHeaders() },
       );
       setScheduleDiff(nextScheduleDiff);
+      setNotice(t("Schedules compared."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to compare schedules"));
     } finally {
@@ -1382,6 +1381,7 @@ export function App() {
 
     setIsExportingSchedule(true);
     setError(null);
+    setNotice(null);
 
     try {
       const exportedSchedule = await requestJson<ApiScheduleExportResponse>(
@@ -1393,6 +1393,7 @@ export function App() {
       } else {
         downloadTextFile(exportedSchedule.filename, exportedSchedule.content, exportedSchedule.content_type);
       }
+      setNotice(t("Schedule export ready."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to export schedule"));
     } finally {
@@ -1426,6 +1427,7 @@ export function App() {
       );
       setScheduleDiff(null);
       cancelRenamingScheduleRun();
+      setNotice(t("Schedule renamed."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to rename schedule"));
     } finally {
@@ -1458,6 +1460,7 @@ export function App() {
       if (editingScheduleRunId === scheduleRunId) {
         cancelRenamingScheduleRun();
       }
+      setNotice(t("Schedule deleted."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to delete schedule"));
     } finally {
@@ -1468,6 +1471,7 @@ export function App() {
   async function generatePlan() {
     setIsGenerating(true);
     setError(null);
+    setNotice(null);
 
     try {
       const nextSchedule = await requestJson<ApiScheduleResponse>(`${API_BASE_URL}/schedules/generate`, {
@@ -1488,6 +1492,7 @@ export function App() {
       const nextScheduleHistory = await refreshScheduleHistory();
       setSelectedScheduleRunId(nextScheduleHistory[0]?.id ?? null);
       setScheduleDiff(null);
+      setNotice(t("Plan generated."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to generate plan"));
     } finally {
@@ -1504,6 +1509,7 @@ export function App() {
 
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       await requestJson<ApiTask>(`${API_BASE_URL}/tasks`, {
@@ -1522,6 +1528,7 @@ export function App() {
       setIsTaskFormOpen(false);
       cancelEditingTask();
       await loadDashboardData();
+      setNotice(t("Task created."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to create task"));
     } finally {
@@ -1538,6 +1545,7 @@ export function App() {
 
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       await requestJson<ApiTask>(`${API_BASE_URL}/tasks/${taskId}`, {
@@ -1548,6 +1556,7 @@ export function App() {
 
       cancelEditingTask();
       await loadDashboardData();
+      setNotice(t("Task updated."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to update task"));
     } finally {
@@ -1564,6 +1573,7 @@ export function App() {
 
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       await requestJson<ApiFixedEvent>(`${API_BASE_URL}/fixed-events`, {
@@ -1578,6 +1588,7 @@ export function App() {
       setIsFixedEventFormOpen(false);
       cancelEditingFixedEvent();
       await loadDashboardData();
+      setNotice(t("Fixed event created."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to create fixed event"));
     } finally {
@@ -1594,6 +1605,7 @@ export function App() {
 
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       await requestJson<ApiFixedEvent>(`${API_BASE_URL}/fixed-events/${fixedEventId}`, {
@@ -1604,6 +1616,7 @@ export function App() {
 
       cancelEditingFixedEvent();
       await loadDashboardData();
+      setNotice(t("Fixed event updated."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to update fixed event"));
     } finally {
@@ -1614,6 +1627,7 @@ export function App() {
   async function deleteFixedEvent(fixedEventId: number) {
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       const response = await fetch(`${API_BASE_URL}/fixed-events/${fixedEventId}`, {
@@ -1625,6 +1639,7 @@ export function App() {
       }
 
       await loadDashboardData();
+      setNotice(t("Fixed event deleted."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to delete fixed event"));
     } finally {
@@ -1640,6 +1655,7 @@ export function App() {
 
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       await requestJson(`${API_BASE_URL}/demo/reset?user_id=${DEMO_USER_ID}`, {
@@ -1651,6 +1667,7 @@ export function App() {
       } else {
         setSelectedDate(DEFAULT_SELECTED_DATE);
       }
+      setNotice(t("Demo data reset."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to reset demo data"));
     } finally {
@@ -1661,6 +1678,7 @@ export function App() {
   async function recordExecutionEvent(taskId: number, eventType: "start" | "pause" | "complete" | "skip") {
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       await requestJson(`${API_BASE_URL}/tasks/${taskId}/execution/${eventType}`, {
@@ -1669,6 +1687,7 @@ export function App() {
         body: JSON.stringify({}),
       });
       await loadDashboardData();
+      setNotice(t("Task status updated."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to record execution event"));
     } finally {
@@ -1679,6 +1698,7 @@ export function App() {
   async function updateTaskStatus(taskId: number, status: TaskStatus) {
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       const endpoint =
@@ -1691,6 +1711,7 @@ export function App() {
         body: status === "pending" ? undefined : JSON.stringify({ status }),
       });
       await loadDashboardData();
+      setNotice(t("Task updated."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to update task"));
     } finally {
@@ -1701,6 +1722,7 @@ export function App() {
   async function deleteTask(taskId: number) {
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
@@ -1712,6 +1734,7 @@ export function App() {
       }
 
       await loadDashboardData();
+      setNotice(t("Task deleted."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to delete task"));
     } finally {
@@ -1734,25 +1757,26 @@ export function App() {
 
         <nav className="sidebar-nav" aria-label={t("Primary")}>
           {navigationItems.map((item) => (
-            <a key={item.label} className={item.isActive ? "nav-item active" : "nav-item"} href="#">
+            <a key={item.label} className={item.isActive ? "nav-item active" : "nav-item"} href={item.target}>
               <item.icon size={18} aria-hidden="true" />
               <span>{t(item.label)}</span>
             </a>
           ))}
         </nav>
 
-        <div className="sidebar-status" aria-label={t("Service health")}>
+        <div className="sidebar-status" aria-label={t("Runtime status")}>
           <div className="status-heading">
             <Activity size={16} aria-hidden="true" />
-            <span>{t("System")}</span>
+            <span>{t("Runtime")}</span>
           </div>
-          {serviceHealth.map((service) => (
-            <div key={service} className="status-row">
-              <span className="health-dot" aria-hidden="true" />
-              <span>{service}</span>
-              <strong>{t("ok")}</strong>
-            </div>
-          ))}
+          <div className="status-row">
+            <span
+              className={authToken && !error && !isLoading ? "health-dot" : "health-dot neutral"}
+              aria-hidden="true"
+            />
+            <span>{t("Dashboard data")}</span>
+            <strong>{t(isLoading ? "checking" : error ? "needs attention" : authToken ? "connected" : "sign in")}</strong>
+          </div>
           <button
             className="demo-reset-button"
             type="button"
@@ -1765,7 +1789,7 @@ export function App() {
         </div>
       </aside>
 
-      <main className="workspace" aria-labelledby="page-title">
+      <main id="today" className="workspace" aria-labelledby="page-title">
         <header className="topbar">
           <div className="date-control" aria-label={t("Selected date")}>
             <button
@@ -1810,7 +1834,7 @@ export function App() {
           </div>
 
           <div className="topbar-actions">
-            <section className="auth-panel" aria-label={t("Account")}>
+            <section id="account" className="auth-panel" aria-label={t("Account")}>
               {currentUser ? (
                 <div className="auth-summary">
                   <UserCircle size={18} aria-hidden="true" />
@@ -1932,9 +1956,6 @@ export function App() {
                 onChange={(event) => setQuery(event.target.value)}
               />
             </label>
-            <button className="icon-button" type="button" aria-label={t("Notifications")} disabled>
-              <Bell size={18} />
-            </button>
             <button
               className="primary-action"
               type="button"
@@ -1958,6 +1979,13 @@ export function App() {
             <button className="ghost-button text-button" type="button" onClick={() => void loadDashboardData()}>
               {t("Retry")}
             </button>
+          </div>
+        ) : null}
+
+        {!error && notice ? (
+          <div className="success-banner" role="status" aria-live="polite">
+            <CheckCircle2 size={18} aria-hidden="true" />
+            <span>{notice}</span>
           </div>
         ) : null}
 
@@ -1996,7 +2024,7 @@ export function App() {
             </section>
 
             <div className="workspace-grid">
-              <section className="timeline-surface" aria-labelledby="page-title">
+              <section id="schedule" className="timeline-surface" aria-labelledby="page-title">
                 <div className="section-header">
                   <div>
                     <p className="section-kicker">{scheduleKicker}</p>
@@ -2072,11 +2100,7 @@ export function App() {
                                 <ChevronRight size={17} />
                               </button>
                             </div>
-                          ) : (
-                            <button className="ghost-button" type="button" aria-label={`${t("More options for")} ${item.title}`}>
-                              <MoreHorizontal size={18} />
-                            </button>
-                          )}
+                          ) : null}
                         </div>
                       </article>
                     ))}
@@ -2245,15 +2269,12 @@ export function App() {
                 </section>
               </section>
 
-              <section className="queue-surface" aria-labelledby="queue-title">
+              <section id="tasks" className="queue-surface" aria-labelledby="queue-title">
                 <div className="section-header compact">
                   <div>
                     <p className="section-kicker">{t("Task queue")}</p>
                     <h2 id="queue-title">{t("Next candidates")}</h2>
                   </div>
-                  <button className="icon-button" type="button" aria-label={t("Command palette")} disabled>
-                    <Command size={17} />
-                  </button>
                 </div>
 
                 <div className="task-toolbar" aria-label={t("Task filters and sorting")}>
@@ -2561,7 +2582,7 @@ export function App() {
                 </div>
               </section>
 
-              <aside className="insight-surface" aria-labelledby="insight-title">
+              <aside id="analytics" className="insight-surface" aria-labelledby="insight-title">
                 <div className="section-header compact">
                   <div>
                     <p className="section-kicker">{t("AI review")}</p>
@@ -2587,7 +2608,7 @@ export function App() {
                   ))}
                 </div>
 
-                <div className="model-panel">
+                <div id="mlops" className="model-panel">
                   <div>
                     <Brain size={18} aria-hidden="true" />
                     <span>

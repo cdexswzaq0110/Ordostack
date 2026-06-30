@@ -20,6 +20,24 @@ Next acceptable label after the remaining gates pass:
 Private Beta Candidate
 ```
 
+## 2026-06-30 Verification
+
+Completed in the available Windows environment:
+
+- 60 backend-api tests, 11 scheduler-service tests, and 9 ml-service tests passed.
+- Dashboard production build, static accessibility audit, security audit, documentation check, backup policy audit, beta readiness check, and 210 translation keys passed.
+- Local E2E smoke passed through auth, task and fixed-event edits, schedule generation, history, rename, comparison, and export.
+- Edge browser smoke produced a valid dashboard screenshot; sidebar navigation, demo login, runtime state, and Generate Plan success feedback were also checked interactively.
+- Production now blocks the demo-reset endpoint.
+
+Manual verification still required:
+
+- Docker Compose config and clean-checkout startup because Docker is unavailable in the audit environment.
+- MySQL persistence across restart, migration execution in Docker, backup creation, and isolated restore drill.
+- Reviewed visual-regression baseline and formal manual accessibility sign-off.
+
+The release label remains `Customer Demo MVP / Technical Preview`; these changes do not complete the hosted or Docker private-beta gates.
+
 ## Required Gates Before Private Beta
 
 | Gate | Status | Owner | Evidence |

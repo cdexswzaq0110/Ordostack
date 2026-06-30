@@ -143,6 +143,10 @@ Start here:
 | Release process | [docs/release-process.md](docs/release-process.md) |
 | Environment variables | [docs/environment.md](docs/environment.md) |
 | Backup and restore | [docs/backup-restore.md](docs/backup-restore.md) |
+| Product roadmap | [docs/product-roadmap.md](docs/product-roadmap.md) |
+| AWS deployment plan | [docs/aws-deployment-plan.md](docs/aws-deployment-plan.md) |
+| ClearML MLOps plan | [docs/mlops-clearml-plan.md](docs/mlops-clearml-plan.md) |
+| Security checklist | [docs/security-checklist.md](docs/security-checklist.md) |
 
 Repository maintenance:
 

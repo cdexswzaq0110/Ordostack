@@ -2,6 +2,17 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## Unreleased
+
+- Audit the commercial-beta request against the implemented repository and record verified versus manual-only release gates.
+- Add a phased product roadmap that keeps hosted SaaS, mobile, ClearML operations, and production infrastructure as explicit future work.
+- Add a UI/UX review with beta-blocking interaction findings and a minimum credible remediation scope.
+- Replace dead sidebar links with native section navigation and remove enabled/visible controls that had no action.
+- Replace static internal-service `ok` claims with observable dashboard data state.
+- Add accessible success feedback for core task, event, schedule, export, and demo actions.
+- Disable the demo-reset endpoint in production and cover the environment guard with an API regression test.
+- Add explicit AWS deployment, ClearML promotion, security-control, and mobile-client decision documents without claiming those future systems are operational.
+
 ## 0.51.3 - 2026-06-20
 
 - Rewrite the GitHub-facing README, architecture, and project specification into a tighter maintained-document style.
