@@ -1,21 +1,21 @@
 # OrdoStack Project Status Report
 
-Date: 2026-06-11
-Version: 0.51.3
+Date: 2026-06-30
+Version: 0.52.0
 Report role: PM / project management
 
 ## Executive Summary
 
-OrdoStack is currently a local Customer Demo MVP / Technical Preview with authentication, user-scoped planner data, English / Traditional Chinese dashboard locale support, manual schedule controls, recurring fixed events, reusable schedule templates, local PDF export, completion forecast, local model registry, duration feedback export, browser smoke CI, visual regression script, accessibility static audit, security audit script, auth hardening baseline, non-Docker release QA gate, hosted monitoring plan, backup policy audit, accessibility QA checklist, deployment baseline documentation, observability baseline, and backup/restore drill baseline. It is suitable for internal QA and customer reference demos on a developer machine. It is not ready for public launch because final Docker/deployment hardening, hosted deployment execution, hosted monitoring implementation, production backup execution, production security review, mobile app, ClearML agent execution, and production model governance are not implemented yet.
+OrdoStack is a local Private Beta Candidate with authenticated user-scoped planning, schedule generation and persistence, execution analytics, local duration prediction, Docker Compose, MySQL migrations, and automated release gates. The v0.52.0 CI runtime gate starts the full stack from a clean checkout and verifies E2E behavior, browser rendering, MySQL restart persistence, backup integrity, and isolated restore. It is not ready for public launch because hosted deployment, production monitoring, external secret management, off-host backup automation, account recovery, and formal security/accessibility approval remain open.
 
 Current evidence:
 
-- Previous release tag before this hardening batch: `v0.44.0`.
-- Current product stage: local Customer Demo MVP / Technical Preview `v0.51.3`.
+- Previous release baseline: `v0.51.3`.
+- Current product stage: local Private Beta Candidate `v0.52.0`.
 - Main runnable entrypoint: `http://localhost:5173`.
-- Runtime: local services; Docker finalization intentionally deferred.
+- Runtime: local Docker Compose with an automated clean-checkout CI gate.
 - Database: local MySQL container.
-- Verification gates available: Python tests, readiness checks, environment validation, E2E smoke, browser screenshot smoke, visual regression script, a11y static audit, security audit, backup policy audit, beta readiness check, backup verification, secrets scan, non-Docker release QA gate, and non-Docker browser smoke CI.
+- Verification gates available: service tests, dashboard build, Compose validation, full Docker startup, readiness, E2E, browser smoke, MySQL restart persistence, backup and isolated restore, accessibility static audit, security audit, documentation checks, and translation coverage.
 
 ## PM Assessment
 
@@ -31,15 +31,15 @@ Public launch:
 ```text
 Status: Not ready
 Estimated remaining issue count: 7 to 12 focused issues
-Reason: final Docker/deployment hardening, hosted deployment execution, production security review, hosted monitoring implementation, production backup execution, production data policy, and operational workflows are missing
+Reason: hosted deployment execution, production security review, monitoring implementation, off-host backup automation, production data policy, and operational ownership are missing
 ```
 
 Private beta:
 
 ```text
-Status: Candidate after final deployment hardening
-Estimated remaining issue count: 3 to 6 focused issues
-Reason: non-Docker beta hardening is now in place, but beta still needs Docker finalization, hosted deployment, manual QA sign-off, and account decisions
+Status: Local Private Beta Candidate
+Estimated remaining issue count: 3 to 5 focused issues
+Reason: repository and Docker runtime gates are in place; hosted deployment, external operations, and manual sign-off remain
 ```
 
 The exact issue count depends on the launch definition. If launch means a controlled private beta for a small customer group, the smaller range applies. If launch means public SaaS or app-store-ready product, the larger range is more realistic.
@@ -117,7 +117,7 @@ Product gaps from the original specification:
 - The demo reset endpoint restores local demo data and is not a production account recovery feature.
 - Browser smoke verifies a nonblank PNG; the local visual regression script still depends on reviewed screenshot artifacts.
 - The ML model is a local JSON artifact, not an operationally managed model.
-- Current CI validates build/test/config but does not run full Docker runtime E2E in GitHub Actions.
+- CI runs build/test/config plus the full Docker runtime, E2E, persistence, backup, and isolated restore gate.
 - Observability has a hosted monitoring plan but no configured hosted metrics backend, tracing backend, uptime monitor, or alerting implementation yet.
 - Backup/restore has a production policy baseline but no scheduled jobs, encrypted off-host storage implementation, or automated production restore.
 
@@ -144,8 +144,8 @@ Issue 49: Production backup automation
 
 Issue 50: Docker finalization and deployment hardening
 
-- Revisit Dockerfiles, Docker Compose, production compose, reverse proxy, health checks, image scanning, and deployment runbooks as one final deployment pass.
-- This is intentionally deferred until product behavior stabilizes.
+- Status: local beta runtime gate implemented in v0.52.0.
+- Remaining production work: image scanning, hosted TLS, external secrets, private networking, and operational rollout under Issue 51.
 
 Issue 51: Hosted beta deployment execution
 
@@ -169,22 +169,22 @@ Do not market this as a finished public product yet.
 Recommended positioning now:
 
 ```text
-Customer Demo MVP / Technical Preview
+Private Beta Candidate
 ```
 
 Recommended next milestone:
 
 ```text
-Private Beta Candidate
+Private Beta
 ```
 
 Minimum next target for private beta:
 
-- Complete a focused manual QA pass on Issues 34 to 45.
-- Keep Docker finalization as a dedicated deployment hardening pass.
+- Complete formal manual accessibility and security sign-off.
+- Keep the Docker runtime gate required on every release PR.
 - Decide whether hosted beta needs AWS or a simpler single-node environment.
 - Keep mobile and ClearML agent execution out of the first beta unless they become explicit customer blockers.
 
 ## Next Execution Plan
 
-The next engineering pass should execute manual QA using `docs/qa-mvp.md` and `docs/accessibility-qa.md`. After product behavior is accepted, start Issue 50 Docker finalization and deployment hardening as a dedicated deployment pass, then Issue 51 hosted beta deployment after account decisions are confirmed.
+The next engineering pass should execute manual QA using `docs/qa-mvp.md` and `docs/accessibility-qa.md`, then start Issue 51 hosted beta deployment after hosting, monitoring, backup, and support ownership are confirmed.

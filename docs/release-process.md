@@ -5,7 +5,7 @@ OrdoStack uses small tagged releases until production deployment exists.
 ## Current Version
 
 ```text
-0.51.3
+0.52.0
 ```
 
 ## Release Types
@@ -104,9 +104,9 @@ python scripts/beta_readiness_check.py --root .
 python scripts/visual_regression.py --baseline artifacts/visual-baseline/dashboard.png --candidate artifacts/browser-smoke/dashboard.png --threshold 0.01
 ```
 
-## Deferred Docker Deployment Checklist
+## Docker Runtime Release Checklist
 
-Run this checklist during the dedicated Docker finalization issue, not during product behavior iteration:
+GitHub Actions runs this behavior from a clean checkout. Run it locally when Docker is available:
 
 ```powershell
 docker compose config
@@ -123,7 +123,7 @@ powershell -ExecutionPolicy Bypass -File scripts\verify_mysql_backup.ps1 -Path a
 After a clean release commit:
 
 ```bash
-git tag v0.51.3
+git tag v0.52.0
 ```
 
 Tags should point only to commits that passed the release checklist.

@@ -2,7 +2,7 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
-## Unreleased
+## 0.52.0 - 2026-06-30
 
 - Audit the commercial-beta request against the implemented repository and record verified versus manual-only release gates.
 - Add a phased product roadmap that keeps hosted SaaS, mobile, ClearML operations, and production infrastructure as explicit future work.
@@ -12,6 +12,8 @@ All notable MVP changes are recorded here. This project follows incremental issu
 - Add accessible success feedback for core task, event, schedule, export, and demo actions.
 - Disable the demo-reset endpoint in production and cover the environment guard with an API regression test.
 - Add explicit AWS deployment, ClearML promotion, security-control, and mobile-client decision documents without claiming those future systems are operational.
+- Add a clean-checkout Docker runtime CI gate covering service startup, migrations, product E2E, browser smoke, MySQL restart persistence, backup verification, and isolated restore.
+- Reconcile architecture, roadmap, beta readiness, project status, and release documentation with the verified v0.52.0 baseline.
 
 ## 0.51.3 - 2026-06-20
 
