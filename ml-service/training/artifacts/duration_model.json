@@ -1,0 +1,19 @@
+{
+  "category_multipliers": {
+    "admin": 0.82,
+    "analytics": 0.9738,
+    "backend": 1.0513,
+    "coding": 1.313,
+    "qa": 0.9,
+    "study": 1.2759
+  },
+  "difficulty_weight": 0.04,
+  "focus_multiplier": 1.05,
+  "global_multiplier": 1.0898,
+  "model_name": "local-duration-regressor",
+  "model_version": "0.1.0",
+  "priority_weight": 0.015,
+  "source": "local-artifact",
+  "trained_at": "2026-06-03T04:06:52.720091+00:00",
+  "training_rows": 14
+}

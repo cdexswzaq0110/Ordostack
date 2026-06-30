@@ -1,0 +1,7 @@
+{
+  "baseline_mae": 14.14,
+  "model_mae": 6.57,
+  "model_name": "local-duration-regressor",
+  "model_version": "0.1.0",
+  "training_rows": 14
+}
