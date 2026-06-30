@@ -5,14 +5,14 @@ This file records the current product baseline for the repository. The original 
 ## Current Baseline
 
 ```text
-Version: 0.51.3
-Stage: Customer Demo MVP / Technical Preview
+Version: 0.52.0
+Stage: Local Private Beta Candidate
 Runtime: Docker Compose local stack
 Primary UI: web-dashboard
 Public launch readiness: Not ready
 ```
 
-OrdoStack can be shown to customers as a local demo. It is not yet a hosted production product.
+OrdoStack can be used for controlled local beta evaluation. It is not yet a hosted production product.
 
 ## Product Identity
 

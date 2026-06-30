@@ -146,7 +146,7 @@ python scripts\beta_readiness_check.py --root .
 Expected:
 
 - Backup policy includes encryption, off-host storage, retention, approval, and temporary restore target requirements.
-- Beta readiness report still marks Issue 50 Docker finalization and Issue 51 hosted deployment as deferred.
+- Beta readiness report marks the Issue 50 local Docker runtime gate complete and Issue 51 hosted deployment deferred.
 
 Manual schedule control checks:
 
@@ -656,6 +656,6 @@ Invoke-RestMethod -Uri "http://localhost:8200/model/info"
 - Observability baseline provides request IDs, request logs, and readiness only; metrics, tracing, alerting, and hosted uptime checks are not implemented yet.
 - Backup/restore baseline provides local SQL dump and verification only; scheduled jobs, encrypted off-host storage, and automated production restore are not implemented yet.
 - A11y, security, and visual regression gates are local MVP scripts; formal external audit and hosted regression governance are not implemented yet.
-- Docker finalization is intentionally deferred to a dedicated deployment hardening pass.
+- The local Docker runtime gate is automated in CI; hosted deployment hardening remains separate.
 - Schema bootstrap remains as a compatibility fallback; Alembic is the Docker startup path.
 - MySQL uses local development settings and no production credential management.

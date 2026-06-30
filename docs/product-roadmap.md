@@ -1,19 +1,19 @@
 # Product Roadmap
 
-OrdoStack is a local Customer Demo MVP / Technical Preview. The next credible milestone is a controlled private beta, not a public SaaS launch.
+OrdoStack is a local Private Beta Candidate. The next milestone is a controlled hosted beta, not a public SaaS launch.
 
 ## Audit Baseline
 
 Audited on 2026-06-30 against branch `codex/docs-github-cleanup`.
 
 - Implemented: authenticated planner API, user-scoped tasks and fixed events, saved schedules, execution analytics, local duration prediction, MySQL migrations, Docker Compose definitions, and local QA scripts.
-- Verified locally: 59 backend tests, 11 scheduler tests, 9 ML tests, dashboard production build, static accessibility audit, security scan, documentation check, backup policy check, beta readiness check, and 199 translation keys.
-- Not verified in this environment: Docker runtime, MySQL persistence, full E2E smoke, and production Compose because Docker is unavailable.
-- Known UI gap at audit time: sidebar links and one schedule action are non-functional placeholders; service health is displayed as static `ok` text.
+- Verified: 60 backend tests, 11 scheduler tests, 9 ML tests, dashboard production build, static accessibility audit, security scan, documentation check, backup policy check, beta readiness check, 210 translation keys, local E2E, and browser smoke.
+- Docker Compose syntax passed in CI. The v0.52.0 runtime gate adds clean-checkout startup, migrations, E2E, MySQL restart persistence, backup verification, and isolated restore.
+- The audited dead navigation, unused actions, static health claims, and production demo-reset exposure are resolved.
 
 ## Phase 1 — Minimum Credible Beta UI
 
-Status: implemented locally; Docker browser verification remains part of Phase 2.
+Status: complete.
 
 - Make every visible navigation and schedule action functional or remove it. Completed for the audited placeholders.
 - Replace static health claims with state the dashboard can actually observe. Completed for dashboard data state.
@@ -23,12 +23,12 @@ Status: implemented locally; Docker browser verification remains part of Phase 2
 
 ## Phase 2 — Runtime Confidence
 
-Priority: before private beta.
+Status: implemented as the v0.52.0 Docker runtime CI gate.
 
-- Run Docker Compose from a clean checkout.
-- Verify migrations, MySQL persistence across restart, E2E smoke, backup creation, and restore against a temporary database.
-- Run dependency and container image scans; resolve high-severity findings.
-- Gate: all service tests, Compose config, healthy stack, E2E smoke, backup restore drill.
+- Run Docker Compose from a clean checkout. Automated in CI.
+- Verify migrations, MySQL persistence across restart, E2E smoke, backup creation, and restore against a temporary database. Automated in CI.
+- Run dependency and container image scans; resolve high-severity findings. Remains a hosted release gate.
+- Gate: all service tests, Compose config, healthy stack, E2E smoke, backup and restore drill.
 
 ## Phase 3 — Controlled Hosted Beta
 
@@ -50,7 +50,7 @@ These are roadmap items, not implemented product claims:
 
 | Label | Evidence required |
 | --- | --- |
-| Customer Demo MVP / Technical Preview | Current verified local behavior |
+| Customer Demo MVP / Technical Preview | Superseded by v0.52.0 |
 | Private Beta Candidate | Phases 1 and 2 complete |
 | Private Beta | Phase 3 deployed and approved |
 | Production Ready | Separate production security, operations, support, and business review |
