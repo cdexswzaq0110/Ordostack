@@ -2,6 +2,43 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.53.0 - 2026-07-09
+
+- Redesign the dashboard with a warm editorial design system: ink/warm/canvas palette, display typography with letter-spaced uppercase labels, hairline borders, and square corners throughout.
+- Make the sidebar navigation functional: Today, Tasks, Schedule, Analytics, MLOps, and Settings now switch dedicated workspace views.
+- Add an Analytics view with a per-task estimate / predicted / actual / delta table.
+- Add an MLOps view showing the active prediction model, per-task predictions with confidence, and how the fallback chain works.
+- Add a Settings view with account details, interface language, keyboard shortcut reference, and demo reset; the top bar keeps only date, search, account, and Generate Plan.
+- Replace the fabricated plan score with real schedule coverage (scheduled vs selected tasks) in the plan-quality ring.
+- Label unscheduled timeline previews explicitly and remove the remaining non-functional buttons (notifications, command palette, more-options).
+- Make the bottom rail honest: the next fixed event is now computed from the current time and the third slot shows the active prediction model.
+- Refresh the visual regression baseline and all README screenshots for the new design.
+
+## 0.52.0 - 2026-07-08
+
+- Close the local ML retraining loop: `scripts/export_duration_feedback.py` pulls completed-task feedback, training merges it with seed data, and `promote_duration_model.py` performs metrics-gated promotion into the local JSON model registry.
+- Report honest out-of-sample metrics: training now uses a seeded holdout split and records baseline MAE, model MAE, and improvement ratio instead of in-sample error.
+- Add `POST /model/reload` to ml-service so a promoted artifact serves without a container restart.
+- Add delete confirmations for tasks and fixed events in the dashboard.
+- Replace hardcoded model version text in the plan-quality panel with the real duration-model name and version plus applied scheduler algorithm count.
+- Highlight the current schedule block with a Now badge that refreshes every minute.
+- Add keyboard shortcuts: Alt+Left/Right for day navigation, Alt+T for today, Alt+G for plan generation.
+- Document the frontend UX roadmap (`docs/frontend-ux-improvement-plan.md`) and the MLOps production launch roadmap (`docs/mlops-production-roadmap.md`).
+- Expand ml-service tests from 11 to 19 covering holdout metrics, feedback merge, determinism, promotion gates, and hot reload.
+- Add a verification test report (`docs/test-report.md`) with the full v0.52.0 evidence: 89 unit/integration tests, static gates, and Docker runtime checks.
+- Rewrite the README introduction and installation guide with real dashboard screenshots (`docs/images/`), a requirements table, first-login walkthrough, and troubleshooting notes.
+- Add `scripts/capture_readme_screenshots.py` to reproduce the README screenshots against the running stack.
+- Move development-history and planning documents (rulebooks, development log, status report, beta-readiness review, branching notes, UX plan, MLOps roadmap) into `docs/internal/` so the top-level docs stay product-facing.
+
+## 0.51.4 - 2026-07-08
+
+- Add the development workflow configuration under `.claude/` (coding rules, task tracking, review and testing commands, workflow templates).
+- Add a root `CLAUDE.md` with project instructions, architecture summary, quality gates, and development guardrails.
+- Add `docs/adr/` with four retroactive architecture decision records (service split, MySQL with in-memory test store, local-first runtime, ML artifact with heuristic fallback).
+- Add a work-breakdown plan at `.claude/taskmaster-data/wbs.md` covering the remaining launch gaps (milestones M2-M4).
+- Add a workflow gap audit (now at `docs/internal/vibecoding-gap-analysis.md`) recording what was added and what was deliberately deferred.
+- Fix a security-audit false positive where filenames like `task-assignment-...` matched the OpenAI key pattern.
+
 ## 0.51.3 - 2026-06-20
 
 - Rewrite the GitHub-facing README, architecture, and project specification into a tighter maintained-document style.

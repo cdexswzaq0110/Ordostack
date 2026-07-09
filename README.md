@@ -4,6 +4,10 @@ OrdoStack is a local-first daily planner. It combines tasks, fixed events, execu
 
 The repository is currently a Customer Demo MVP / Technical Preview. It runs locally with Docker Compose and does not use paid APIs.
 
+![OrdoStack dashboard with a generated schedule](docs/images/dashboard-overview.png)
+
+*The dashboard after one click on Generate Plan: scored task blocks scheduled around protected events, daily KPIs, ML duration predictions, and the plan-quality panel.*
+
 ## Problem
 
 Most planning tools keep a list. A list is useful, but it does not answer the harder questions:
@@ -25,17 +29,40 @@ OrdoStack focuses on that loop for one day at a time.
 - Local schedule exports in Markdown, CSV, and PDF.
 - Execution logs and daily analytics: actual minutes, estimate drift, completion rate, focus minutes, and forecast.
 - Local duration prediction through `ml-service` using a JSON artifact or heuristic fallback.
+- Workspace views for planning, task management, schedule review, analytics, prediction insight, and settings.
 - English UI by default, with Traditional Chinese available in the dashboard.
+- Local retraining loop: export execution feedback, retrain with holdout evaluation, metrics-gated model promotion, hot reload.
 - Docker Compose runtime with MySQL persistence.
 - Local QA gates for tests, build, security, accessibility, backup policy, visual regression, and smoke checks.
 
+## Interface
+
+| Focused schedule and history | Task queue with ML predictions |
+| --- | --- |
+| ![Generated schedule timeline with history and export](docs/images/schedule-timeline.png) | ![Task queue with estimates, predictions, and protected events](docs/images/task-queue.png) |
+
+The timeline shows scheduler-scored blocks around protected events, with per-item lock and 15-minute move controls, saved-plan history, compare, and Markdown/PDF export. The task queue shows each task's estimate next to the ML-predicted duration and the actual logged minutes, with start/pause/complete/skip execution controls.
+
+The sidebar switches between six workspace views. Analytics compares estimated, predicted, and actual minutes per task; MLOps shows the active prediction model and per-task confidence; Settings holds account, language, and shortcut reference.
+
+![Analytics view with per-task estimate, predicted, actual, and delta columns](docs/images/analytics-view.png)
+
+Keyboard shortcuts: `Alt+←` / `Alt+→` switch days, `Alt+T` jumps to today, `Alt+G` generates a plan.
+
 ## Quick Start
 
-Requirements:
+### Requirements
 
-- Docker Desktop with Docker Compose.
-- Python 3.11+ for local QA scripts.
-- Node.js 20+ only when running `web-dashboard` outside Docker.
+| Requirement | Version | Needed for |
+| --- | --- | --- |
+| Docker Desktop with Docker Compose | current | Running the full stack (only hard requirement) |
+| Python | 3.11+ | Local QA scripts and ML training tools |
+| Node.js | 20+ | Only when running `web-dashboard` outside Docker |
+| Edge or Chrome | any recent | Only for browser smoke and screenshot scripts |
+
+No cloud account, API key, or paid service is needed. Everything runs on `localhost`.
+
+### 1. Clone and start
 
 Windows PowerShell:
 
@@ -53,24 +80,38 @@ cd Ordostack
 docker compose up --build -d
 ```
 
+The first build takes a few minutes. When it finishes, `docker compose ps` should show five services (`backend-api`, `scheduler-service`, `ml-service`, `mysql`, `web-dashboard`) with status `healthy`. Database migrations run automatically before `backend-api` starts.
+
+### 2. Sign in
+
 Open:
 
 ```text
 http://localhost:5173
 ```
 
-Demo account:
+Sign in with the demo account (prefilled in the login form):
 
 ```text
 demo@ordostack.local
 ordostack-demo
 ```
 
-Stop the stack:
+The dashboard opens on the bundled demo dataset date (2026-06-03) with seeded tasks and fixed events. Click **Generate Plan** (or press `Alt+G`) to produce the schedule shown in the screenshots above. Use **Reset demo** in the sidebar to restore the seed data at any time.
+
+### 3. Stop
 
 ```powershell
 docker compose down
 ```
+
+Data persists in the `ordostack_mysql_data` Docker volume across restarts.
+
+### Troubleshooting
+
+- **A port is already in use** — the stack needs 5173, 8000, 8100, 8200, and 3307 on the host. Stop the conflicting process or adjust `docker-compose.yml` and the health checks together.
+- **`web-dashboard` is unhealthy on first start** — it waits for `backend-api`, which waits for MySQL to pass its health check; give the first boot up to a minute, then check `docker compose logs backend-api`.
+- **Docker is not running** — start Docker Desktop first; `docker info` should print a server version.
 
 ## Health Checks
 
@@ -140,9 +181,11 @@ Start here:
 | System architecture | [ARCHITECTURE.md](ARCHITECTURE.md) |
 | API behavior | [docs/api.md](docs/api.md) |
 | QA workflow | [docs/qa-mvp.md](docs/qa-mvp.md) |
+| Test report (v0.52.0) | [docs/test-report.md](docs/test-report.md) |
 | Release process | [docs/release-process.md](docs/release-process.md) |
 | Environment variables | [docs/environment.md](docs/environment.md) |
 | Backup and restore | [docs/backup-restore.md](docs/backup-restore.md) |
+| Architecture decisions | [docs/adr/README.md](docs/adr/README.md) |
 
 Repository maintenance:
 

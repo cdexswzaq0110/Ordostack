@@ -5,7 +5,7 @@ This file records the current product baseline for the repository. The original 
 ## Current Baseline
 
 ```text
-Version: 0.51.3
+Version: 0.53.0
 Stage: Customer Demo MVP / Technical Preview
 Runtime: Docker Compose local stack
 Primary UI: web-dashboard
@@ -68,7 +68,7 @@ OrdoStack can be shown to customers as a local demo. It is not yet a hosted prod
 | Schedule history | Save generated runs, reload, rename, soft delete, compare, lock items, move items |
 | Export | Markdown, CSV, local PDF |
 | Analytics | Actual minutes, estimate drift, completion rate, focus minutes, completion forecast |
-| ML | Local duration prediction, JSON artifact, heuristic fallback, model metadata, feedback export |
+| ML | Local duration prediction, JSON artifact, heuristic fallback, model metadata, feedback export, holdout-evaluated retraining, metrics-gated promotion into a local registry, hot model reload |
 | Storage | MySQL in Docker, memory store in tests |
 | Observability | Request IDs, structured request logs, health and readiness endpoints |
 | Backup | Local MySQL backup script and verification script |
