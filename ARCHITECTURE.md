@@ -58,7 +58,16 @@ The scheduler returns a generated timeline. It does not persist data.
 - focus requirement,
 - actual minutes when available.
 
-The service first looks for a local JSON model artifact. If none is available, it uses a deterministic heuristic. No paid API or hosted model endpoint is required.
+The service first looks for the model referenced by the local JSON registry (`model_registry.json`), then the default artifact, and falls back to a deterministic heuristic when neither exists. No paid API or hosted model endpoint is required.
+
+The retraining loop is local and metrics-gated:
+
+1. `scripts/export_duration_feedback.py` pulls completed-task feedback from `backend-api`.
+2. `ml-service/training/train_duration_model.py` retrains with a seeded holdout split and reports out-of-sample MAE against the naive-estimate baseline.
+3. `ml-service/training/promote_duration_model.py` promotes the candidate into the registry only when it beats the baseline and does not regress against the active model.
+4. `POST /model/reload` serves the promoted artifact without a restart.
+
+Longer-term model lifecycle planning lives in [docs/internal/mlops-production-roadmap.md](docs/internal/mlops-production-roadmap.md).
 
 ## Persistence
 

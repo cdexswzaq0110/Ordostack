@@ -1,19 +1,21 @@
 {
   "category_multipliers": {
-    "admin": 0.82,
-    "analytics": 0.9738,
-    "backend": 1.0513,
+    "admin": 0.84,
+    "analytics": 1.0333,
+    "backend": 0.94,
     "coding": 1.313,
     "qa": 0.9,
     "study": 1.2759
   },
   "difficulty_weight": 0.04,
+  "feedback_rows": 0,
   "focus_multiplier": 1.05,
-  "global_multiplier": 1.0898,
+  "global_multiplier": 1.1255,
   "model_name": "local-duration-regressor",
-  "model_version": "0.1.0",
+  "model_version": "0.2.0",
   "priority_weight": 0.015,
+  "seed": 42,
   "source": "local-artifact",
-  "trained_at": "2026-06-03T04:06:52.720091+00:00",
-  "training_rows": 14
+  "trained_at": "2026-07-08T14:13:43.424585+00:00",
+  "training_rows": 11
 }
