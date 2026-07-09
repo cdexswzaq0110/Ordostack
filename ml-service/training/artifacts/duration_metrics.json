@@ -1,7 +1,12 @@
 {
-  "baseline_mae": 14.14,
-  "model_mae": 6.57,
+  "baseline_mae": 7.33,
+  "evaluation_mode": "holdout",
+  "evaluation_rows": 3,
+  "feedback_rows": 0,
+  "improvement_ratio": 0.4093,
+  "model_mae": 4.33,
   "model_name": "local-duration-regressor",
-  "model_version": "0.1.0",
-  "training_rows": 14
+  "model_version": "0.2.0",
+  "seed": 42,
+  "training_rows": 11
 }

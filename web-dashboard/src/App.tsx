@@ -4,14 +4,12 @@ import {
   Activity,
   AlertCircle,
   BarChart3,
-  Bell,
   Brain,
   CalendarDays,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Clock3,
-  Command,
   Download,
   LayoutDashboard,
   ListFilter,
@@ -20,7 +18,6 @@ import {
   LogOut,
   Lock,
   Loader2,
-  MoreHorizontal,
   Pause,
   Pencil,
   Play,
@@ -47,10 +44,12 @@ import {
   type Translator,
 } from "./i18n";
 
+type WorkspaceView = "today" | "tasks" | "schedule" | "analytics" | "mlops" | "settings";
+
 type NavigationItem = {
+  view: WorkspaceView;
   label: string;
   icon: LucideIcon;
-  isActive?: boolean;
 };
 
 type TaskStatus = "pending" | "in_progress" | "completed" | "skipped";
@@ -228,6 +227,8 @@ type TimelineItem = {
   itemKey?: string;
   locked?: boolean;
   manualOverride?: boolean;
+  startsAt?: Date;
+  endsAt?: Date;
 };
 
 type InsightItem = {
@@ -269,12 +270,12 @@ const DEFAULT_SELECTED_DATE = "2026-06-03";
 const AUTH_TOKEN_STORAGE_KEY = "ordostack.authToken";
 
 const navigationItems: NavigationItem[] = [
-  { label: "Today", icon: LayoutDashboard, isActive: true },
-  { label: "Tasks", icon: ListTodo },
-  { label: "Schedule", icon: CalendarDays },
-  { label: "Analytics", icon: BarChart3 },
-  { label: "MLOps", icon: Brain },
-  { label: "Settings", icon: Settings },
+  { view: "today", label: "Today", icon: LayoutDashboard },
+  { view: "tasks", label: "Tasks", icon: ListTodo },
+  { view: "schedule", label: "Schedule", icon: CalendarDays },
+  { view: "analytics", label: "Analytics", icon: BarChart3 },
+  { view: "mlops", label: "MLOps", icon: Brain },
+  { view: "settings", label: "Settings", icon: Settings },
 ];
 
 const emptyTaskForm: TaskFormState = {
@@ -299,8 +300,6 @@ const emptyAuthForm: AuthFormState = {
   displayName: "Demo User",
   password: DEMO_AUTH_PASSWORD,
 };
-
-const serviceHealth = ["backend-api", "scheduler-service", "ml-service"];
 
 type TaskMutationPayload = {
   title: string;
@@ -731,6 +730,8 @@ function buildTimeline(
       title: task.title,
       meta: `${task.category} | ${formatMinutes(task.estimated_minutes, locale)} | ${t("priority")} ${task.priority}`,
       type: task.requires_focus ? "focus" : "admin",
+      startsAt: start,
+      endsAt: end,
     } satisfies TimelineItem;
   });
 
@@ -740,6 +741,8 @@ function buildTimeline(
     title: event.title,
     meta: `${event.event_type ?? t("fixed")} | ${t("protected")}`,
     type: "fixed",
+    startsAt: new Date(event.start_time),
+    endsAt: new Date(event.end_time),
   })) satisfies TimelineItem[];
 
   return [...taskBlocks, ...fixedBlocks].sort((left, right) => left.start.localeCompare(right.start));
@@ -766,11 +769,17 @@ function buildTimelineFromSchedule(items: ApiScheduleItem[], locale: LocaleCode,
         itemKey: scheduleItemKey(item),
         locked: item.locked ?? false,
         manualOverride: item.manual_override ?? false,
+        startsAt: new Date(item.start_time),
+        endsAt: new Date(item.end_time),
       };
 
       return timelineItem;
     })
     .sort((left, right) => left.start.localeCompare(right.start));
+}
+
+function isCurrentTimelineItem(item: TimelineItem, now: Date): boolean {
+  return item.startsAt !== undefined && item.endsAt !== undefined && item.startsAt <= now && now < item.endsAt;
 }
 
 function scheduleItemKey(item: ApiScheduleItem): string {
@@ -802,11 +811,11 @@ function padDatePart(value: number): string {
 
 async function sendJsonRequest<T>(url: string, options?: RequestInit, allowNotFound = false): Promise<T | null> {
   const response = await fetch(url, {
+    ...options,
     headers: {
       "Content-Type": "application/json",
       ...(options?.headers ?? {}),
     },
-    ...options,
   });
 
   if (allowNotFound && response.status === 404) {
@@ -876,6 +885,7 @@ export function App() {
   const [isComparing, setIsComparing] = useState(false);
   const [isExportingSchedule, setIsExportingSchedule] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [isFixedEventFormOpen, setIsFixedEventFormOpen] = useState(false);
   const [taskForm, setTaskForm] = useState<TaskFormState>(emptyTaskForm);
@@ -886,6 +896,8 @@ export function App() {
   const [editFixedEventForm, setEditFixedEventForm] = useState<FixedEventFormState>(emptyFixedEventForm);
   const [authToken, setAuthToken] = useState(() => localStorage.getItem(AUTH_TOKEN_STORAGE_KEY) ?? "");
   const [currentUser, setCurrentUser] = useState<ApiUser | null>(null);
+  const [now, setNow] = useState(() => new Date());
+  const [activeView, setActiveView] = useState<WorkspaceView>("today");
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [authForm, setAuthForm] = useState<AuthFormState>(emptyAuthForm);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -1076,6 +1088,41 @@ export function App() {
     void loadCurrentUser(authToken);
   }, [authToken]);
 
+  useEffect(() => {
+    const tick = window.setInterval(() => setNow(new Date()), 60_000);
+    return () => window.clearInterval(tick);
+  }, []);
+
+  // Re-registered every render so the handlers always see current state.
+  useEffect(() => {
+    function handleShortcut(event: KeyboardEvent) {
+      if (!event.altKey || event.ctrlKey || event.metaKey) {
+        return;
+      }
+      const target = event.target as HTMLElement | null;
+      if (target && target.closest("input, textarea, select, [contenteditable=true]")) {
+        return;
+      }
+
+      if (event.key === "ArrowLeft" && !isLoading) {
+        event.preventDefault();
+        changeSelectedDate(-1);
+      } else if (event.key === "ArrowRight" && !isLoading) {
+        event.preventDefault();
+        changeSelectedDate(1);
+      } else if ((event.key === "t" || event.key === "T") && !isLoading) {
+        event.preventDefault();
+        selectDate(todayDateString());
+      } else if ((event.key === "g" || event.key === "G") && authToken && !isGenerating && !isLoading && !isMutating) {
+        event.preventDefault();
+        void generatePlan();
+      }
+    }
+
+    window.addEventListener("keydown", handleShortcut);
+    return () => window.removeEventListener("keydown", handleShortcut);
+  });
+
   const filteredTasks = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     const matchesQuery = (task: ApiTask) => {
@@ -1163,9 +1210,16 @@ export function App() {
         : scheduleSource === "history"
           ? t("from selected history run")
           : t("from backend tasks");
-  const planScore = algorithmSummary
-    ? Math.max(0, Math.min(98, 82 + algorithmSummary.scheduled_task_count * 4 - algorithmSummary.skipped_task_count * 6))
-    : Math.min(98, completionRate + 24);
+  const scheduleCoverage =
+    algorithmSummary && algorithmSummary.selected_task_count > 0
+      ? Math.round((algorithmSummary.scheduled_task_count / algorithmSummary.selected_task_count) * 100)
+      : null;
+  const ringValue = scheduleCoverage ?? completionRate;
+  const ringLabel = scheduleCoverage !== null ? t("Coverage") : t("Completion");
+  const nextFixedEvent =
+    [...fixedEvents]
+      .sort((left, right) => left.start_time.localeCompare(right.start_time))
+      .find((event) => new Date(event.end_time) > now) ?? null;
 
   const insights: InsightItem[] = algorithmSummary
     ? [
@@ -1316,6 +1370,7 @@ export function App() {
         },
       );
       applyUpdatedScheduleRun(updatedScheduleRun);
+      setNotice(t("Schedule item updated."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to update schedule item"));
     }
@@ -1347,6 +1402,7 @@ export function App() {
         },
       );
       applyUpdatedScheduleRun(updatedScheduleRun);
+      setNotice(t("Schedule item updated."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to update schedule item"));
     }
@@ -1367,6 +1423,7 @@ export function App() {
         { headers: buildAuthHeaders() },
       );
       setScheduleDiff(nextScheduleDiff);
+      setNotice(t("Schedules compared."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to compare schedules"));
     } finally {
@@ -1382,6 +1439,7 @@ export function App() {
 
     setIsExportingSchedule(true);
     setError(null);
+    setNotice(null);
 
     try {
       const exportedSchedule = await requestJson<ApiScheduleExportResponse>(
@@ -1393,6 +1451,7 @@ export function App() {
       } else {
         downloadTextFile(exportedSchedule.filename, exportedSchedule.content, exportedSchedule.content_type);
       }
+      setNotice(t("Schedule export ready."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to export schedule"));
     } finally {
@@ -1409,6 +1468,7 @@ export function App() {
 
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       const updatedScheduleRun = await requestJson<ApiScheduleHistoryItem>(
@@ -1426,6 +1486,7 @@ export function App() {
       );
       setScheduleDiff(null);
       cancelRenamingScheduleRun();
+      setNotice(t("Schedule renamed."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to rename schedule"));
     } finally {
@@ -1441,6 +1502,7 @@ export function App() {
 
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       await requestJson<{ deleted: boolean }>(
@@ -1458,6 +1520,7 @@ export function App() {
       if (editingScheduleRunId === scheduleRunId) {
         cancelRenamingScheduleRun();
       }
+      setNotice(t("Schedule deleted."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to delete schedule"));
     } finally {
@@ -1468,6 +1531,7 @@ export function App() {
   async function generatePlan() {
     setIsGenerating(true);
     setError(null);
+    setNotice(null);
 
     try {
       const nextSchedule = await requestJson<ApiScheduleResponse>(`${API_BASE_URL}/schedules/generate`, {
@@ -1488,6 +1552,7 @@ export function App() {
       const nextScheduleHistory = await refreshScheduleHistory();
       setSelectedScheduleRunId(nextScheduleHistory[0]?.id ?? null);
       setScheduleDiff(null);
+      setNotice(t("Plan generated."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to generate plan"));
     } finally {
@@ -1504,6 +1569,7 @@ export function App() {
 
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       await requestJson<ApiTask>(`${API_BASE_URL}/tasks`, {
@@ -1522,6 +1588,8 @@ export function App() {
       setIsTaskFormOpen(false);
       cancelEditingTask();
       await loadDashboardData();
+      setNotice(t("Task updated."));
+      setNotice(t("Task created."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to create task"));
     } finally {
@@ -1538,6 +1606,7 @@ export function App() {
 
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       await requestJson<ApiTask>(`${API_BASE_URL}/tasks/${taskId}`, {
@@ -1564,6 +1633,7 @@ export function App() {
 
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       await requestJson<ApiFixedEvent>(`${API_BASE_URL}/fixed-events`, {
@@ -1578,6 +1648,8 @@ export function App() {
       setIsFixedEventFormOpen(false);
       cancelEditingFixedEvent();
       await loadDashboardData();
+      setNotice(t("Fixed event updated."));
+      setNotice(t("Fixed event created."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to create fixed event"));
     } finally {
@@ -1594,6 +1666,7 @@ export function App() {
 
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       await requestJson<ApiFixedEvent>(`${API_BASE_URL}/fixed-events/${fixedEventId}`, {
@@ -1612,8 +1685,14 @@ export function App() {
   }
 
   async function deleteFixedEvent(fixedEventId: number) {
+    const shouldDelete = window.confirm(t("Delete this fixed event?"));
+    if (!shouldDelete) {
+      return;
+    }
+
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       const response = await fetch(`${API_BASE_URL}/fixed-events/${fixedEventId}`, {
@@ -1625,6 +1704,7 @@ export function App() {
       }
 
       await loadDashboardData();
+      setNotice(t("Fixed event deleted."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to delete fixed event"));
     } finally {
@@ -1640,6 +1720,7 @@ export function App() {
 
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       await requestJson(`${API_BASE_URL}/demo/reset?user_id=${DEMO_USER_ID}`, {
@@ -1651,6 +1732,7 @@ export function App() {
       } else {
         setSelectedDate(DEFAULT_SELECTED_DATE);
       }
+      setNotice(t("Demo data reset."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to reset demo data"));
     } finally {
@@ -1661,6 +1743,7 @@ export function App() {
   async function recordExecutionEvent(taskId: number, eventType: "start" | "pause" | "complete" | "skip") {
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       await requestJson(`${API_BASE_URL}/tasks/${taskId}/execution/${eventType}`, {
@@ -1669,6 +1752,7 @@ export function App() {
         body: JSON.stringify({}),
       });
       await loadDashboardData();
+      setNotice(t("Task status updated."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to record execution event"));
     } finally {
@@ -1679,6 +1763,7 @@ export function App() {
   async function updateTaskStatus(taskId: number, status: TaskStatus) {
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       const endpoint =
@@ -1691,6 +1776,7 @@ export function App() {
         body: status === "pending" ? undefined : JSON.stringify({ status }),
       });
       await loadDashboardData();
+      setNotice(t("Task updated."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to update task"));
     } finally {
@@ -1699,8 +1785,14 @@ export function App() {
   }
 
   async function deleteTask(taskId: number) {
+    const shouldDelete = window.confirm(t("Delete this task?"));
+    if (!shouldDelete) {
+      return;
+    }
+
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
@@ -1712,6 +1804,7 @@ export function App() {
       }
 
       await loadDashboardData();
+      setNotice(t("Task deleted."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to delete task"));
     } finally {
@@ -1734,34 +1827,32 @@ export function App() {
 
         <nav className="sidebar-nav" aria-label={t("Primary")}>
           {navigationItems.map((item) => (
-            <a key={item.label} className={item.isActive ? "nav-item active" : "nav-item"} href="#">
+            <button
+              key={item.view}
+              className={activeView === item.view ? "nav-item active" : "nav-item"}
+              type="button"
+              aria-current={activeView === item.view ? "page" : undefined}
+              onClick={() => setActiveView(item.view)}
+            >
               <item.icon size={18} aria-hidden="true" />
               <span>{t(item.label)}</span>
-            </a>
+            </button>
           ))}
         </nav>
 
-        <div className="sidebar-status" aria-label={t("Service health")}>
+        <div className="sidebar-status" aria-label={t("Runtime status")}>
           <div className="status-heading">
             <Activity size={16} aria-hidden="true" />
-            <span>{t("System")}</span>
+            <span>{t("Runtime")}</span>
           </div>
-          {serviceHealth.map((service) => (
-            <div key={service} className="status-row">
-              <span className="health-dot" aria-hidden="true" />
-              <span>{service}</span>
-              <strong>{t("ok")}</strong>
-            </div>
-          ))}
-          <button
-            className="demo-reset-button"
-            type="button"
-            disabled={isMutating || isLoading}
-            onClick={() => void resetDemoData()}
-          >
-            <RotateCcw size={15} aria-hidden="true" />
-            <span>{t("Reset demo")}</span>
-          </button>
+          <div className="status-row">
+            <span
+              className={authToken && !error && !isLoading ? "health-dot" : "health-dot neutral"}
+              aria-hidden="true"
+            />
+            <span>{t("Dashboard data")}</span>
+            <strong>{t(isLoading ? "checking" : error ? "needs attention" : authToken ? "connected" : "sign in")}</strong>
+          </div>
         </div>
       </aside>
 
@@ -1772,6 +1863,8 @@ export function App() {
               className="icon-button"
               type="button"
               aria-label={t("Previous day")}
+              title={`${t("Previous day")} (Alt+←)`}
+              aria-keyshortcuts="Alt+ArrowLeft"
               disabled={isLoading}
               onClick={() => changeSelectedDate(-1)}
             >
@@ -1794,6 +1887,8 @@ export function App() {
               className="icon-button"
               type="button"
               aria-label={t("Next day")}
+              title={`${t("Next day")} (Alt+→)`}
+              aria-keyshortcuts="Alt+ArrowRight"
               disabled={isLoading}
               onClick={() => changeSelectedDate(1)}
             >
@@ -1802,6 +1897,8 @@ export function App() {
             <button
               className="ghost-button text-button"
               type="button"
+              title={`${t("Today")} (Alt+T)`}
+              aria-keyshortcuts="Alt+T"
               disabled={isLoading || selectedDate === todayDateString()}
               onClick={() => selectDate(todayDateString())}
             >
@@ -1913,16 +2010,6 @@ export function App() {
                 </p>
               ) : null}
             </section>
-            <label className="language-switcher" aria-label={t("Language")}>
-              <span>{t("Language")}</span>
-              <select value={locale} onChange={(event) => changeLocale(resolveLocale(event.target.value))}>
-                {localeOptions.map((option) => (
-                  <option key={option.code} value={option.code}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
             <label className="search-box" aria-label={t("Search tasks")}>
               <Search size={17} aria-hidden="true" />
               <input
@@ -1932,12 +2019,11 @@ export function App() {
                 onChange={(event) => setQuery(event.target.value)}
               />
             </label>
-            <button className="icon-button" type="button" aria-label={t("Notifications")} disabled>
-              <Bell size={18} />
-            </button>
             <button
               className="primary-action"
               type="button"
+              title={`${t("Generate Plan")} (Alt+G)`}
+              aria-keyshortcuts="Alt+G"
               disabled={!authToken || isGenerating || isLoading || isMutating}
               onClick={() => void generatePlan()}
             >
@@ -1961,6 +2047,13 @@ export function App() {
           </div>
         ) : null}
 
+        {!error && notice ? (
+          <div className="success-banner" role="status" aria-live="polite">
+            <CheckCircle2 size={18} aria-hidden="true" />
+            <span>{notice}</span>
+          </div>
+        ) : null}
+
         {isLoading ? (
           <section className="loading-panel" aria-label={t("Loading dashboard data")}>
             <Loader2 size={22} aria-hidden="true" />
@@ -1968,6 +2061,7 @@ export function App() {
           </section>
         ) : (
           <>
+            {activeView === "today" || activeView === "analytics" ? (
             <section className="overview-strip" aria-label={t("Daily overview")}>
               <article>
                 <span>{t("Completion")}</span>
@@ -1994,8 +2088,19 @@ export function App() {
                 </em>
               </article>
             </section>
+            ) : null}
 
-            <div className="workspace-grid">
+            {activeView === "today" || activeView === "tasks" || activeView === "schedule" ? (
+            <div
+              className={
+                activeView === "tasks"
+                  ? "workspace-grid solo"
+                  : activeView === "schedule"
+                    ? "workspace-grid duo"
+                    : "workspace-grid"
+              }
+            >
+              {activeView === "today" || activeView === "schedule" ? (
               <section className="timeline-surface" aria-labelledby="page-title">
                 <div className="section-header">
                   <div>
@@ -2016,6 +2121,10 @@ export function App() {
                   </button>
                 </div>
 
+                {!schedule && timelineItems.length > 0 ? (
+                  <p className="preview-note">{t("Preview times. Generate a plan to schedule these tasks.")}</p>
+                ) : null}
+
                 {isTaskFormOpen ? (
                   <form
                     className="inline-form"
@@ -2034,11 +2143,17 @@ export function App() {
 
                 {timelineItems.length > 0 ? (
                   <div className="timeline">
-                    {timelineItems.map((item) => (
-                      <article key={`${item.start}-${item.title}`} className={`timeline-item ${item.type}`}>
+                    {timelineItems.map((item) => {
+                      const isCurrent = isCurrentTimelineItem(item, now);
+                      return (
+                      <article
+                        key={`${item.start}-${item.title}`}
+                        className={`timeline-item ${item.type}${isCurrent ? " current" : ""}`}
+                      >
                         <div className="time-range">
                           <strong>{item.start}</strong>
                           <span>{item.end}</span>
+                          {isCurrent ? <em className="now-pill">{t("Now")}</em> : null}
                         </div>
                         <div className="timeline-block">
                           <div>
@@ -2072,14 +2187,11 @@ export function App() {
                                 <ChevronRight size={17} />
                               </button>
                             </div>
-                          ) : (
-                            <button className="ghost-button" type="button" aria-label={`${t("More options for")} ${item.title}`}>
-                              <MoreHorizontal size={18} />
-                            </button>
-                          )}
+                          ) : null}
                         </div>
                       </article>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="empty-state tall-state">
@@ -2244,16 +2356,15 @@ export function App() {
                   )}
                 </section>
               </section>
+              ) : null}
 
+              {activeView === "today" || activeView === "tasks" ? (
               <section className="queue-surface" aria-labelledby="queue-title">
                 <div className="section-header compact">
                   <div>
                     <p className="section-kicker">{t("Task queue")}</p>
                     <h2 id="queue-title">{t("Next candidates")}</h2>
                   </div>
-                  <button className="icon-button" type="button" aria-label={t("Command palette")} disabled>
-                    <Command size={17} />
-                  </button>
                 </div>
 
                 <div className="task-toolbar" aria-label={t("Task filters and sorting")}>
@@ -2560,19 +2671,21 @@ export function App() {
                   )}
                 </div>
               </section>
+              ) : null}
 
+              {activeView === "today" || activeView === "schedule" ? (
               <aside className="insight-surface" aria-labelledby="insight-title">
                 <div className="section-header compact">
                   <div>
-                    <p className="section-kicker">{t("AI review")}</p>
+                    <p className="section-kicker">{t("Plan review")}</p>
                     <h2 id="insight-title">{t("Plan quality")}</h2>
                   </div>
                   <Target size={19} aria-hidden="true" />
                 </div>
 
-                <div className="score-ring" aria-label={`${t("Plan score")} ${planScore} / 100`}>
-                  <span>{planScore}</span>
-                  <strong>{t("Plan score")}</strong>
+                <div className="score-ring" aria-label={`${ringLabel} ${ringValue}%`}>
+                  <span>{ringValue}%</span>
+                  <strong>{ringLabel}</strong>
                 </div>
 
                 <div className="insight-list">
@@ -2592,17 +2705,20 @@ export function App() {
                     <Brain size={18} aria-hidden="true" />
                     <span>
                       {schedule
-                        ? `${scheduleSource === "saved" ? t("saved ") : ""}scheduler-mvp + ${
-                            durationPredictions?.model_name ?? t("estimate-fallback")
-                          }`
+                        ? `${scheduleSource === "saved" ? t("saved ") : ""}${
+                            schedule.algorithm_summary.applied_algorithms.length
+                          } ${t("scheduler algorithms")} + ${durationPredictions?.model_name ?? t("estimate-fallback")}`
                         : durationPredictions?.model_name ?? t("duration-baseline")}
                     </span>
                   </div>
-                  <strong>{schedule ? "v0.5.0" : durationPredictions?.model_version ?? "v0.2.0"}</strong>
+                  <strong>{durationPredictions?.model_version ?? "-"}</strong>
                 </div>
               </aside>
+              ) : null}
             </div>
+            ) : null}
 
+            {activeView === "today" ? (
             <section className="bottom-rail" aria-label={t("Execution state")}>
               <div>
                 <Timer size={18} aria-hidden="true" />
@@ -2616,14 +2732,201 @@ export function App() {
               <div>
                 <Clock3 size={18} aria-hidden="true" />
                 <span>{t("Next fixed event")}</span>
-                <strong>{fixedEvents[0]?.title ?? t("No fixed event")}</strong>
+                <strong>
+                  {nextFixedEvent
+                    ? `${nextFixedEvent.title} · ${formatTime(nextFixedEvent.start_time, locale)}`
+                    : t("No fixed event")}
+                </strong>
               </div>
               <div>
-                <CalendarDays size={18} aria-hidden="true" />
-                <span>{t("Data source")}</span>
-                <strong>{t("execution analytics MVP")}</strong>
+                <Brain size={18} aria-hidden="true" />
+                <span>{t("Prediction model")}</span>
+                <strong>{durationPredictions?.model_name ?? t("estimate-fallback")}</strong>
               </div>
             </section>
+            ) : null}
+
+            {activeView === "analytics" ? (
+            <section className="view-panel" aria-labelledby="analytics-title">
+              <div className="section-header">
+                <div>
+                  <p className="section-kicker">{t("Analytics")}</p>
+                  <h1 id="analytics-title">{t("Daily analytics")}</h1>
+                </div>
+              </div>
+              {tasks.length > 0 ? (
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">{t("Task")}</th>
+                      <th scope="col">{t("Estimate")}</th>
+                      <th scope="col">{t("Predicted")}</th>
+                      <th scope="col">{t("Actual")}</th>
+                      <th scope="col">{t("Delta")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tasks.map((task) => {
+                      const taskActualMinutes = analyticsByTask.get(task.id)?.actual_minutes ?? 0;
+                      return (
+                        <tr key={task.id}>
+                          <td>
+                            <strong>{task.title}</strong>
+                            <span>{task.category}</span>
+                          </td>
+                          <td>{formatMinutes(task.estimated_minutes, locale)}</td>
+                          <td>
+                            {formatMinutes(
+                              predictionsByTask.get(task.id)?.predicted_minutes ??
+                                task.predicted_minutes ??
+                                task.estimated_minutes,
+                              locale,
+                            )}
+                          </td>
+                          <td>{taskActualMinutes > 0 ? formatMinutes(taskActualMinutes, locale) : "-"}</td>
+                          <td>
+                            {taskActualMinutes > 0
+                              ? formatSignedMinutes(taskActualMinutes - task.estimated_minutes, locale)
+                              : "-"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="empty-state">{t("No matching tasks.")}</div>
+              )}
+            </section>
+            ) : null}
+
+            {activeView === "mlops" ? (
+            <section className="view-panel" aria-labelledby="mlops-title">
+              <div className="section-header">
+                <div>
+                  <p className="section-kicker">{t("MLOps")}</p>
+                  <h1 id="mlops-title">{t("Duration predictions")}</h1>
+                </div>
+                <div className="model-badge">
+                  <Brain size={16} aria-hidden="true" />
+                  <span>
+                    {durationPredictions?.model_name ?? t("estimate-fallback")}{" "}
+                    {durationPredictions?.model_version ?? ""}
+                  </span>
+                </div>
+              </div>
+              <p className="view-note">
+                {t(
+                  "Predictions come from the local ml-service. Without a trained artifact it falls back to a deterministic heuristic, and to raw estimates when the service is unreachable.",
+                )}
+              </p>
+              {durationPredictions && durationPredictions.predictions.length > 0 ? (
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">{t("Task")}</th>
+                      <th scope="col">{t("Estimate")}</th>
+                      <th scope="col">{t("Predicted")}</th>
+                      <th scope="col">{t("Confidence")}</th>
+                      <th scope="col">{t("Reason")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {durationPredictions.predictions.map((prediction) => {
+                      const predictionTask = tasks.find((task) => task.id === prediction.task_id);
+                      return (
+                        <tr key={prediction.task_id}>
+                          <td>
+                            <strong>{predictionTask?.title ?? `#${prediction.task_id}`}</strong>
+                            <span>{predictionTask?.category ?? ""}</span>
+                          </td>
+                          <td>
+                            {predictionTask ? formatMinutes(predictionTask.estimated_minutes, locale) : "-"}
+                          </td>
+                          <td>{formatMinutes(prediction.predicted_minutes, locale)}</td>
+                          <td>{Math.round(prediction.confidence * 100)}%</td>
+                          <td className="muted-cell">{prediction.reason}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="empty-state">{t("No predictions for this date.")}</div>
+              )}
+            </section>
+            ) : null}
+
+            {activeView === "settings" ? (
+            <section className="view-panel" aria-labelledby="settings-title">
+              <div className="section-header">
+                <div>
+                  <p className="section-kicker">{t("Workspace")}</p>
+                  <h1 id="settings-title">{t("Settings")}</h1>
+                </div>
+              </div>
+              <div className="settings-grid">
+                <article className="settings-card">
+                  <h2>{t("Account")}</h2>
+                  {currentUser ? (
+                    <p>
+                      <strong>{currentUser.display_name}</strong>
+                      <span>{currentUser.email}</span>
+                    </p>
+                  ) : (
+                    <p>
+                      <span>{t("Not signed in. Use the top bar to sign in.")}</span>
+                    </p>
+                  )}
+                </article>
+                <article className="settings-card">
+                  <h2>{t("Language")}</h2>
+                  <label className="language-switcher" aria-label={t("Language")}>
+                    <span>{t("Interface language")}</span>
+                    <select value={locale} onChange={(event) => changeLocale(resolveLocale(event.target.value))}>
+                      {localeOptions.map((option) => (
+                        <option key={option.code} value={option.code}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </article>
+                <article className="settings-card">
+                  <h2>{t("Keyboard shortcuts")}</h2>
+                  <ul className="shortcut-list">
+                    <li>
+                      <span>{t("Previous or next day")}</span>
+                      <kbd>Alt + ← / →</kbd>
+                    </li>
+                    <li>
+                      <span>{t("Jump to today")}</span>
+                      <kbd>Alt + T</kbd>
+                    </li>
+                    <li>
+                      <span>{t("Generate Plan")}</span>
+                      <kbd>Alt + G</kbd>
+                    </li>
+                  </ul>
+                </article>
+                <article className="settings-card">
+                  <h2>{t("Demo data")}</h2>
+                  <p>
+                    <span>{t("Restore the bundled demo dataset.")}</span>
+                  </p>
+                  <button
+                    className="secondary-action"
+                    type="button"
+                    disabled={isMutating || isLoading}
+                    onClick={() => void resetDemoData()}
+                  >
+                    <RotateCcw size={15} aria-hidden="true" />
+                    <span>{t("Reset demo")}</span>
+                  </button>
+                </article>
+              </div>
+            </section>
+            ) : null}
           </>
         )}
       </main>

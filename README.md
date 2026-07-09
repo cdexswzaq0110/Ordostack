@@ -1,56 +1,89 @@
 # OrdoStack
 
-OrdoStack is a local-first daily planning system. It turns tasks, fixed events, estimates, execution logs, and duration predictions into a schedule that can be reviewed, adjusted, saved, and exported.
+OrdoStack is a local-first daily planner. It combines tasks, fixed events, execution logs, schedule generation, and duration prediction into one workflow: plan the day, adjust the schedule, run the work, then compare estimates with reality.
 
-The current repository is a Customer Demo MVP / Technical Preview. It runs locally with Docker Compose and does not require paid APIs.
+The repository is currently a local Private Beta Candidate. It runs with Docker Compose, does not use paid APIs, and is not a hosted production service.
+
+![OrdoStack dashboard with a generated schedule](docs/images/dashboard-overview.png)
+
+*The dashboard after one click on Generate Plan: scored task blocks scheduled around protected events, daily KPIs, ML duration predictions, and the plan-quality panel.*
 
 ## Problem
 
-Most planning tools stop at a list. That leaves three recurring problems:
+Most planning tools keep a list. A list is useful, but it does not answer the harder questions:
 
-- A task list does not protect real calendar time.
-- Estimates are rarely checked against actual work.
-- Generated plans are often temporary suggestions, not saved schedules people can edit, audit, or export.
+- Where does this task fit around meetings or fixed commitments?
+- Which tasks should fit into the remaining day?
+- How far off were the original estimates?
+- Can the generated plan be saved, edited, compared, and exported?
 
-OrdoStack closes that loop for a single-day planning workflow: capture work, protect fixed time, generate a schedule, adjust it, execute it, and compare the result with the estimate.
+OrdoStack focuses on that loop for one day at a time.
 
-## Features
+## What Works Today
 
-- Task workflow: create, edit, complete, pause, skip, reopen, and soft-delete tasks.
-- Protected time: create fixed events and expand weekly recurring blocks.
-- Schedule generation: build a date-scoped plan through `scheduler-service`.
-- Manual control: lock generated schedule items and move them in 15-minute steps.
-- Schedule history: persist generated runs, rename them, compare them, and reload older plans.
-- Export: download schedules as Markdown, CSV, or local PDF.
-- Analytics: track actual time, completion rate, estimate drift, focus minutes, and completion forecast.
-- Local ML: predict task duration through `ml-service` with a local model artifact or heuristic fallback.
-- Auth: local registration/login, bearer tokens, password policy, token expiry, and failed-login rate limiting.
-- Language: English by default, with Traditional Chinese dashboard support.
-- QA and ops: health/readiness endpoints, Docker Compose, tests, security audit, a11y audit, backup policy audit, and a compact clean gate.
+- Local account registration, demo login, bearer-token auth, password policy, and login lockout.
+- Date-scoped tasks with create, edit, status changes, reopen, and soft delete.
+- Fixed events with create, edit, soft delete, and weekly recurrence expansion.
+- Schedule generation through a dedicated scheduler service.
+- Schedule history with rename, compare, export, lock, and manual time adjustment.
+- Local schedule exports in Markdown, CSV, and PDF.
+- Execution logs and daily analytics: actual minutes, estimate drift, completion rate, focus minutes, and forecast.
+- Local duration prediction through `ml-service` using a JSON artifact or heuristic fallback.
+- Workspace views for planning, task management, schedule review, analytics, prediction insight, and settings.
+- English UI by default, with Traditional Chinese available in the dashboard.
+- Local retraining loop: export execution feedback, retrain with holdout evaluation, metrics-gated model promotion, hot reload.
+- Docker Compose runtime with MySQL persistence.
+- Local QA gates for tests, build, security, accessibility, backup policy, visual regression, and smoke checks.
+- Clean-checkout Docker runtime CI covering migrations, E2E, persistence across MySQL restart, backup verification, and isolated restore.
+
+## Interface
+
+| Focused schedule and history | Task queue with ML predictions |
+| --- | --- |
+| ![Generated schedule timeline with history and export](docs/images/schedule-timeline.png) | ![Task queue with estimates, predictions, and protected events](docs/images/task-queue.png) |
+
+The timeline shows scheduler-scored blocks around protected events, with per-item lock and 15-minute move controls, saved-plan history, compare, and Markdown/PDF export. The task queue shows each task's estimate next to the ML-predicted duration and the actual logged minutes, with start/pause/complete/skip execution controls.
+
+The sidebar switches between six workspace views. Analytics compares estimated, predicted, and actual minutes per task; MLOps shows the active prediction model and per-task confidence; Settings holds account, language, and shortcut reference.
+
+![Analytics view with per-task estimate, predicted, actual, and delta columns](docs/images/analytics-view.png)
+
+Keyboard shortcuts: `Alt+←` / `Alt+→` switch days, `Alt+T` jumps to today, `Alt+G` generates a plan.
 
 ## Quick Start
 
-Requirements:
+### Requirements
 
-- Docker Desktop with Docker Compose.
-- Python 3.11+ for local QA scripts.
-- Node.js 20+ only if you run the dashboard outside Docker.
+| Requirement | Version | Needed for |
+| --- | --- | --- |
+| Docker Desktop with Docker Compose | current | Running the full stack (only hard requirement) |
+| Python | 3.11+ | Local QA scripts and ML training tools |
+| Node.js | 20+ | Only when running `web-dashboard` outside Docker |
+| Edge or Chrome | any recent | Only for browser smoke and screenshot scripts |
+
+No cloud account, API key, or paid service is needed. Everything runs on `localhost`.
+
+### 1. Clone and start
 
 Windows PowerShell:
 
 ```powershell
-git clone <your-repo-url>
-cd OrdoStack
+git clone https://github.com/cdexswzaq0110/Ordostack.git
+cd Ordostack
 docker compose up --build -d
 ```
 
 Linux / WSL:
 
 ```bash
-git clone <your-repo-url>
-cd OrdoStack
+git clone https://github.com/cdexswzaq0110/Ordostack.git
+cd Ordostack
 docker compose up --build -d
 ```
+
+The first build takes a few minutes. When it finishes, `docker compose ps` should show five services (`backend-api`, `scheduler-service`, `ml-service`, `mysql`, `web-dashboard`) with status `healthy`. Database migrations run automatically before `backend-api` starts.
+
+### 2. Sign in
 
 Open:
 
@@ -58,22 +91,30 @@ Open:
 http://localhost:5173
 ```
 
-Demo login:
+Sign in with the demo account (prefilled in the login form):
 
 ```text
 demo@ordostack.local
 ordostack-demo
 ```
 
-Stop the stack:
+The dashboard opens on the bundled demo dataset date (2026-06-03) with seeded tasks and fixed events. Click **Generate Plan** (or press `Alt+G`) to produce the schedule shown in the screenshots above. Use **Reset demo** in the Settings view to restore the seed data at any time.
+
+### 3. Stop
 
 ```powershell
 docker compose down
 ```
 
-## Health Checks
+Data persists in the `ordostack_mysql_data` Docker volume across restarts.
 
-After Docker Compose is running:
+### Troubleshooting
+
+- **A port is already in use** — the stack needs 5173, 8000, 8100, 8200, and 3307 on the host. Stop the conflicting process or adjust `docker-compose.yml` and the health checks together.
+- **`web-dashboard` is unhealthy on first start** — it waits for `backend-api`, which waits for MySQL to pass its health check; give the first boot up to a minute, then check `docker compose logs backend-api`.
+- **Docker is not running** — start Docker Desktop first; `docker info` should print a server version.
+
+## Health Checks
 
 | Service | URL |
 | --- | --- |
@@ -82,7 +123,7 @@ After Docker Compose is running:
 | scheduler-service | `http://localhost:8100/health` |
 | ml-service | `http://localhost:8200/health` |
 
-Readiness endpoints:
+Readiness:
 
 | Service | URL |
 | --- | --- |
@@ -90,67 +131,82 @@ Readiness endpoints:
 | scheduler-service | `http://localhost:8100/ready` |
 | ml-service | `http://localhost:8200/ready` |
 
-## Clean Check
+## Architecture
 
-Run this before final delivery or commit:
-
-```powershell
-python scripts\ponytail.py
+```text
+Browser
+  |
+  v
+web-dashboard :5173
+  |
+  v
+backend-api :8000
+  |-- MySQL :3306 container / :3307 host
+  |-- scheduler-service :8100
+  `-- ml-service :8200
 ```
 
-When Docker is available:
+`backend-api` is the product API. It owns authentication, tasks, fixed events, execution logs, analytics, schedule persistence, schedule export, and demo reset.
+
+`scheduler-service` owns scheduling logic. It scores tasks, respects dependencies, selects work that fits into available time, builds free slots around fixed events, and returns timeline items.
+
+`ml-service` owns duration prediction. It uses a local JSON model artifact when available and falls back to a deterministic heuristic when the artifact is missing.
+
+`mysql` stores local Docker data: users, tasks, fixed events, execution logs, schedule runs, schedule items, and schedule templates.
+
+## Clean Check
+
+Run before committing:
 
 ```powershell
 python scripts\ponytail.py --include-compose-config
 ```
 
-The clean gate runs documentation completeness, service tests, release QA checks, security/a11y audits, translation coverage, visual regression when artifacts exist, and Git whitespace checks.
+The gate runs documentation completeness, service tests, dashboard build, security audit, accessibility audit, backup policy audit, beta readiness check, translation coverage, visual regression when artifacts exist, Git whitespace checks, and Docker Compose config validation.
 
-## Architecture
+For runtime verification, run:
 
-```text
-web-dashboard -> backend-api -> MySQL
-                         |-> scheduler-service
-                         |-> ml-service
+```powershell
+docker compose up --build -d
+python scripts\e2e_smoke.py
+python scripts\browser_smoke.py
 ```
-
-| Service | Port | Purpose |
-| --- | ---: | --- |
-| `web-dashboard` | 5173 | React / Vite dashboard |
-| `backend-api` | 8000 | Main FastAPI API |
-| `scheduler-service` | 8100 | Scheduling algorithms |
-| `ml-service` | 8200 | Duration prediction |
-| `mysql` | 3307 -> 3306 | Local persistence |
 
 ## Documentation Map
 
+Start here:
+
 | Topic | File |
 | --- | --- |
-| Product specification | [ORDOSTACK_PROJECT_SPEC.md](ORDOSTACK_PROJECT_SPEC.md) |
-| System design | [ARCHITECTURE.md](ARCHITECTURE.md) |
-| System analysis | [docs/system-analysis.md](docs/system-analysis.md) |
-| API | [docs/api.md](docs/api.md) |
-| QA plan | [docs/qa-mvp.md](docs/qa-mvp.md) |
-| Documentation status | [docs/documentation-completeness.md](docs/documentation-completeness.md) |
+| Product scope | [ORDOSTACK_PROJECT_SPEC.md](ORDOSTACK_PROJECT_SPEC.md) |
+| System architecture | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| API behavior | [docs/api.md](docs/api.md) |
+| QA workflow | [docs/qa-mvp.md](docs/qa-mvp.md) |
+| Test report (v0.53.0) | [docs/test-report.md](docs/test-report.md) |
 | Release process | [docs/release-process.md](docs/release-process.md) |
-| Deployment planning | [docs/deployment.md](docs/deployment.md) |
 | Environment variables | [docs/environment.md](docs/environment.md) |
 | Backup and restore | [docs/backup-restore.md](docs/backup-restore.md) |
-| Observability | [docs/observability.md](docs/observability.md) |
-| Accessibility QA | [docs/accessibility-qa.md](docs/accessibility-qa.md) |
-| Beta readiness | [docs/beta-readiness.md](docs/beta-readiness.md) |
+| Architecture decisions | [docs/adr/README.md](docs/adr/README.md) |
+| Product roadmap | [docs/product-roadmap.md](docs/product-roadmap.md) |
+| AWS deployment plan | [docs/aws-deployment-plan.md](docs/aws-deployment-plan.md) |
+| ClearML MLOps plan | [docs/mlops-clearml-plan.md](docs/mlops-clearml-plan.md) |
+| Security checklist | [docs/security-checklist.md](docs/security-checklist.md) |
 
-## GitHub Project Files
+Repository maintenance:
 
-- [CONTRIBUTING.md](CONTRIBUTING.md)
-- [SECURITY.md](SECURITY.md)
-- [SUPPORT.md](SUPPORT.md)
-- [.github/pull_request_template.md](.github/pull_request_template.md)
-- [.github/ISSUE_TEMPLATE](.github/ISSUE_TEMPLATE)
+| Topic | File |
+| --- | --- |
+| Contributing | [CONTRIBUTING.md](CONTRIBUTING.md) |
+| Security | [SECURITY.md](SECURITY.md) |
+| Support | [SUPPORT.md](SUPPORT.md) |
+| Changelog | [CHANGELOG.md](CHANGELOG.md) |
+
+The remaining files under `docs/` are supporting runbooks and historical notes. They are useful for QA and release review, but not required for a first read.
 
 ## Current Limits
 
-- Not a hosted public SaaS launch.
-- No AWS resources, domain, TLS certificate, or paid API is provisioned by this repo.
-- Mobile app, ClearML agent execution, external calendar sync, and production model governance are not implemented.
+- Not a hosted SaaS launch.
+- No AWS resources, DNS, TLS certificate, paid API, or external monitoring vendor is provisioned by this repository.
+- The mobile app folder is a placeholder, not a shipped mobile client.
+- ClearML and production model governance are documented but not operational.
 - Production secrets must stay outside Git.

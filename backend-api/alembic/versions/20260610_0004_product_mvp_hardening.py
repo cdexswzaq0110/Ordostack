@@ -6,6 +6,7 @@ Create Date: 2026-06-10
 """
 
 from alembic import op
+import sqlalchemy as sa
 
 revision = "20260610_0004"
 down_revision = "20260604_0003"
@@ -13,11 +14,23 @@ branch_labels = None
 depends_on = None
 
 
+def _add_column_if_missing(table_name: str, column: sa.Column) -> None:
+    existing_columns = {item["name"] for item in sa.inspect(op.get_bind()).get_columns(table_name)}
+    if column.name not in existing_columns:
+        op.add_column(table_name, column)
+
+
 def upgrade() -> None:
-    op.execute("ALTER TABLE fixed_events ADD COLUMN IF NOT EXISTS recurrence_id VARCHAR(64) NULL")
-    op.execute("ALTER TABLE fixed_events ADD COLUMN IF NOT EXISTS recurrence_rule VARCHAR(255) NULL")
-    op.execute("ALTER TABLE schedule_items ADD COLUMN IF NOT EXISTS locked BOOLEAN NOT NULL DEFAULT FALSE")
-    op.execute("ALTER TABLE schedule_items ADD COLUMN IF NOT EXISTS manual_override BOOLEAN NOT NULL DEFAULT FALSE")
+    _add_column_if_missing("fixed_events", sa.Column("recurrence_id", sa.String(length=64), nullable=True))
+    _add_column_if_missing("fixed_events", sa.Column("recurrence_rule", sa.String(length=255), nullable=True))
+    _add_column_if_missing(
+        "schedule_items",
+        sa.Column("locked", sa.Boolean(), nullable=False, server_default=sa.false()),
+    )
+    _add_column_if_missing(
+        "schedule_items",
+        sa.Column("manual_override", sa.Boolean(), nullable=False, server_default=sa.false()),
+    )
     op.execute(
         """
         CREATE TABLE IF NOT EXISTS schedule_templates (

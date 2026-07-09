@@ -159,3 +159,71 @@ jobs:
 
       - name: Validate compose file
         run: docker compose config
+
+  docker-runtime:
+    name: docker runtime gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs:
+      - backend-api
+      - scheduler-service
+      - ml-service
+      - web-dashboard
+      - compose-config
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build and start stack
+        run: docker compose up --build -d --wait --wait-timeout 180
+
+      - name: Run product smoke tests
+        run: |
+          python scripts/e2e_smoke.py
+          python scripts/browser_smoke.py
+
+      - name: Verify persistence, backup, and isolated restore
+        shell: bash
+        run: |
+          before_restart="$(docker compose exec -T mysql mysql -uroot -Nse 'SELECT COUNT(*) FROM ordostack.tasks')"
+          test "${before_restart}" -gt 0
+
+          docker compose restart mysql
+          mysql_ready=false
+          for attempt in {1..30}; do
+            if docker compose exec -T mysql mysqladmin ping -h 127.0.0.1 -uroot --silent; then
+              mysql_ready=true
+              break
+            fi
+            sleep 2
+          done
+          test "${mysql_ready}" = true
+
+          after_restart="$(docker compose exec -T mysql mysql -uroot -Nse 'SELECT COUNT(*) FROM ordostack.tasks')"
+          test "${after_restart}" = "${before_restart}"
+          curl --fail --retry 20 --retry-delay 2 --retry-all-errors http://127.0.0.1:8000/api/ready
+
+          bash scripts/backup_mysql.sh
+          backup_path="$(find artifacts/backups -name '*.sql' -type f -print | sort | tail -n 1)"
+          bash scripts/verify_mysql_backup.sh "${backup_path}"
+
+          docker compose exec -T mysql mysql -uroot -e 'CREATE DATABASE ordostack_restore_drill'
+          docker compose exec -T mysql mysql -uroot ordostack_restore_drill < "${backup_path}"
+          restored_count="$(docker compose exec -T mysql mysql -uroot -Nse 'SELECT COUNT(*) FROM ordostack_restore_drill.tasks')"
+          test "${restored_count}" = "${before_restart}"
+          docker compose exec -T mysql mysql -uroot -e 'DROP DATABASE ordostack_restore_drill'
+
+      - name: Upload Docker browser smoke
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: docker-browser-smoke
+          path: artifacts/browser-smoke
+
+      - name: Show service logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+
+      - name: Stop stack
+        if: always()
+        run: docker compose down --volumes --remove-orphans

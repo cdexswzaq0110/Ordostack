@@ -49,4 +49,4 @@ This is not a formal third-party accessibility audit. It is the minimum manual g
 - Manual keyboard pass has no blocking issue.
 - Manual screen reader pass has no blocking issue.
 - No text overlap is visible in English or Traditional Chinese at tested widths.
-- Any remaining non-blocking issue is documented in `docs/project-status-report.md`.
+- Any remaining non-blocking issue is documented in `docs/internal/project-status-report.md`.

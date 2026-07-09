@@ -1,125 +1,92 @@
 # OrdoStack Project Specification
 
-Source document: `C:\Users\HUANG\Desktop\OrdoStack Project Specification.docx`
-
-This markdown file records the implementation baseline used by Codex for the repository. The project is developed incrementally by issue. As of Issue 53 non-Docker beta hardening, the repository is a local Customer Demo MVP with authentication, user-scoped planner data, English / Traditional Chinese dashboard locale support, manual schedule controls, recurring fixed events, schedule templates, PDF export, local model registry, completion forecast, auth hardening baseline, accessibility/security/visual QA scripts, non-Docker release QA gate, deployment baseline documentation, observability baseline, backup/restore drill baseline, backup policy audit, and beta readiness review, not a production launch build.
+This file records the current product baseline for the repository. The original project brief lives outside the repo at `C:\Users\HUANG\Desktop\OrdoStack Project Specification.docx`.
 
 ## Current Baseline
 
 ```text
-Version: 0.50.0
-Stage: Customer Demo MVP
-Runtime: Local services; Docker deployment hardening deferred
+Version: 0.53.0
+Stage: Local Private Beta Candidate
+Runtime: Docker Compose local stack
 Primary UI: web-dashboard
-Production readiness: Not ready for public launch
+Public launch readiness: Not ready
 ```
 
-## Project Identity
+OrdoStack can be used for controlled local beta evaluation. It is not yet a hosted production product.
 
-- English name: OrdoStack
-- Subtitle: Algorithmic Daily Planning Mobile App with ClearML MLOps
-- Chinese name: OrdoStack：演算法每日規劃與 ClearML MLOps 的 AI 行程 App
+## Product Identity
 
-## One-line Description
-
-OrdoStack is an AI daily planning product that lets users capture tasks and fixed events, generate daily plans with scheduling algorithms, compare estimates with execution data, and use local ML duration prediction to improve planning quality.
+- Name: OrdoStack
+- Category: Daily planning and schedule optimization
+- Core idea: turn tasks, fixed events, estimates, and execution data into a usable daily schedule.
 
 ## Primary Goals
 
-- Let users create, edit, complete, reopen, skip, and soft-delete daily tasks.
-- Let users create, edit, and soft-delete fixed events.
-- Let users expand weekly recurring fixed events into dated protected events.
-- Generate daily plans automatically without overlapping protected fixed events.
+- Create and maintain daily tasks.
+- Protect fixed events from schedule conflicts.
+- Generate a practical daily plan.
 - Let users lock and manually adjust generated schedule items.
-- Track task execution start, pause, completion, and skip events.
-- Compare estimated, predicted, and actual task duration.
-- Persist tasks, fixed events, execution logs, generated schedule runs, and schedule items in MySQL.
-- Predict task duration through the local ML service.
-- Keep the scheduling algorithms inside scheduler-service instead of backend routes.
-- Provide a professional web dashboard suitable for customer demo review.
-- Run locally with Docker Compose and pass repeatable smoke verification.
+- Persist schedule history so generated plans are not throwaway output.
+- Track actual execution time and compare it with estimates.
+- Use local duration prediction to improve planning quality.
+- Keep the scheduling algorithm in `scheduler-service`.
+- Keep duration prediction in `ml-service`.
+- Run locally without paid APIs.
 
-## Non-goals For Current MVP
+## Non-Goals For The Current MVP
 
-- No paid APIs.
-- No hosted refresh-token/session store, account recovery workflow, or admin support tooling.
-- No native mobile app implementation yet.
+- No hosted SaaS launch.
+- No AWS account, DNS, TLS certificate, or paid API setup.
 - No app store release.
-- No ClearML agent execution yet.
-- No hosted production ML / DL model registry yet.
-- No DL completion-rate or focus-score service yet.
-- No hosted AWS deployment, HTTPS rollout, production Nginx rollout, or production backup implementation yet.
-- No automated restore into the active production database.
-- No external observability vendor, hosted uptime monitor, metrics backend, tracing backend, or alerting workflow yet.
-- No full Google Calendar two-way sync.
+- No production mobile client.
+- No ClearML agent execution.
+- No hosted production model registry.
 - No payment system.
-- No complex permission system.
-- No chatbot replacing the scheduling algorithm core.
-
-## Implemented Through Issue 53 Non-Docker Beta Hardening
-
-| Area | Current implementation |
-| --- | --- |
-| Repository | Monorepo structure, README, project spec, rulebooks, architecture docs, Docker Compose, CI docs |
-| Web dashboard | React / Vite TypeScript dashboard with landing/demo product experience, English / Traditional Chinese locale support, task filters, task sorting, schedule lock, manual move controls, and PDF export |
-| Tasks | Create, list, edit, status transitions, reopen, soft delete |
-| Fixed events | Create, list, edit, soft delete, weekly recurrence expansion, validation for `HH:MM` time ranges |
-| Date navigation | Previous day, next day, native date picker, Today shortcut |
-| Scheduler | Daily schedule generation with priority score, topological sort, knapsack selection, priority queue ordering, fixed-event free-slot building, and locked item preservation |
-| Schedule persistence | Latest generated schedule, recent schedule history, schedule history rename, soft delete, lock, manual time adjustment, diff, Markdown/CSV/PDF export, and named templates |
-| Execution tracking | Start, pause, complete, skip, execution log listing |
-| Analytics | Daily actual minutes, estimate delta, completion rate, focus minutes, completion forecast |
-| ML duration prediction | Local duration prediction API with bundled training artifact, local JSON model registry, duration feedback export, and heuristic fallback |
-| Storage | Docker MySQL persistence with Alembic migration baseline and local compatibility bootstrap |
-| Auth | Local register, login, current-user API, PBKDF2 password hashes, HMAC bearer tokens, token expiry governance, password policy, failed-login rate limiting, demo account, user-scoped planner APIs |
-| Deployment | Production env template, Nginx reverse-proxy skeleton, single-node deployment guide, hosted smoke checklist |
-| Observability | Request ID propagation, structured request logs, readiness endpoints, local observability runbook, hosted monitoring baseline plan, local monitoring probe |
-| Backup/restore | Local MySQL backup scripts, backup verification scripts, non-destructive restore drill docs, production backup policy audit |
-| Demo support | Seeded demo data and demo-only reset control |
-| Quality gates | Python service tests, web-dashboard build path, environment validation, local E2E smoke script, browser screenshot smoke, visual regression script, a11y static audit, security audit, backup verification, backup policy audit, beta readiness check, non-Docker release QA gate, GitHub Actions baseline |
-| Documentation | API docs, QA plan, release process, branching strategy, development log, changelog, PM status report, environment configuration guide, backup/restore runbook, accessibility QA checklist, beta readiness review |
+- No enterprise permission model.
+- No chatbot replacing the scheduling engine.
 
 ## System Components
 
 | Component | Purpose | Current status |
 | --- | --- | --- |
-| web-dashboard | React / Vite dashboard for demo and QA | Implemented MVP |
-| backend-api | FastAPI gateway for tasks, fixed events, schedules, logs, analytics, ML predictions, and demo reset | Implemented MVP |
-| scheduler-service | Scheduling algorithm service | Implemented MVP |
-| ml-service | Duration prediction service | Implemented MVP |
-| mysql | Local relational persistence for Docker Compose | Implemented MVP |
-| mobile-app | Future React Native / Expo mobile client | Not implemented |
-| dl-service | Future completion-rate or focus-score prediction service | Not implemented |
-| clearml-agent | Future model training worker | Not implemented |
-| nginx | Future production reverse proxy skeleton | Baseline skeleton only |
+| `web-dashboard` | React / Vite dashboard | Implemented MVP |
+| `backend-api` | Main FastAPI product API | Implemented MVP |
+| `scheduler-service` | Schedule generation algorithms | Implemented MVP |
+| `ml-service` | Local duration prediction | Implemented MVP |
+| `mysql` | Docker persistence | Implemented MVP |
+| `mobile-app` | Future mobile client | Placeholder only |
+| `clearml` | Future MLOps work | Documentation / placeholder only |
 
-## Target Tech Stack
+## Implemented Scope
 
-| Area | Stack |
+| Area | Current implementation |
 | --- | --- |
-| Web | React, Vite, TypeScript |
-| Backend | Python 3.11+, FastAPI, Pydantic, SQLAlchemy, Alembic |
-| Scheduler | Python 3.11+, FastAPI, heapq, custom DP and graph algorithms |
-| ML | Python, local model artifact, heuristic fallback |
-| Future Mobile | React Native, Expo, TypeScript |
-| Future DL | PyTorch, pandas, numpy, ClearML SDK |
-| Database | MySQL 8.x |
-| DevOps | Docker, Docker Compose, GitHub Actions; AWS EC2 in a future phase |
+| Auth | Register, login, current user, bearer token, password policy, failed-login lockout, demo account |
+| Tasks | Create, list, edit, status changes, reopen, soft delete |
+| Fixed events | Create, list, edit, soft delete, weekly recurrence expansion |
+| Schedule generation | Priority scoring, dependency ordering, capacity selection, free-slot building, fixed-event conflict avoidance |
+| Schedule history | Save generated runs, reload, rename, soft delete, compare, lock items, move items |
+| Export | Markdown, CSV, local PDF |
+| Analytics | Actual minutes, estimate drift, completion rate, focus minutes, completion forecast |
+| ML | Local duration prediction, JSON artifact, heuristic fallback, model metadata, feedback export, holdout-evaluated retraining, metrics-gated promotion into a local registry, hot model reload |
+| Storage | MySQL in Docker, memory store in tests |
+| Observability | Request IDs, structured request logs, health and readiness endpoints |
+| Backup | Local MySQL backup script and verification script |
+| QA | Unit tests, E2E smoke, browser smoke, visual regression, a11y audit, security audit, beta readiness check |
+| Language | English default and Traditional Chinese dashboard copy |
 
-## MVP User Flows
+## Main User Flow
 
 1. User opens `http://localhost:5173`.
-2. User reviews daily tasks, protected fixed events, analytics, predictions, and current timeline.
-3. User adds or edits task data for the selected date.
-4. User adds or edits fixed events for the selected date.
-5. User clicks `Generate Plan`.
-6. backend-api requests duration predictions, sends planning input to scheduler-service, persists the generated plan, and returns the schedule.
-7. User reviews the generated timeline and algorithm summary.
-8. User can switch to recent generated plans through schedule history.
-9. User can execute tasks and review actual-time analytics.
-10. User can lock or manually move generated schedule items while avoiding fixed-event conflicts.
-11. User can export schedules as Markdown, CSV, or local PDF.
-12. For demos, user can reset bundled demo data after confirming the dashboard prompt.
+2. User signs in with the demo account or registers locally.
+3. User reviews tasks, fixed events, analytics, predictions, and current schedule.
+4. User adds or edits tasks and fixed events for the selected date.
+5. User clicks Generate plan.
+6. `backend-api` calls `ml-service` for duration prediction.
+7. `backend-api` calls `scheduler-service` for schedule generation.
+8. `backend-api` saves the generated schedule.
+9. User reviews, locks, moves, compares, or exports the plan.
+10. User tracks execution and reviews actual-time analytics.
 
 ## API Baseline
 
@@ -129,118 +96,66 @@ Base URL:
 http://localhost:8000/api
 ```
 
-Core endpoint groups:
+Core groups:
 
-- Health: `GET /api/health`
-- Readiness: `GET /api/ready`
-- Tasks: `GET /tasks`, `POST /tasks`, `PATCH /tasks/{task_id}`, `DELETE /tasks/{task_id}`, `POST /tasks/{task_id}/reopen`
-- Fixed events: `GET /fixed-events`, `POST /fixed-events`, `PATCH /fixed-events/{fixed_event_id}`, `DELETE /fixed-events/{fixed_event_id}`
-- Execution logs: `GET /task-execution-logs`, task start / pause / complete / skip endpoints
-- Analytics: `GET /analytics/daily`
-- Schedules: `POST /schedules/generate`, `GET /schedules/latest`, `GET /schedules/history`
-- ML predictions: `GET /ml/duration-predictions`
+- Health: `GET /api/health`, `GET /api/ready`
 - Auth: `POST /auth/register`, `POST /auth/login`, `GET /auth/me`
-- Demo: `POST /demo/reset?user_id=1`
+- Tasks: `GET /tasks`, `POST /tasks`, `PATCH /tasks/{task_id}`, `DELETE /tasks/{task_id}`
+- Fixed events: `GET /fixed-events`, `POST /fixed-events`, `PATCH /fixed-events/{fixed_event_id}`, `DELETE /fixed-events/{fixed_event_id}`
+- Execution: task start, pause, complete, skip, and execution log listing
+- Analytics: `GET /analytics/daily`
+- Schedules: generate, latest, history, diff, export, lock, manual move
+- ML: `GET /ml/duration-predictions`, `GET /ml/duration-feedback`
+- Demo: `POST /demo/reset`
 
-Detailed API documentation is maintained in `docs/api.md`.
-
-## Scheduling Algorithm Requirements
-
-The scheduler service owns algorithm logic. Backend routes must not contain scheduling internals.
-
-Implemented algorithms:
-
-- Priority score.
-- Topological sort for task dependencies.
-- 0/1 knapsack-style capacity selection.
-- Priority queue ordering.
-- Fixed event free-slot builder.
-- Fixed event conflict avoidance.
-- Schedule builder orchestration.
-
-Future algorithm work:
-
-- Weighted interval scheduling for richer event conflict scenarios.
-- Drag-and-drop schedule editing.
-- Timezone-aware scheduling preferences.
-
-## Current Data Ownership
-
-| Data | Owner |
-| --- | --- |
-| Tasks | backend-api store layer, persisted in MySQL for Docker |
-| Fixed events | backend-api store layer, persisted in MySQL for Docker |
-| Execution logs | backend-api store layer, persisted in MySQL for Docker |
-| Generated schedule runs | backend-api store layer, persisted in MySQL for Docker |
-| Generated schedule items | backend-api store layer, persisted in MySQL for Docker |
-| Scheduling algorithm output | scheduler-service, called by backend-api |
-| Duration predictions | ml-service, called by backend-api |
-| Demo reset seed | backend-api demo service |
+Detailed endpoint behavior is in [docs/api.md](docs/api.md).
 
 ## Quality Gates
 
-Before the current non-Docker beta hardening tag:
+Minimum local gate:
 
-- backend-api tests pass.
-- scheduler-service tests pass.
-- ml-service tests pass.
-- `python scripts/release_qa_gate.py` exits with status code `0`.
-- web-dashboard production build passes when `npm` is available; otherwise it is explicitly recorded as skipped.
-- Backup policy audit passes.
-- Beta readiness check passes.
-- Secrets scan finds no committed credentials.
+```powershell
+python scripts\ponytail.py --include-compose-config
+```
 
-Deferred final deployment gate:
+Runtime gate:
 
-- `docker compose config` passes.
-- `docker compose up --build -d` starts all services.
-- Health checks pass:
-  - `http://localhost:8000/api/health`
-  - `http://localhost:8100/health`
-  - `http://localhost:8200/health`
-  - `http://localhost:5173`
-- Readiness checks pass:
-  - `http://localhost:8000/api/ready`
-  - `http://localhost:8100/ready`
-  - `http://localhost:8200/ready`
-- `python scripts/e2e_smoke.py` exits with status code `0`.
-- `python scripts/browser_smoke.py` exits with status code `0` when Edge or Chrome is available.
-- Backup script creates a SQL file under `artifacts/backups`.
-- Backup verification script returns `status: ok` for the generated SQL file.
+```powershell
+docker compose up --build -d
+python scripts\e2e_smoke.py
+python scripts\browser_smoke.py
+```
 
-## Remaining Gaps Before Public Launch
+Expected runtime checks:
 
-- Hosted refresh-token/session storage, account recovery, admin support tooling, and complex authorization.
-- Real onboarding, user settings, timezone handling, and profile data.
-- Production-grade migration policy, off-host backup implementation, automated restore, and data retention.
-- Hosted deployment execution with HTTPS, domain, metrics backend, tracing, alerting, and incident playbook.
-- Mobile app implementation.
-- ClearML experiment tracking, model registry, agent execution, and deployment workflow.
-- DL completion-rate / focus-score service.
-- Calendar two-way sync and cloud share links.
-- Hosted visual regression service.
-- Load testing and production penetration testing.
-- Docker deployment hardening, image scan, and cloud rollout execution.
-
-## Planned Phases
-
-1. Local Customer Demo MVP: complete through Issue 45.
-2. Non-Docker Beta Hardening: complete through Issue 53 except Docker finalization and hosted deployment execution.
-3. Deployment Hardening: Docker finalization, hosted deployment, monitoring implementation, backup automation, and browser regression governance.
-4. MLOps Expansion: ClearML tracking, model registry, scheduled retraining, and model promotion.
-5. Intelligence Expansion: DL completion-rate or focus-score service.
-6. Mobile Product: React Native / Expo mobile client.
-7. Production Launch: cloud deployment, security review, monitoring, support process, and release governance.
+- `http://localhost:5173` returns the dashboard.
+- `http://localhost:8000/api/health` returns `ok`.
+- `http://localhost:8000/api/ready` returns `ready`.
+- `http://localhost:8100/health` returns `ok`.
+- `http://localhost:8200/health` returns `ok`.
+- E2E smoke can create and edit tasks, create and edit fixed events, generate schedules, rename history, compare schedules, and export schedules.
 
 ## Definition Of Done
 
-A feature is done only when:
+A change is done when:
 
-- Code is implemented where required.
-- Tests exist where meaningful.
-- Tests pass.
-- Local service tests or build checks pass; Docker runtime verification is deferred to final deployment hardening unless the issue explicitly targets Docker.
-- API, QA, or README documentation is updated when behavior changes.
-- Version history is recorded.
-- No secrets are committed.
-- No hard-coded credentials are introduced.
+- the behavior is implemented,
+- validation and data-loss checks are preserved,
+- one meaningful runnable check exists for non-trivial logic,
+- relevant docs are updated,
+- version history is recorded,
+- no secrets are committed,
+- local clean gates pass.
+
+Any Docker, database, migration, or deployment change also requires `docker compose up --build` and service health/log verification.
+
+## Remaining Gaps Before Public Launch
+
+- Hosted deployment with DNS, TLS, production secrets, and monitored infrastructure.
+- Off-host backup storage and restore procedure for production.
+- Production-grade auth sessions, account recovery, and admin support.
+- Production ML model registry and promotion workflow.
+- ClearML agent execution.
+- Mobile app implementation.
+- External calendar integration.
+- Load testing and security review.

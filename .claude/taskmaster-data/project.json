@@ -1,0 +1,7 @@
+{
+  "name": "OrdoStack",
+  "created": "2026-07-08",
+  "mode": "MVP",
+  "language": "Python + TypeScript",
+  "wbsFile": ".claude/taskmaster-data/wbs.md"
+}

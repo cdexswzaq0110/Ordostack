@@ -6,13 +6,13 @@ from pathlib import Path
 
 REQUIRED_DOCUMENTS = [
     "ORDOSTACK_PROJECT_SPEC.md",
-    "docs/project-status-report.md",
+    "docs/internal/project-status-report.md",
     "docs/qa-mvp.md",
     "docs/release-process.md",
     "docs/deployment.md",
     "docs/backup-restore.md",
     "docs/observability.md",
-    "docs/beta-readiness.md",
+    "docs/internal/beta-readiness.md",
     "docs/accessibility-qa.md",
 ]
 
@@ -56,7 +56,7 @@ def main() -> int:
         if key not in production_env_example:
             failures.append(f".env.production.example missing {key}")
 
-    status_report = (root / "docs" / "project-status-report.md").read_text(encoding="utf-8")
+    status_report = (root / "docs" / "internal" / "project-status-report.md").read_text(encoding="utf-8")
     for marker in REQUIRED_STATUS_MARKERS:
         if marker not in status_report:
             failures.append(f"project status report missing marker: {marker}")

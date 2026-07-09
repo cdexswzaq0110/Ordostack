@@ -95,6 +95,49 @@ python scripts/browser_smoke.py
 
 The browser smoke script expects Docker Compose to be running and a local Edge or Chrome executable to be installed. It writes screenshot artifacts under `artifacts/browser-smoke`, which is ignored by Git.
 
+## Duration Feedback Export
+
+Windows PowerShell:
+
+```powershell
+python scripts\export_duration_feedback.py --days 14
+```
+
+Linux / WSL:
+
+```bash
+python scripts/export_duration_feedback.py --days 14
+```
+
+Exports completed-task execution feedback from backend-api into `ml-service/training/data/duration_feedback.csv` for retraining. It expects Docker Compose to be running. The full retraining loop is:
+
+```powershell
+python scripts\export_duration_feedback.py
+python ml-service\training\train_duration_model.py
+python ml-service\training\promote_duration_model.py
+curl -X POST http://localhost:8200/model/reload
+```
+
+Promotion is metrics-gated: the candidate must beat the naive-estimate baseline on holdout MAE and must not regress against the active model. See [docs/internal/mlops-production-roadmap.md](../docs/internal/mlops-production-roadmap.md).
+
+## README Screenshot Capture
+
+Windows PowerShell:
+
+```powershell
+python -m pip install playwright
+python scripts\capture_readme_screenshots.py
+```
+
+Linux / WSL:
+
+```bash
+python -m pip install playwright
+python scripts/capture_readme_screenshots.py
+```
+
+Resets the demo dataset, generates a plan, signs in as the demo user, and writes the README screenshots to `docs/images/`. It expects Docker Compose to be running and uses the local Edge or Chrome executable, so Playwright does not download a browser. Playwright is a dev-only tool dependency and is not part of any service's `requirements.txt`.
+
 ## A11y Static Audit
 
 Windows PowerShell:

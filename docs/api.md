@@ -88,7 +88,7 @@ Auth response:
 | --- | --- | --- |
 | `POST` | `/demo/reset?user_id=1` | Reset the bundled local demo user dataset |
 
-This is a demo-only endpoint for local QA and customer demos. It is not a production account-management API.
+This is a demo-only endpoint for local QA and customer demos. It returns `404` when `ORDOSTACK_ENV=production` and is not a production account-management API.
 
 ## Tasks MVP
 

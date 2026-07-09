@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, status
 
 from app.observability import configure_request_observability
 from app.model_registry import model_registry_info
-from app.predict import get_active_model_metadata, predict_duration
+from app.predict import get_active_model_metadata, predict_duration, reset_model_cache
 from app.schemas import DurationPredictRequest, DurationPredictResponse
 
 SERVICE_NAME = "ml-service"
@@ -82,3 +82,16 @@ def model_info() -> dict[str, str]:
 @app.get("/model/registry", tags=["model"])
 def model_registry() -> dict[str, object]:
     return model_registry_info()
+
+
+@app.post("/model/reload", tags=["model"])
+def model_reload() -> dict[str, str]:
+    """Drop the cached model so a newly promoted artifact serves without a restart."""
+    reset_model_cache()
+    model_name, model_version, source = get_active_model_metadata()
+    return {
+        "status": "reloaded",
+        "model_name": model_name,
+        "model_version": model_version,
+        "source": source,
+    }
