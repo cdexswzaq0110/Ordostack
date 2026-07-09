@@ -23,6 +23,21 @@ flowchart LR
 
 The backend is the only public product API. The dashboard does not call MySQL, scheduler-service, or ml-service directly.
 
+## Repository Structure
+
+```text
+web-dashboard/       Browser client
+backend-api/         Public product API and persistence owner
+scheduler-service/   Stateless scheduling engine
+ml-service/          Stateless local duration prediction
+database/            Schema reference
+scripts/             QA, smoke, backup, and verification commands
+infra/               Reverse-proxy configuration
+docs/                Product, operations, security, and release documents
+```
+
+There is no shared application framework between services. Each service owns a small HTTP boundary and can be tested independently.
+
 ## Data Flow
 
 1. The dashboard loads tasks, fixed events, analytics, duration predictions, latest schedule, and schedule history for the selected date.
@@ -83,6 +98,54 @@ Docker Compose uses MySQL for:
 
 Alembic migrations run before `backend-api` starts in Docker. The older schema bootstrap remains only as a local compatibility fallback.
 
+## Failure Modes
+
+| Failure | Product behavior | Recovery boundary |
+| --- | --- | --- |
+| `ml-service` unavailable | Backend uses task estimates as the duration fallback | Restore ML service; no product data repair required |
+| `scheduler-service` unavailable | Schedule generation returns `503`; existing tasks and saved schedules remain available | Restore scheduler service and retry generation |
+| MySQL unavailable | Persistent product requests fail; health remains process-only and readiness must be checked | Restore MySQL before accepting writes |
+| Dashboard unavailable | API and stored data remain intact | Restore or replace the stateless dashboard container |
+| Migration failure | Backend container does not start | Fix forward or restore an approved backup; do not silently downgrade |
+| Invalid production configuration | Backend startup or readiness fails | Correct external environment values and restart |
+
+## Deployment Topology
+
+Local and CI runtime:
+
+```mermaid
+flowchart LR
+  user["Browser"] --> dashboard["web-dashboard"]
+  dashboard --> api["backend-api"]
+  api --> mysql[("MySQL volume")]
+  api --> scheduler["scheduler-service"]
+  api --> ml["ml-service"]
+```
+
+Hosted beta target:
+
+```mermaid
+flowchart LR
+  internet["Internet"] --> tls["TLS / reverse proxy"]
+  tls --> dashboard["web-dashboard"]
+  tls --> api["backend-api"]
+  api --> mysql[("Private MySQL / RDS")]
+  api --> scheduler["private scheduler-service"]
+  api --> ml["private ml-service"]
+  api --> logs["logs / monitoring"]
+  mysql --> backups["encrypted off-host backups"]
+```
+
+Only the dashboard and backend API may be public. Internal services and MySQL must not expose public ports in a hosted environment.
+
+## Security Boundaries
+
+- `backend-api` authenticates users and scopes planner data by user.
+- Production rejects the local auth secret and disables demo reset.
+- Secrets remain external to images and Git.
+- Request logs exclude bodies, authorization headers, cookies, and query strings.
+- Hosted TLS, secret storage, rate limiting, and account recovery remain deployment gates.
+
 ## Quality Gates
 
 Local verification is split into two levels.
@@ -102,6 +165,8 @@ python scripts\browser_smoke.py
 ```
 
 The runtime gate checks the full path through dashboard, backend, scheduler, ml-service, and MySQL.
+
+GitHub Actions also runs the stack from a clean checkout and verifies migrations, E2E, browser rendering, MySQL restart persistence, backup integrity, and restore into a temporary database.
 
 ## Current Limits
 

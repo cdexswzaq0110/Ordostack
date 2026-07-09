@@ -301,8 +301,6 @@ const emptyAuthForm: AuthFormState = {
   password: DEMO_AUTH_PASSWORD,
 };
 
-const serviceHealth = ["backend-api", "scheduler-service", "ml-service"];
-
 type TaskMutationPayload = {
   title: string;
   category: string;
@@ -887,6 +885,7 @@ export function App() {
   const [isComparing, setIsComparing] = useState(false);
   const [isExportingSchedule, setIsExportingSchedule] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [isFixedEventFormOpen, setIsFixedEventFormOpen] = useState(false);
   const [taskForm, setTaskForm] = useState<TaskFormState>(emptyTaskForm);
@@ -1371,6 +1370,7 @@ export function App() {
         },
       );
       applyUpdatedScheduleRun(updatedScheduleRun);
+      setNotice(t("Schedule item updated."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to update schedule item"));
     }
@@ -1402,6 +1402,7 @@ export function App() {
         },
       );
       applyUpdatedScheduleRun(updatedScheduleRun);
+      setNotice(t("Schedule item updated."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to update schedule item"));
     }
@@ -1422,6 +1423,7 @@ export function App() {
         { headers: buildAuthHeaders() },
       );
       setScheduleDiff(nextScheduleDiff);
+      setNotice(t("Schedules compared."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to compare schedules"));
     } finally {
@@ -1437,6 +1439,7 @@ export function App() {
 
     setIsExportingSchedule(true);
     setError(null);
+    setNotice(null);
 
     try {
       const exportedSchedule = await requestJson<ApiScheduleExportResponse>(
@@ -1448,6 +1451,7 @@ export function App() {
       } else {
         downloadTextFile(exportedSchedule.filename, exportedSchedule.content, exportedSchedule.content_type);
       }
+      setNotice(t("Schedule export ready."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to export schedule"));
     } finally {
@@ -1464,6 +1468,7 @@ export function App() {
 
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       const updatedScheduleRun = await requestJson<ApiScheduleHistoryItem>(
@@ -1481,6 +1486,7 @@ export function App() {
       );
       setScheduleDiff(null);
       cancelRenamingScheduleRun();
+      setNotice(t("Schedule renamed."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to rename schedule"));
     } finally {
@@ -1496,6 +1502,7 @@ export function App() {
 
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       await requestJson<{ deleted: boolean }>(
@@ -1513,6 +1520,7 @@ export function App() {
       if (editingScheduleRunId === scheduleRunId) {
         cancelRenamingScheduleRun();
       }
+      setNotice(t("Schedule deleted."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to delete schedule"));
     } finally {
@@ -1523,6 +1531,7 @@ export function App() {
   async function generatePlan() {
     setIsGenerating(true);
     setError(null);
+    setNotice(null);
 
     try {
       const nextSchedule = await requestJson<ApiScheduleResponse>(`${API_BASE_URL}/schedules/generate`, {
@@ -1543,6 +1552,7 @@ export function App() {
       const nextScheduleHistory = await refreshScheduleHistory();
       setSelectedScheduleRunId(nextScheduleHistory[0]?.id ?? null);
       setScheduleDiff(null);
+      setNotice(t("Plan generated."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to generate plan"));
     } finally {
@@ -1559,6 +1569,7 @@ export function App() {
 
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       await requestJson<ApiTask>(`${API_BASE_URL}/tasks`, {
@@ -1577,6 +1588,8 @@ export function App() {
       setIsTaskFormOpen(false);
       cancelEditingTask();
       await loadDashboardData();
+      setNotice(t("Task updated."));
+      setNotice(t("Task created."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to create task"));
     } finally {
@@ -1593,6 +1606,7 @@ export function App() {
 
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       await requestJson<ApiTask>(`${API_BASE_URL}/tasks/${taskId}`, {
@@ -1619,6 +1633,7 @@ export function App() {
 
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       await requestJson<ApiFixedEvent>(`${API_BASE_URL}/fixed-events`, {
@@ -1633,6 +1648,8 @@ export function App() {
       setIsFixedEventFormOpen(false);
       cancelEditingFixedEvent();
       await loadDashboardData();
+      setNotice(t("Fixed event updated."));
+      setNotice(t("Fixed event created."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to create fixed event"));
     } finally {
@@ -1649,6 +1666,7 @@ export function App() {
 
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       await requestJson<ApiFixedEvent>(`${API_BASE_URL}/fixed-events/${fixedEventId}`, {
@@ -1674,6 +1692,7 @@ export function App() {
 
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       const response = await fetch(`${API_BASE_URL}/fixed-events/${fixedEventId}`, {
@@ -1685,6 +1704,7 @@ export function App() {
       }
 
       await loadDashboardData();
+      setNotice(t("Fixed event deleted."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to delete fixed event"));
     } finally {
@@ -1700,6 +1720,7 @@ export function App() {
 
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       await requestJson(`${API_BASE_URL}/demo/reset?user_id=${DEMO_USER_ID}`, {
@@ -1711,6 +1732,7 @@ export function App() {
       } else {
         setSelectedDate(DEFAULT_SELECTED_DATE);
       }
+      setNotice(t("Demo data reset."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to reset demo data"));
     } finally {
@@ -1721,6 +1743,7 @@ export function App() {
   async function recordExecutionEvent(taskId: number, eventType: "start" | "pause" | "complete" | "skip") {
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       await requestJson(`${API_BASE_URL}/tasks/${taskId}/execution/${eventType}`, {
@@ -1729,6 +1752,7 @@ export function App() {
         body: JSON.stringify({}),
       });
       await loadDashboardData();
+      setNotice(t("Task status updated."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to record execution event"));
     } finally {
@@ -1739,6 +1763,7 @@ export function App() {
   async function updateTaskStatus(taskId: number, status: TaskStatus) {
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       const endpoint =
@@ -1751,6 +1776,7 @@ export function App() {
         body: status === "pending" ? undefined : JSON.stringify({ status }),
       });
       await loadDashboardData();
+      setNotice(t("Task updated."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to update task"));
     } finally {
@@ -1766,6 +1792,7 @@ export function App() {
 
     setIsMutating(true);
     setError(null);
+    setNotice(null);
 
     try {
       const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
@@ -1777,6 +1804,7 @@ export function App() {
       }
 
       await loadDashboardData();
+      setNotice(t("Task deleted."));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : t("Unable to delete task"));
     } finally {
@@ -1812,18 +1840,19 @@ export function App() {
           ))}
         </nav>
 
-        <div className="sidebar-status" aria-label={t("Service health")}>
+        <div className="sidebar-status" aria-label={t("Runtime status")}>
           <div className="status-heading">
             <Activity size={16} aria-hidden="true" />
-            <span>{t("System")}</span>
+            <span>{t("Runtime")}</span>
           </div>
-          {serviceHealth.map((service) => (
-            <div key={service} className="status-row">
-              <span className="health-dot" aria-hidden="true" />
-              <span>{service}</span>
-              <strong>{t("ok")}</strong>
-            </div>
-          ))}
+          <div className="status-row">
+            <span
+              className={authToken && !error && !isLoading ? "health-dot" : "health-dot neutral"}
+              aria-hidden="true"
+            />
+            <span>{t("Dashboard data")}</span>
+            <strong>{t(isLoading ? "checking" : error ? "needs attention" : authToken ? "connected" : "sign in")}</strong>
+          </div>
         </div>
       </aside>
 
@@ -2015,6 +2044,13 @@ export function App() {
             <button className="ghost-button text-button" type="button" onClick={() => void loadDashboardData()}>
               {t("Retry")}
             </button>
+          </div>
+        ) : null}
+
+        {!error && notice ? (
+          <div className="success-banner" role="status" aria-live="polite">
+            <CheckCircle2 size={18} aria-hidden="true" />
+            <span>{notice}</span>
           </div>
         ) : null}
 

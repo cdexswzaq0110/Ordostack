@@ -5,30 +5,28 @@ All notable MVP changes are recorded here. This project follows incremental issu
 ## 0.53.0 - 2026-07-09
 
 - Redesign the dashboard with a warm editorial design system: ink/warm/canvas palette, display typography with letter-spaced uppercase labels, hairline borders, and square corners throughout.
-- Make the sidebar navigation functional: Today, Tasks, Schedule, Analytics, MLOps, and Settings now switch dedicated workspace views.
-- Add an Analytics view with a per-task estimate / predicted / actual / delta table.
-- Add an MLOps view showing the active prediction model, per-task predictions with confidence, and how the fallback chain works.
-- Add a Settings view with account details, interface language, keyboard shortcut reference, and demo reset; the top bar keeps only date, search, account, and Generate Plan.
+- Make the sidebar navigation switch dedicated workspace views: Today, Tasks, Schedule, Analytics (per-task estimate / predicted / actual / delta table), MLOps (active model, per-task confidence, fallback chain), and Settings (account, language, shortcuts, demo reset).
 - Replace the fabricated plan score with real schedule coverage (scheduled vs selected tasks) in the plan-quality ring.
-- Label unscheduled timeline previews explicitly and remove the remaining non-functional buttons (notifications, command palette, more-options).
-- Make the bottom rail honest: the next fixed event is now computed from the current time and the third slot shows the active prediction model.
-- Refresh the visual regression baseline and all README screenshots for the new design.
+- Label unscheduled timeline previews explicitly; compute the next fixed event from the current time; highlight the current schedule block with a Now badge.
+- Add delete confirmations for tasks and fixed events, and keyboard shortcuts: Alt+Left/Right for day navigation, Alt+T for today, Alt+G for plan generation.
+- Close the local ML retraining loop: `scripts/export_duration_feedback.py` pulls completed-task feedback, training merges it with seed data via a seeded holdout split with out-of-sample metrics, and `promote_duration_model.py` performs metrics-gated promotion into the local JSON model registry.
+- Add `POST /model/reload` to ml-service so a promoted artifact serves without a container restart; ml-service tests grow from 11 to 19.
+- Rewrite the README introduction and installation guide around real dashboard screenshots (`docs/images/`, reproducible via `scripts/capture_readme_screenshots.py`) and record verification evidence in `docs/test-report.md`.
+- Move development-history and planning documents into `docs/internal/` so the top-level docs stay product-facing.
+- Merge the v0.52.0 private-beta baseline from main, keeping its success-feedback notices, observable dashboard status, and production demo-reset guard on top of the redesigned views.
 
-## 0.52.0 - 2026-07-08
+## 0.52.0 - 2026-06-30
 
-- Close the local ML retraining loop: `scripts/export_duration_feedback.py` pulls completed-task feedback, training merges it with seed data, and `promote_duration_model.py` performs metrics-gated promotion into the local JSON model registry.
-- Report honest out-of-sample metrics: training now uses a seeded holdout split and records baseline MAE, model MAE, and improvement ratio instead of in-sample error.
-- Add `POST /model/reload` to ml-service so a promoted artifact serves without a container restart.
-- Add delete confirmations for tasks and fixed events in the dashboard.
-- Replace hardcoded model version text in the plan-quality panel with the real duration-model name and version plus applied scheduler algorithm count.
-- Highlight the current schedule block with a Now badge that refreshes every minute.
-- Add keyboard shortcuts: Alt+Left/Right for day navigation, Alt+T for today, Alt+G for plan generation.
-- Document the frontend UX roadmap (`docs/frontend-ux-improvement-plan.md`) and the MLOps production launch roadmap (`docs/mlops-production-roadmap.md`).
-- Expand ml-service tests from 11 to 19 covering holdout metrics, feedback merge, determinism, promotion gates, and hot reload.
-- Add a verification test report (`docs/test-report.md`) with the full v0.52.0 evidence: 89 unit/integration tests, static gates, and Docker runtime checks.
-- Rewrite the README introduction and installation guide with real dashboard screenshots (`docs/images/`), a requirements table, first-login walkthrough, and troubleshooting notes.
-- Add `scripts/capture_readme_screenshots.py` to reproduce the README screenshots against the running stack.
-- Move development-history and planning documents (rulebooks, development log, status report, beta-readiness review, branching notes, UX plan, MLOps roadmap) into `docs/internal/` so the top-level docs stay product-facing.
+- Audit the commercial-beta request against the implemented repository and record verified versus manual-only release gates.
+- Add a phased product roadmap that keeps hosted SaaS, mobile, ClearML operations, and production infrastructure as explicit future work.
+- Add a UI/UX review with beta-blocking interaction findings and a minimum credible remediation scope.
+- Replace dead sidebar links with native section navigation and remove enabled/visible controls that had no action.
+- Replace static internal-service `ok` claims with observable dashboard data state.
+- Add accessible success feedback for core task, event, schedule, export, and demo actions.
+- Disable the demo-reset endpoint in production and cover the environment guard with an API regression test.
+- Add explicit AWS deployment, ClearML promotion, security-control, and mobile-client decision documents without claiming those future systems are operational.
+- Add a clean-checkout Docker runtime CI gate covering service startup, migrations, product E2E, browser smoke, MySQL restart persistence, backup verification, and isolated restore.
+- Reconcile architecture, roadmap, beta readiness, project status, and release documentation with the verified v0.52.0 baseline.
 
 ## 0.51.4 - 2026-07-08
 

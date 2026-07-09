@@ -204,6 +204,10 @@ a {
   background: #9dbba9;
 }
 
+.health-dot.neutral {
+  background: var(--frame);
+}
+
 .workspace {
   min-width: 0;
   padding: 20px 28px 28px;
@@ -512,6 +516,7 @@ select:focus-visible {
 }
 
 .alert-banner,
+.success-banner,
 .loading-panel {
   display: flex;
   align-items: center;
@@ -529,6 +534,12 @@ select:focus-visible {
 
 .alert-banner span {
   flex: 1 1 auto;
+}
+
+.success-banner {
+  color: var(--ok);
+  border: 1px solid #b7c6ba;
+  background: #ebf0ea;
 }
 
 .loading-panel {

@@ -3,7 +3,7 @@
 > **日期:** 2026-07-09
 > **版本:** 0.53.0（branch `feature/v0.53.0`）
 > **測試環境:** Windows 10 Pro、Docker Desktop（Engine 29.4.3）、Python 3.11（專案 `.venv`）、Node.js 20、Microsoft Edge（headless smoke）
-> **結論:** ✅ 全數通過 —— 89 個單元/整合測試、11 項靜態閘門、Docker runtime 驗證（5 容器 healthy + E2E + browser smoke + 視覺回歸）
+> **結論:** ✅ 全數通過 —— 90 個單元/整合測試、11 項靜態閘門、Docker runtime 驗證（5 容器 healthy + E2E + browser smoke + 視覺回歸）
 
 ## 1. 測試範圍
 
@@ -13,10 +13,10 @@
 
 | 服務 | 測試數 | 結果 | 執行時間 | 重點涵蓋 |
 | --- | ---: | --- | ---: | --- |
-| backend-api | 59 | ✅ 全過 | 6.42s | auth（註冊/登入/鎖定）、tasks、fixed events、execution logs、analytics、schedule 持久化/diff/export、demo reset、migration guard |
+| backend-api | 60 | ✅ 全過 | 6.12s | auth（註冊/登入/鎖定）、tasks、fixed events、execution logs、analytics、schedule 持久化/diff/export、demo reset 與生產環境防護、migration guard |
 | scheduler-service | 11 | ✅ 全過 | 0.39s | 優先級評分、拓撲排序、容量選擇、free-slot 建構、鎖定項保留 |
 | ml-service | 19 | ✅ 全過 | 0.58s | 預測（artifact/heuristic/registry 三路徑）、**holdout 訓練指標、回饋合併、訓練決定性、晉升閘門（通過/拒絕基線/拒絕退步/回滾覆寫/歸檔）、熱載入** |
-| **合計** | **89** | ✅ | | |
+| **合計** | **90** | ✅ | | |
 
 ml-service 測試由 11 個擴充至 19 個，新增涵蓋為本版新功能。
 
@@ -35,14 +35,14 @@ python scripts\ponytail.py --include-compose-config
 | 閘門 | 結果 | 備註 |
 | --- | --- | --- |
 | backend-api / scheduler / ml-service tests | ✅ | 同上表 |
-| web-dashboard build（tsc + vite） | ✅ | 214.98 kB JS（gzip 64.45 kB）＋ 22.84 kB CSS |
+| web-dashboard build（tsc + vite） | ✅ | 216.61 kB JS（gzip 64.86 kB）＋ 22.97 kB CSS |
 | a11y static audit | ✅ | focus-visible 與 ARIA 標籤檢查 |
 | security audit | ✅ | 含 0.52.0 修正的金鑰誤判（`task-assignment-*` 檔名不再誤報） |
 | documentation completeness | ✅ | 10 份 launch-facing 文件必要章節齊備 |
 | backup policy audit | ✅ | |
 | beta readiness check | ✅ | |
-| translation coverage | ✅ | 220 keys（0.53.0 +17：視圖標題、分析表頭、設定頁、預覽提示等） |
-| visual regression | ✅ | 重設計屬預期變更，基線經人工檢視後重建；重建後 diff 0.0 |
+| translation coverage | ✅ | 234 keys（0.53.0 +31：視圖標題、分析表頭、設定頁、預覽提示，以及自 main 合入的操作成功提示與執行狀態文案） |
+| visual regression | ✅ | 重設計屬預期變更，基線經人工檢視後重建；合併 main 後 diff 0.14% |
 | git whitespace check | ✅ | |
 | docker compose config | ✅ | |
 
@@ -99,6 +99,15 @@ python scripts\browser_smoke.py
 | 死按鈕清除（通知、command palette、more-options） | 原始碼檢查 | ✅ 已移除，無 `disabled` 裝飾按鈕 |
 | 未排程預覽標示 | 程式邏輯 | ✅ 無排程時 timeline 顯示預覽提示文字 |
 | 編輯風設計系統（ink/warm/canvas、方角、髮絲線） | 截圖人工檢視 + 視覺基線重建 | ✅ 全介面一致套用 CSS variables |
+
+### 5.4 main 分支整合（v0.52.0 私測基線合入）
+
+| 項目 | 驗證方式 | 結果 |
+| --- | --- | --- |
+| 操作成功提示（aria-live success banner，任務/行程/排程/匯出/重置全操作） | 移植後 build + runtime | ✅ |
+| 可觀測儀表板狀態（connected / checking / needs attention / sign in） | 移植後 build | ✅ 取代寫死的服務 ok 清單 |
+| demo-reset 生產環境防護 | backend 回歸測試 | ✅ 測試數 59→60 |
+| 合併後全鏈路 | Docker rebuild + E2E + browser smoke | ✅ |
 
 ## 6. 涵蓋 / 不涵蓋
 

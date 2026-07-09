@@ -2,7 +2,7 @@
 
 OrdoStack is a local-first daily planner. It combines tasks, fixed events, execution logs, schedule generation, and duration prediction into one workflow: plan the day, adjust the schedule, run the work, then compare estimates with reality.
 
-The repository is currently a Customer Demo MVP / Technical Preview. It runs locally with Docker Compose and does not use paid APIs.
+The repository is currently a local Private Beta Candidate. It runs with Docker Compose, does not use paid APIs, and is not a hosted production service.
 
 ![OrdoStack dashboard with a generated schedule](docs/images/dashboard-overview.png)
 
@@ -34,6 +34,7 @@ OrdoStack focuses on that loop for one day at a time.
 - Local retraining loop: export execution feedback, retrain with holdout evaluation, metrics-gated model promotion, hot reload.
 - Docker Compose runtime with MySQL persistence.
 - Local QA gates for tests, build, security, accessibility, backup policy, visual regression, and smoke checks.
+- Clean-checkout Docker runtime CI covering migrations, E2E, persistence across MySQL restart, backup verification, and isolated restore.
 
 ## Interface
 
@@ -97,7 +98,7 @@ demo@ordostack.local
 ordostack-demo
 ```
 
-The dashboard opens on the bundled demo dataset date (2026-06-03) with seeded tasks and fixed events. Click **Generate Plan** (or press `Alt+G`) to produce the schedule shown in the screenshots above. Use **Reset demo** in the sidebar to restore the seed data at any time.
+The dashboard opens on the bundled demo dataset date (2026-06-03) with seeded tasks and fixed events. Click **Generate Plan** (or press `Alt+G`) to produce the schedule shown in the screenshots above. Use **Reset demo** in the Settings view to restore the seed data at any time.
 
 ### 3. Stop
 
@@ -181,11 +182,15 @@ Start here:
 | System architecture | [ARCHITECTURE.md](ARCHITECTURE.md) |
 | API behavior | [docs/api.md](docs/api.md) |
 | QA workflow | [docs/qa-mvp.md](docs/qa-mvp.md) |
-| Test report (v0.52.0) | [docs/test-report.md](docs/test-report.md) |
+| Test report (v0.53.0) | [docs/test-report.md](docs/test-report.md) |
 | Release process | [docs/release-process.md](docs/release-process.md) |
 | Environment variables | [docs/environment.md](docs/environment.md) |
 | Backup and restore | [docs/backup-restore.md](docs/backup-restore.md) |
 | Architecture decisions | [docs/adr/README.md](docs/adr/README.md) |
+| Product roadmap | [docs/product-roadmap.md](docs/product-roadmap.md) |
+| AWS deployment plan | [docs/aws-deployment-plan.md](docs/aws-deployment-plan.md) |
+| ClearML MLOps plan | [docs/mlops-clearml-plan.md](docs/mlops-clearml-plan.md) |
+| Security checklist | [docs/security-checklist.md](docs/security-checklist.md) |
 
 Repository maintenance:
 

@@ -104,9 +104,9 @@ python scripts/beta_readiness_check.py --root .
 python scripts/visual_regression.py --baseline artifacts/visual-baseline/dashboard.png --candidate artifacts/browser-smoke/dashboard.png --threshold 0.01
 ```
 
-## Deferred Docker Deployment Checklist
+## Docker Runtime Release Checklist
 
-Run this checklist during the dedicated Docker finalization issue, not during product behavior iteration:
+GitHub Actions runs this behavior from a clean checkout. Run it locally when Docker is available:
 
 ```powershell
 docker compose config
