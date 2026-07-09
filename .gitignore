@@ -11,6 +11,11 @@ __pycache__/
 .ruff_cache/
 artifacts/
 
+# Local model registry state; fresh clones fall back to duration_model.json.
+ml-service/training/artifacts/model_registry.json
+ml-service/training/artifacts/duration_model-*.json
+ml-service/training/data/duration_feedback.csv
+
 node_modules/
 dist/
 .vite/
@@ -20,3 +25,10 @@ web-dashboard/vite.config.js
 
 .DS_Store
 Thumbs.db
+
+# TaskMaster session-local state
+.claude/taskmaster-data/.session-start
+.claude/taskmaster-data/.session-snapshot
+.claude/taskmaster-data/.current-task
+.claude/taskmaster-data/timelog.jsonl
+.claude/taskmaster-data/wbs-history.log
