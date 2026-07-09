@@ -18,6 +18,9 @@ This repository keeps several Markdown files because the project has product, en
 | `scripts/e2e_smoke.py` | Present | Docker runtime API smoke |
 | `scripts/browser_smoke.py` | Present | Dashboard browser smoke |
 | `.github/workflows/ci.yml` | Present | CI baseline |
+| `docs/test-report.md` | Present | v0.52.0 verification results and evidence |
+| `docs/images/` | Present | Real dashboard screenshots for README and test report |
+| `scripts/capture_readme_screenshots.py` | Present | Reproducible screenshot capture against the running stack |
 
 ## System Design Documents
 
@@ -31,6 +34,7 @@ This repository keeps several Markdown files because the project has product, en
 | `docs/database-migrations.md` | Present | Alembic and migration policy |
 | `docs/environment.md` | Present | Runtime variables |
 | `docs/deployment.md` | Present | Future hosted deployment checklist |
+| `docs/adr/` | Present | Architecture decision records |
 
 ## GitHub Documents
 
@@ -43,18 +47,11 @@ This repository keeps several Markdown files because the project has product, en
 | `.github/pull_request_template.md` | Present | PR checklist |
 | `.github/ISSUE_TEMPLATE/*` | Present | Bug, feature, and ML experiment templates |
 
-## Cleanup Note
+## Internal Documents
 
-The files below are useful during development but are candidates for consolidation before a public launch:
+Working documents that are useful for development history but not needed to run or evaluate the project live under [docs/internal/](internal/README.md): the development rulebooks, development log, status report, beta-readiness review, branching notes, and planning documents (frontend UX plan, MLOps roadmap, workflow gap audit).
 
-- `AI_RULEBOOK.md`
-- `DEVELOPMENT_RULEBOOK.md`
-- `docs/development-log.md`
-- `docs/project-status-report.md`
-- `docs/beta-readiness.md`
-- `docs/branching-strategy.md`
-
-They were not deleted in this cleanup because repository file deletion requires explicit owner approval.
+Developer tooling configuration lives in `CLAUDE.md` and `.claude/` (project instructions, task tracking, and workflow automation for the coding assistant used on this project).
 
 ## Verification
 

@@ -21,7 +21,7 @@
 - Use one short-lived branch per issue after the initial repository baseline exists.
 - Use `feature/`, `fix/`, `chore/`, or `docs/` prefixes.
 - Keep `main` runnable.
-- Record suggested commit messages in `CHANGELOG.md` and `docs/development-log.md`.
+- Record suggested commit messages in `CHANGELOG.md` and `docs/internal/development-log.md`.
 
 ## Service Ports
 
