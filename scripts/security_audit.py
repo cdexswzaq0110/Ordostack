@@ -6,7 +6,8 @@ import sys
 from pathlib import Path
 
 SECRET_PATTERNS = {
-    "openai_api_key": re.compile(r"sk-[A-Za-z0-9_-]{20,}"),
+    # Lookbehind avoids matching "sk-" embedded in words such as "task-assignment-...".
+    "openai_api_key": re.compile(r"(?<![A-Za-z0-9_])sk-[A-Za-z0-9_-]{20,}"),
     "github_token": re.compile(r"ghp_[A-Za-z0-9]{20,}"),
     "slack_bot_token": re.compile(r"xoxb-[A-Za-z0-9-]{20,}"),
     "aws_access_key": re.compile(r"AKIA[0-9A-Z]{16}"),
