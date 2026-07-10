@@ -5,7 +5,7 @@ OrdoStack uses small tagged releases until production deployment exists.
 ## Current Version
 
 ```text
-0.54.0
+0.55.0
 ```
 
 ## Release Types
@@ -123,7 +123,7 @@ powershell -ExecutionPolicy Bypass -File scripts\verify_mysql_backup.ps1 -Path a
 After a clean release commit:
 
 ```bash
-git tag v0.54.0
+git tag v0.55.0
 ```
 
 Tags should point only to commits that passed the release checklist.

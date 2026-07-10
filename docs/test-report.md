@@ -1,24 +1,24 @@
-# OrdoStack 測試報告（v0.54.0）
+# OrdoStack 測試報告（v0.55.0）
 
 > **日期:** 2026-07-10
-> **版本:** 0.54.0（branch `feature/clearml-tracking`）
+> **版本:** 0.55.0（branch `feature/prediction-quality`）
 > **測試環境:** Windows 10 Pro、Docker Desktop（Engine 29.4.3）、Python 3.11（專案 `.venv`）、Node.js 20、Microsoft Edge（headless smoke）
-> **結論:** ✅ 全數通過 —— 97 個單元/整合測試、11 項靜態閘門、Docker runtime 驗證（5 容器 healthy + E2E + browser smoke + 視覺回歸）
+> **結論:** ✅ 全數通過 —— 106 個單元/整合測試、11 項靜態閘門、Docker runtime 驗證（5 容器 healthy + E2E + browser smoke + 視覺回歸）
 
 ## 1. 測試範圍
 
-本報告涵蓋 v0.52.0–v0.54.0 的完整驗證：三個後端服務的測試套件、dashboard build、八項靜態稽核、Docker Compose runtime 全鏈路驗證，以及兩版新增功能的實測——ML 重訓迴路（0.52.0）、介面重設計與側邊欄視圖導覽（0.53.0）、選配 ClearML 整合（0.54.0）。
+本報告涵蓋 v0.52.0–v0.55.0 的完整驗證：三個後端服務的測試套件、dashboard build、八項靜態稽核、Docker Compose runtime 全鏈路驗證，以及兩版新增功能的實測——ML 重訓迴路（0.52.0）、介面重設計與側邊欄視圖導覽（0.53.0）、選配 ClearML 整合（0.54.0）、預測服務日誌與線上準確度（0.55.0）。
 
 ## 2. 單元 / 整合測試
 
 | 服務 | 測試數 | 結果 | 執行時間 | 重點涵蓋 |
 | --- | ---: | --- | ---: | --- |
-| backend-api | 60 | ✅ 全過 | 6.12s | auth（註冊/登入/鎖定）、tasks、fixed events、execution logs、analytics、schedule 持久化/diff/export、demo reset 與生產環境防護、migration guard |
+| backend-api | 65 | ✅ 全過 | 7.90s | auth（註冊/登入/鎖定）、tasks、fixed events、execution logs、analytics、schedule 持久化/diff/export、demo reset 與生產環境防護、migration guard、**預測日誌（記錄/配對/準確度/零分鐘排除/授權）** |
 | scheduler-service | 11 | ✅ 全過 | 0.39s | 優先級評分、拓撲排序、容量選擇、free-slot 建構、鎖定項保留 |
-| ml-service | 26 | ✅ 全過 | 0.75s | 預測（artifact/heuristic/registry 三路徑）、**holdout 訓練指標、回饋合併、訓練決定性、晉升閘門（通過/拒絕基線/拒絕退步/回滾覆寫/歸檔）、熱載入、ClearML 追蹤（停用預設/追蹤內容/失敗安全/註冊回退/空回饋檔）** |
-| **合計** | **97** | ✅ | | |
+| ml-service | 30 | ✅ 全過 | 3.10s | 預測（artifact/heuristic/registry 三路徑）、**holdout 訓練指標、回饋合併、訓練決定性、晉升閘門（通過/拒絕基線/拒絕退步/回滾覆寫/歸檔）、熱載入、ClearML 追蹤（停用預設/追蹤內容/失敗安全/註冊回退/空回饋檔）、誤差輪廓信心值、模型對比實驗** |
+| **合計** | **106** | ✅ | | |
 
-ml-service 測試由 11 個（0.51.x）擴充至 26 個。
+ml-service 測試由 11 個（0.51.x）擴充至 30 個。
 
 執行指令（Windows PowerShell，各服務目錄下）：
 
@@ -41,7 +41,7 @@ python scripts\ponytail.py --include-compose-config
 | documentation completeness | ✅ | 10 份 launch-facing 文件必要章節齊備 |
 | backup policy audit | ✅ | |
 | beta readiness check | ✅ | |
-| translation coverage | ✅ | 234 keys（0.53.0 +31：視圖標題、分析表頭、設定頁、預覽提示，以及自 main 合入的操作成功提示與執行狀態文案） |
+| translation coverage | ✅ | 243 keys（0.55.0 +9 線上準確度區塊；0.53.0 +31：視圖標題、分析表頭、設定頁、預覽提示，以及自 main 合入的操作成功提示與執行狀態文案） |
 | visual regression | ✅ | 重設計屬預期變更，基線經人工檢視後重建；合併 main 後 diff 0.14% |
 | git whitespace check | ✅ | |
 | docker compose config | ✅ | |
@@ -119,6 +119,17 @@ python scripts\browser_smoke.py
 | 失敗安全 | 單元測試（Task.init 拋錯） | ✅ 訓練/晉升照常完成，僅記錄一行略過訊息 |
 | 空回饋檔修正 | 回歸測試 | ✅ 0 列匯出檔視為「尚無回饋」而非錯誤 |
 
+### 5.6 預測服務日誌與線上準確度（0.55.0）
+
+| 項目 | 驗證方式 | 結果 |
+| --- | --- | --- |
+| 排程生成落盤預測 | API 整合測試 | ✅ 每任務一列（模型名/版本、預測/估時分鐘） |
+| 完成任務配對實際值 | API 整合測試 | ✅ start→complete 52 分鐘正確寫回；無 start 事件（0 分鐘）不配對 |
+| /ml/prediction-accuracy | API 整合測試 + Docker runtime 實測 | ✅ 整體與每日 model MAE vs estimate MAE、需授權 |
+| MLOps 視圖準確度圖表 | build + runtime 截圖 | ✅ headline 統計 + 每日對比長條 |
+| 誤差輪廓信心值 | 單元測試 | ✅ qa（MAE 6）→0.9、study（MAE 30）→0.5、未知類別回退 global；舊 artifact 相容 |
+| 模型對比實驗 | `compare_models.py` 實跑（5-fold CV, seed 42） | ✅ naive 14.17 / multiplier 8.57 / GBM 8.84 / ridge 4.95（±2~3，n=14 下差異未達統計顯著；生產維持乘數表，ridge 列為資料累積後首選候選） |
+
 ## 6. 涵蓋 / 不涵蓋
 
 **涵蓋：** 單元/整合測試、靜態稽核、本地 Docker 全鏈路、視覺回歸、新功能實測。
@@ -136,6 +147,7 @@ python scripts\browser_smoke.py
 - `feedback export` 依日期逐日拉取，大量歷史資料時效率待優化。
 - 視覺回歸僅比對單一 1440×1000 桌面版面。
 - ClearML server/agent 未實際運行（自架步驟已文件化，屬部署決策）。
+- 模型對比在 14 筆種子資料上進行，fold 間變異大，結論僅在此資料量下成立。
 
 ## 8. 重現方式
 

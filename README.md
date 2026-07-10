@@ -50,6 +50,10 @@ The sidebar switches between six workspace views. Analytics compares estimated, 
 
 ![Analytics view with per-task estimate, predicted, actual, and delta columns](docs/images/analytics-view.png)
 
+The MLOps view tracks the model in real use: every generated plan logs its served predictions, completed tasks pair actual minutes back in, and the live-accuracy panel compares the model's rolling error against raw estimates — honestly, in both directions.
+
+![MLOps view with live prediction accuracy and per-task confidence](docs/images/mlops-view.png)
+
 Keyboard shortcuts: `Alt+←` / `Alt+→` switch days, `Alt+T` jumps to today, `Alt+G` generates a plan.
 
 ## Quick Start

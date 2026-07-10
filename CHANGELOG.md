@@ -2,6 +2,14 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.55.0 - 2026-07-10
+
+- Log every served prediction when a plan is generated and pair actual minutes back on task completion (`prediction_logs` table in both stores plus Alembic migration).
+- Add `GET /api/ml/prediction-accuracy`: rolling overall and per-day MAE for the model against the raw-estimate baseline, rendered in the MLOps view as headline stats and daily comparison bars.
+- Derive prediction confidence from per-category error profiles learned at training time, replacing the hardcoded confidence constants; unseen categories fall back to the global error and legacy artifacts to documented base values.
+- Add `training/compare_models.py`, a cross-validated comparison of the production multiplier table against naive-estimate, ridge, and gradient-boosting candidates, with results recorded in `artifacts/model_comparison.json`.
+- Expand tests to 106 (backend 65, scheduler 11, ml-service 30); scikit-learn joins the optional training requirements only.
+
 ## 0.54.0 - 2026-07-10
 
 - Add optional ClearML integration for the training loop: training runs record tasks, parameters, holdout metrics, and artifacts; gate-passing promotions register the versioned model, all behind `ORDOSTACK_CLEARML_ENABLED=1`.

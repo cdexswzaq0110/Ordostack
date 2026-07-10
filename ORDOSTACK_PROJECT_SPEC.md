@@ -5,7 +5,7 @@ This file records the current product baseline for the repository. The original 
 ## Current Baseline
 
 ```text
-Version: 0.54.0
+Version: 0.55.0
 Stage: Local Private Beta Candidate
 Runtime: Docker Compose local stack
 Primary UI: web-dashboard
@@ -68,7 +68,7 @@ OrdoStack can be used for controlled local beta evaluation. It is not yet a host
 | Schedule history | Save generated runs, reload, rename, soft delete, compare, lock items, move items |
 | Export | Markdown, CSV, local PDF |
 | Analytics | Actual minutes, estimate drift, completion rate, focus minutes, completion forecast |
-| ML | Local duration prediction, JSON artifact, heuristic fallback, model metadata, feedback export, holdout-evaluated retraining, metrics-gated promotion into a local registry, hot model reload, optional ClearML tracking |
+| ML | Local duration prediction, JSON artifact, heuristic fallback, model metadata, feedback export, holdout-evaluated retraining, metrics-gated promotion into a local registry, hot model reload, optional ClearML tracking, prediction serving logs with live accuracy reporting, error-profile-based confidence, cross-validated model comparison |
 | Storage | MySQL in Docker, memory store in tests |
 | Observability | Request IDs, structured request logs, health and readiness endpoints |
 | Backup | Local MySQL backup script and verification script |
@@ -105,7 +105,7 @@ Core groups:
 - Execution: task start, pause, complete, skip, and execution log listing
 - Analytics: `GET /analytics/daily`
 - Schedules: generate, latest, history, diff, export, lock, manual move
-- ML: `GET /ml/duration-predictions`, `GET /ml/duration-feedback`
+- ML: `GET /ml/duration-predictions`, `GET /ml/duration-feedback`, `GET /ml/prediction-accuracy`
 - Demo: `POST /demo/reset`
 
 Detailed endpoint behavior is in [docs/api.md](docs/api.md).
