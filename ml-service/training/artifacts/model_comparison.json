@@ -1,0 +1,25 @@
+{
+  "dataset": "duration_training_samples.csv",
+  "folds": 5,
+  "metric": "mean absolute error (minutes), lower is better",
+  "results": {
+    "gradient-boosting": {
+      "mae_mean": 8.84,
+      "mae_std": 2.88
+    },
+    "multiplier-table (production)": {
+      "mae_mean": 8.57,
+      "mae_std": 2.72
+    },
+    "naive-estimate": {
+      "mae_mean": 14.17,
+      "mae_std": 3.33
+    },
+    "ridge-regression": {
+      "mae_mean": 4.95,
+      "mae_std": 1.99
+    }
+  },
+  "rows": 14,
+  "seed": 42
+}
