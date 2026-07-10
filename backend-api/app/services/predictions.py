@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from statistics import median
 from typing import Any
 
 import httpx
@@ -18,6 +19,12 @@ from app.services import tasks as task_service
 ML_TIMEOUT_SECONDS = 8.0
 FALLBACK_MODEL_NAME = "estimate-fallback"
 FALLBACK_MODEL_VERSION = "0.1.0"
+
+CALIBRATION_MIN_SAMPLES = 3
+CALIBRATION_WINDOW = 20
+CALIBRATION_FLOOR = 0.5
+CALIBRATION_CEILING = 2.0
+PREDICTION_MAX_MINUTES = 480
 
 
 def get_duration_predictions(user_id: int, target_date: date) -> DurationPredictionResponse:
@@ -70,6 +77,7 @@ def log_served_predictions(
             "model_name": prediction.model_name,
             "model_version": prediction_response.model_version,
             "predicted_minutes": prediction.predicted_minutes,
+            "raw_predicted_minutes": prediction.raw_predicted_minutes or prediction.predicted_minutes,
             "estimated_minutes": estimated_by_task.get(prediction.task_id, prediction.predicted_minutes),
         }
         for prediction in prediction_response.predictions
@@ -149,13 +157,52 @@ def predict_for_tasks(
         return build_fallback_predictions(user_id=user_id, target_date=target_date, tasks=tasks)
 
     payload = response.json()
+    calibration_factor, calibration_samples = get_user_calibration(user_id)
+    predictions = [
+        {
+            **prediction,
+            "raw_predicted_minutes": prediction["predicted_minutes"],
+            "predicted_minutes": calibrate_minutes(prediction["predicted_minutes"], calibration_factor),
+        }
+        for prediction in payload["predictions"]
+    ]
     return DurationPredictionResponse(
         user_id=user_id,
         target_date=target_date,
         model_name=payload["model_name"],
         model_version=payload["model_version"],
-        predictions=payload["predictions"],
+        predictions=predictions,
+        calibration_factor=calibration_factor,
+        calibration_samples=calibration_samples,
     )
+
+
+def get_user_calibration(user_id: int) -> tuple[float | None, int]:
+    """Median actual/predicted ratio over the user's recent paired predictions.
+
+    The ratio uses the raw model output rather than the served (already
+    calibrated) value, so the factor cannot feed back on itself. Returns
+    (None, samples) until enough pairs exist; the factor is clamped so a few
+    unusual tasks cannot swing predictions wildly.
+    """
+    logs = get_store().list_prediction_logs(user_id=user_id)
+    ratios = [
+        log["actual_minutes"] / log["raw_predicted_minutes"]
+        for log in logs
+        if log["actual_minutes"] and (log.get("raw_predicted_minutes") or 0) > 0
+    ][-CALIBRATION_WINDOW:]
+
+    if len(ratios) < CALIBRATION_MIN_SAMPLES:
+        return None, len(ratios)
+
+    factor = min(CALIBRATION_CEILING, max(CALIBRATION_FLOOR, median(ratios)))
+    return round(factor, 3), len(ratios)
+
+
+def calibrate_minutes(predicted_minutes: int, calibration_factor: float | None) -> int:
+    if calibration_factor is None:
+        return predicted_minutes
+    return min(PREDICTION_MAX_MINUTES, max(1, round(predicted_minutes * calibration_factor)))
 
 
 def csv_escape(value: str) -> str:

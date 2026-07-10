@@ -230,6 +230,7 @@ class InMemoryStore:
                 self._next_prediction_log_id += 1
                 prediction_log = {
                     "id": prediction_log_id,
+                    "raw_predicted_minutes": None,
                     "actual_minutes": None,
                     "actual_recorded_at": None,
                     "created_at": now,

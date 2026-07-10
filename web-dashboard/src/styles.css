@@ -1276,6 +1276,13 @@ h3 {
   background: var(--surface);
 }
 
+.model-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .model-badge {
   display: inline-flex;
   align-items: center;

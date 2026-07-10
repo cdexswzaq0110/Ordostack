@@ -202,6 +202,8 @@ type ApiDurationPredictionResponse = {
   model_name: string;
   model_version: string;
   predictions: ApiDurationPrediction[];
+  calibration_factor: number | null;
+  calibration_samples: number;
 };
 
 type ApiPredictionAccuracyDay = {
@@ -2833,12 +2835,24 @@ export function App() {
                   <p className="section-kicker">{t("MLOps")}</p>
                   <h1 id="mlops-title">{t("Duration predictions")}</h1>
                 </div>
-                <div className="model-badge">
-                  <Brain size={16} aria-hidden="true" />
-                  <span>
-                    {durationPredictions?.model_name ?? t("estimate-fallback")}{" "}
-                    {durationPredictions?.model_version ?? ""}
-                  </span>
+                <div className="model-badges">
+                  <div className="model-badge">
+                    <Brain size={16} aria-hidden="true" />
+                    <span>
+                      {durationPredictions?.model_name ?? t("estimate-fallback")}{" "}
+                      {durationPredictions?.model_version ?? ""}
+                    </span>
+                  </div>
+                  <div className="model-badge">
+                    <Target size={16} aria-hidden="true" />
+                    <span>
+                      {durationPredictions?.calibration_factor
+                        ? `${t("Personal calibration")} ×${durationPredictions.calibration_factor} · ${
+                            durationPredictions.calibration_samples
+                          } ${t("pairs")}`
+                        : `${t("Personal calibration")}: ${t("activates after 3 completed predictions")}`}
+                    </span>
+                  </div>
                 </div>
               </div>
               <p className="view-note">
