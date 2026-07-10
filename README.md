@@ -38,11 +38,13 @@ OrdoStack focuses on that loop for one day at a time.
 
 ## Interface
 
-| Focused schedule and history | Task queue with ML predictions |
-| --- | --- |
-| ![Generated schedule timeline with history and export](docs/images/schedule-timeline.png) | ![Task queue with estimates, predictions, and protected events](docs/images/task-queue.png) |
+**Focused schedule and history.** The timeline shows scheduler-scored blocks around protected events, with per-item lock and 15-minute move controls, saved-plan history, compare, and Markdown/PDF export.
 
-The timeline shows scheduler-scored blocks around protected events, with per-item lock and 15-minute move controls, saved-plan history, compare, and Markdown/PDF export. The task queue shows each task's estimate next to the ML-predicted duration and the actual logged minutes, with start/pause/complete/skip execution controls.
+![Generated schedule timeline with history and export](docs/images/schedule-timeline.png)
+
+**Task queue with ML predictions.** The task queue shows each task's estimate next to the ML-predicted duration and the actual logged minutes, with start/pause/complete/skip execution controls.
+
+![Task queue with estimates, predictions, and protected events](docs/images/task-queue.png)
 
 The sidebar switches between six workspace views. Analytics compares estimated, predicted, and actual minutes per task; MLOps shows the active prediction model and per-task confidence; Settings holds account, language, and shortcut reference.
 
