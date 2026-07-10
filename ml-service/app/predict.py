@@ -9,6 +9,14 @@ from app.schemas import DurationPrediction, DurationTaskInput
 HEURISTIC_MODEL_NAME = "heuristic-duration"
 HEURISTIC_MODEL_VERSION = "0.1.0"
 
+# Confidence floors when no learned error profile exists: heuristic predictions
+# and artifacts trained before error profiles were recorded.
+HEURISTIC_BASE_CONFIDENCE = 0.45
+ARTIFACT_BASE_CONFIDENCE = 0.6
+EXECUTION_SIGNAL_BONUS = 0.1
+CONFIDENCE_FLOOR = 0.2
+CONFIDENCE_CEILING = 0.95
+
 
 def predict_duration(task: DurationTaskInput) -> DurationPrediction:
     model = load_duration_model()
@@ -16,19 +24,39 @@ def predict_duration(task: DurationTaskInput) -> DurationPrediction:
     model_name, _, _ = get_active_model_metadata(model)
 
     if model is not None:
-        confidence = 0.74 if task.actual_minutes > 0 else 0.58
         reason = "trained local artifact blended with execution logs" if task.actual_minutes > 0 else "trained local artifact"
     else:
-        confidence = 0.62 if task.actual_minutes > 0 else 0.45
         reason = "blended with execution logs" if task.actual_minutes > 0 else "feature baseline"
 
     return DurationPrediction(
         task_id=task.task_id,
         predicted_minutes=predicted_minutes,
-        confidence=confidence,
+        confidence=calculate_confidence(task, model),
         model_name=model_name,
         reason=reason,
     )
+
+
+def calculate_confidence(task: DurationTaskInput, model: dict[str, Any] | None) -> float:
+    """Derive confidence from the model's learned error profile for the task's category.
+
+    A category whose historical error is small relative to the estimate scores
+    high; unknown categories fall back to the global error, and artifacts
+    without an error profile fall back to a documented base value.
+    """
+    if model is None:
+        confidence = HEURISTIC_BASE_CONFIDENCE
+    else:
+        category_mae = model.get("category_mae", {}).get(task.category, model.get("global_mae"))
+        if isinstance(category_mae, (int, float)):
+            confidence = 1 - (float(category_mae) / max(task.estimated_minutes, 1))
+        else:
+            confidence = ARTIFACT_BASE_CONFIDENCE
+
+    if task.actual_minutes > 0:
+        confidence += EXECUTION_SIGNAL_BONUS
+
+    return round(min(CONFIDENCE_CEILING, max(CONFIDENCE_FLOOR, confidence)), 2)
 
 
 def calculate_predicted_minutes(task: DurationTaskInput, model: dict[str, Any] | None = None) -> int:

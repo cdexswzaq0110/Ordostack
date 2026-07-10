@@ -88,10 +88,70 @@ def test_duration_prediction_uses_local_artifact_when_available(monkeypatch, tmp
     assert response.status_code == 200
     assert response.json()["model_name"] == "local-duration-regressor"
     prediction = response.json()["predictions"][0]
-    assert prediction["confidence"] == 0.74
+    # Legacy artifact without an error profile: base confidence plus execution signal.
+    assert prediction["confidence"] == 0.7
     assert prediction["reason"] == "trained local artifact blended with execution logs"
     assert info_response.status_code == 200
     assert info_response.json()["source"] == "local-artifact"
+
+
+def test_confidence_derives_from_category_error_profile(monkeypatch, tmp_path) -> None:
+    model_path = tmp_path / "duration_model.json"
+    model_path.write_text(
+        json.dumps(
+            {
+                "model_name": "local-duration-regressor",
+                "model_version": "0.2.0",
+                "source": "local-artifact",
+                "global_multiplier": 1.1,
+                "category_multipliers": {"qa": 0.95, "study": 1.3},
+                "difficulty_weight": 0.04,
+                "priority_weight": 0.015,
+                "focus_multiplier": 1.05,
+                "category_mae": {"qa": 6.0, "study": 30.0},
+                "global_mae": 12.0,
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("DURATION_MODEL_PATH", str(model_path))
+    reset_model_cache()
+    client = TestClient(app)
+
+    def predict(category: str, estimated_minutes: int) -> dict:
+        response = client.post(
+            "/duration/predict",
+            json={
+                "user_id": 1,
+                "tasks": [
+                    {
+                        "task_id": 9,
+                        "title": "confidence probe",
+                        "category": category,
+                        "estimated_minutes": estimated_minutes,
+                        "priority": 3,
+                        "difficulty": 3,
+                        "requires_focus": False,
+                        "actual_minutes": 0,
+                    }
+                ],
+            },
+        )
+        assert response.status_code == 200
+        return response.json()["predictions"][0]
+
+    try:
+        low_error_category = predict("qa", 60)
+        high_error_category = predict("study", 60)
+        unknown_category = predict("writing", 60)
+    finally:
+        reset_model_cache()
+
+    # qa: 1 - 6/60 = 0.9; study: 1 - 30/60 = 0.5; unknown falls back to global 1 - 12/60 = 0.8.
+    assert low_error_category["confidence"] == 0.9
+    assert high_error_category["confidence"] == 0.5
+    assert unknown_category["confidence"] == 0.8
+    assert low_error_category["confidence"] > high_error_category["confidence"]
 
 
 def test_duration_prediction_uses_local_model_registry(monkeypatch, tmp_path) -> None:

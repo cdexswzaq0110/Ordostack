@@ -1,4 +1,12 @@
 {
+  "category_mae": {
+    "admin": 2,
+    "analytics": 0,
+    "backend": 0,
+    "coding": 11.33,
+    "qa": 1,
+    "study": 14
+  },
   "category_multipliers": {
     "admin": 0.84,
     "analytics": 1.0333,
@@ -10,12 +18,13 @@
   "difficulty_weight": 0.04,
   "feedback_rows": 0,
   "focus_multiplier": 1.05,
+  "global_mae": 7.27,
   "global_multiplier": 1.1255,
   "model_name": "local-duration-regressor",
   "model_version": "0.2.0",
   "priority_weight": 0.015,
   "seed": 42,
   "source": "local-artifact",
-  "trained_at": "2026-07-10T03:26:31.517175+00:00",
+  "trained_at": "2026-07-10T15:58:27.069109+00:00",
   "training_rows": 11
 }

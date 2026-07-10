@@ -55,6 +55,7 @@ def train_duration_model(
         "priority_weight": PRIORITY_WEIGHT,
         "focus_multiplier": FOCUS_MULTIPLIER,
     }
+    model["category_mae"], model["global_mae"] = build_error_profile(train_rows, model)
     metrics = evaluate_model(evaluation_rows, model, evaluation_mode, seed)
 
     artifact_dir.mkdir(parents=True, exist_ok=True)
@@ -112,6 +113,20 @@ def build_category_multipliers(rows: list[dict]) -> dict[str, float]:
         category: round(clamp(mean(ratios), 0.75, 1.45), 4)
         for category, ratios in sorted(ratios_by_category.items())
     }
+
+
+def build_error_profile(rows: list[dict], model: dict) -> tuple[dict[str, float], float]:
+    """Per-category training residuals; serving derives prediction confidence from these."""
+    errors_by_category: dict[str, list[int]] = {}
+    for row in rows:
+        error = abs(predict_row(row, model) - row["actual_minutes"])
+        errors_by_category.setdefault(row["category"], []).append(error)
+
+    category_mae = {
+        category: round(mean(errors), 2) for category, errors in sorted(errors_by_category.items())
+    }
+    global_mae = round(mean(error for errors in errors_by_category.values() for error in errors), 2)
+    return category_mae, global_mae
 
 
 def evaluate_model(rows: list[dict], model: dict, evaluation_mode: str, seed: int) -> dict:
