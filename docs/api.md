@@ -344,7 +344,7 @@ Backend entrypoint:
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
-| `GET` | `/ml/duration-predictions?target_date=2026-06-03` | Predict task duration for dashboard and scheduler |
+| `GET` | `/ml/duration-predictions?target_date=2026-06-03` | Predict task duration for dashboard and scheduler; served values include the per-user calibration factor (median actual/raw ratio over recent paired predictions, active from 3 pairs, clamped to [0.5, 2.0]) and each prediction carries its raw pre-calibration value |
 | `GET` | `/ml/duration-feedback?target_date=2026-06-03` | Export completed-task duration feedback as CSV |
 | `GET` | `/ml/prediction-accuracy?days=90` | Rolling accuracy of served predictions: overall and per-day MAE for the model vs the raw-estimate baseline, from prediction logs paired with actual execution minutes |
 

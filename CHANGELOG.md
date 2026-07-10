@@ -2,6 +2,13 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.56.0 - 2026-07-11
+
+- Apply a per-user calibration factor to served predictions: the median actual/predicted ratio over the user's recent paired prediction logs, active from three pairs, clamped to [0.5, 2.0], and computed from separately logged raw model outputs so the correction cannot feed back on itself (migration 0006).
+- Report the calibration factor and sample count in the predictions API and show the calibration state in the MLOps view; fallback predictions stay uncalibrated.
+- Add `scripts/load_test.py` and record a single-machine baseline: dashboard read mix p50 76ms / p95 158ms at 108 req/s, full schedule-generation chain p50 306ms / p95 392ms at 30.6 req/s, zero errors (200/50 requests at concurrency 10).
+- Expand backend tests from 65 to 71 covering calibration math, clamping, minimum samples, feedback isolation, served application, and uncalibrated fallback.
+
 ## 0.55.0 - 2026-07-10
 
 - Log every served prediction when a plan is generated and pair actual minutes back on task completion (`prediction_logs` table in both stores plus Alembic migration).

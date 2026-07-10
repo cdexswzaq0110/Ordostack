@@ -138,6 +138,26 @@ python scripts/capture_readme_screenshots.py
 
 Resets the demo dataset, generates a plan, signs in as the demo user, and writes the README screenshots to `docs/images/`. It expects Docker Compose to be running and uses the local Edge or Chrome executable, so Playwright does not download a browser. Playwright is a dev-only tool dependency and is not part of any service's `requirements.txt`.
 
+## Load Test Baseline
+
+Windows PowerShell:
+
+```powershell
+python scripts\load_test.py --requests 200 --concurrency 10 --generate-requests 50
+```
+
+Linux / WSL:
+
+```bash
+python scripts/load_test.py --requests 200 --concurrency 10 --generate-requests 50
+```
+
+Measures the dashboard read mix and the full schedule-generation chain
+(backend -> ml-service -> scheduler-service -> MySQL) against the running
+Docker stack, reporting throughput and p50/p95/p99 latency. Results are
+written under `artifacts/load-test/`. The run writes demo data and resets the
+demo dataset afterwards unless `--keep-data` is passed.
+
 ## A11y Static Audit
 
 Windows PowerShell:

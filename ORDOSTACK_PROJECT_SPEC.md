@@ -5,7 +5,7 @@ This file records the current product baseline for the repository. The original 
 ## Current Baseline
 
 ```text
-Version: 0.55.0
+Version: 0.56.0
 Stage: Local Private Beta Candidate
 Runtime: Docker Compose local stack
 Primary UI: web-dashboard
@@ -68,7 +68,7 @@ OrdoStack can be used for controlled local beta evaluation. It is not yet a host
 | Schedule history | Save generated runs, reload, rename, soft delete, compare, lock items, move items |
 | Export | Markdown, CSV, local PDF |
 | Analytics | Actual minutes, estimate drift, completion rate, focus minutes, completion forecast |
-| ML | Local duration prediction, JSON artifact, heuristic fallback, model metadata, feedback export, holdout-evaluated retraining, metrics-gated promotion into a local registry, hot model reload, optional ClearML tracking, prediction serving logs with live accuracy reporting, error-profile-based confidence, cross-validated model comparison |
+| ML | Local duration prediction, JSON artifact, heuristic fallback, model metadata, feedback export, holdout-evaluated retraining, metrics-gated promotion into a local registry, hot model reload, optional ClearML tracking, prediction serving logs with live accuracy reporting, error-profile-based confidence, cross-validated model comparison, per-user calibration |
 | Storage | MySQL in Docker, memory store in tests |
 | Observability | Request IDs, structured request logs, health and readiness endpoints |
 | Backup | Local MySQL backup script and verification script |
@@ -158,4 +158,4 @@ Any Docker, database, migration, or deployment change also requires `docker comp
 - ClearML agent execution.
 - Mobile app implementation.
 - External calendar integration.
-- Load testing and security review.
+- Security review. (A single-machine load baseline exists; hosted-scale load testing remains open.)
