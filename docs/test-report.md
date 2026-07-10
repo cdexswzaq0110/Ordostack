@@ -1,22 +1,22 @@
-# OrdoStack 測試報告（v0.55.0）
+# OrdoStack 測試報告（v0.56.0）
 
-> **日期:** 2026-07-10
-> **版本:** 0.55.0（branch `feature/prediction-quality`）
+> **日期:** 2026-07-11
+> **版本:** 0.56.0（branch `feature/calibration-and-load-baseline`）
 > **測試環境:** Windows 10 Pro、Docker Desktop（Engine 29.4.3）、Python 3.11（專案 `.venv`）、Node.js 20、Microsoft Edge（headless smoke）
-> **結論:** ✅ 全數通過 —— 106 個單元/整合測試、11 項靜態閘門、Docker runtime 驗證（5 容器 healthy + E2E + browser smoke + 視覺回歸）
+> **結論:** ✅ 全數通過 —— 112 個單元/整合測試、11 項靜態閘門、Docker runtime 驗證（5 容器 healthy + E2E + browser smoke + 視覺回歸）、單機負載基線（零錯誤）
 
 ## 1. 測試範圍
 
-本報告涵蓋 v0.52.0–v0.55.0 的完整驗證：三個後端服務的測試套件、dashboard build、八項靜態稽核、Docker Compose runtime 全鏈路驗證，以及兩版新增功能的實測——ML 重訓迴路（0.52.0）、介面重設計與側邊欄視圖導覽（0.53.0）、選配 ClearML 整合（0.54.0）、預測服務日誌與線上準確度（0.55.0）。
+本報告涵蓋 v0.52.0–v0.56.0 的完整驗證：三個後端服務的測試套件、dashboard build、八項靜態稽核、Docker Compose runtime 全鏈路驗證，以及兩版新增功能的實測——ML 重訓迴路（0.52.0）、介面重設計與側邊欄視圖導覽（0.53.0）、選配 ClearML 整合（0.54.0）、預測服務日誌與線上準確度（0.55.0）、每用戶校正與負載基線（0.56.0）。
 
 ## 2. 單元 / 整合測試
 
 | 服務 | 測試數 | 結果 | 執行時間 | 重點涵蓋 |
 | --- | ---: | --- | ---: | --- |
-| backend-api | 65 | ✅ 全過 | 7.90s | auth（註冊/登入/鎖定）、tasks、fixed events、execution logs、analytics、schedule 持久化/diff/export、demo reset 與生產環境防護、migration guard、**預測日誌（記錄/配對/準確度/零分鐘排除/授權）** |
+| backend-api | 71 | ✅ 全過 | 7.72s | auth（註冊/登入/鎖定）、tasks、fixed events、execution logs、analytics、schedule 持久化/diff/export、demo reset 與生產環境防護、migration guard、**預測日誌（記錄/配對/準確度/零分鐘排除/授權）、每用戶校正（中位數/clamp/最低樣本/回饋隔離/套用/回退）** |
 | scheduler-service | 11 | ✅ 全過 | 0.39s | 優先級評分、拓撲排序、容量選擇、free-slot 建構、鎖定項保留 |
 | ml-service | 30 | ✅ 全過 | 3.10s | 預測（artifact/heuristic/registry 三路徑）、**holdout 訓練指標、回饋合併、訓練決定性、晉升閘門（通過/拒絕基線/拒絕退步/回滾覆寫/歸檔）、熱載入、ClearML 追蹤（停用預設/追蹤內容/失敗安全/註冊回退/空回饋檔）、誤差輪廓信心值、模型對比實驗** |
-| **合計** | **106** | ✅ | | |
+| **合計** | **112** | ✅ | | |
 
 ml-service 測試由 11 個（0.51.x）擴充至 30 個。
 
@@ -130,12 +130,33 @@ python scripts\browser_smoke.py
 | 誤差輪廓信心值 | 單元測試 | ✅ qa（MAE 6）→0.9、study（MAE 30）→0.5、未知類別回退 global；舊 artifact 相容 |
 | 模型對比實驗 | `compare_models.py` 實跑（5-fold CV, seed 42） | ✅ naive 14.17 / multiplier 8.57 / GBM 8.84 / ridge 4.95（±2~3，n=14 下差異未達統計顯著；生產維持乘數表，ridge 列為資料累積後首選候選） |
 
+### 5.7 每用戶校正係數（0.56.0）
+
+| 項目 | 驗證方式 | 結果 |
+| --- | --- | --- |
+| 校正數學（中位數、clamp [0.5,2.0]、3 筆啟用） | 單元測試 | ✅ ratios 0.8/0.9/0.7 → 0.8；極端值 clamp 至 2.0；2 筆不啟用 |
+| 回饋隔離（從 raw 模型輸出計算，非已校正值） | 單元測試 | ✅ served 999／raw 100／actual 90 → factor 0.9 |
+| 套用至服務端預測 | API 整合測試 + Docker 實測 | ✅ 3 筆配對後 factor 啟用，實測 raw 101 → served 50（clamp 下限生效）、API 回報 factor 與樣本數 |
+| Fallback 不校正 | 整合測試 | ✅ ml-service 不可用時維持原始估時 |
+| MLOps 視圖顯示校正狀態 | build | ✅ 啟用時顯示 ×factor 與配對數；未啟用顯示暖身提示 |
+
+### 5.8 單機負載基線（0.56.0）
+
+`python scripts/load_test.py --requests 200 --concurrency 10 --generate-requests 50`（Docker Desktop、Windows 10、單機）：
+
+| 情境 | 吞吐 | p50 | p95 | p99 | max | 錯誤 |
+| --- | --- | --- | --- | --- | --- | --- |
+| read-mix（tasks/analytics/predictions/history 輪詢，200 req @ c=10） | 108.2 req/s | 76.3ms | 158.2ms | 279.4ms | 334.9ms | 0 |
+| generate-full-chain（backend→ml→scheduler→MySQL，50 req @ c=10） | 30.6 req/s | 305.5ms | 392.2ms | 403.1ms | 403.1ms | 0 |
+
+註：單機基線用於容量規劃起點與回歸比較，非託管環境數字。
+
 ## 6. 涵蓋 / 不涵蓋
 
 **涵蓋：** 單元/整合測試、靜態稽核、本地 Docker 全鏈路、視覺回歸、新功能實測。
 
 **不涵蓋（已列入 WBS）：**
-- 負載/壓力測試（WBS 2.2）
+- 託管環境負載測試（單機基線已建立）
 - 滲透測試與正式安全審查（WBS 2.1）
 - 跨瀏覽器矩陣（僅驗證 Chromium 系 Edge）
 - 行動裝置實機測試（mobile-app 為 placeholder）

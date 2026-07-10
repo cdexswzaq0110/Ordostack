@@ -17,8 +17,9 @@
 | 1.4 | ML 本地重訓迴路（回饋匯出、holdout 評估、指標閘門晉升、熱載入） | ✅ 完成 | 高 | 1.1 | 6h | 2026-07-08，見 docs/internal/mlops-production-roadmap.md |
 | 1.5 | 前端 UX P0（刪除防呆、誠實 model panel、Now 高亮、快捷鍵） | ✅ 完成 | 中 | 1.1 | 4h | 2026-07-08，見 docs/internal/frontend-ux-improvement-plan.md |
 | 1.6 | 介面重設計 + 側邊欄視圖導覽（編輯風設計系統、六視圖、真實涵蓋率、死按鈕清除） | ✅ 完成 | 高 | 1.5 | 8h | 2026-07-09，v0.53.0 |
-| 2.1 | 安全審查（load testing 前置：OWASP 檢查、依賴掃描、auth 流程審計） | ⏳ 待處理 | 高 | - | 8h | 可用 /verify 與 sunnydata-security skill |
-| 2.2 | 負載測試基線（單機 Docker Compose 下的容量報告） | ⏳ 待處理 | 中 | 2.1 | 6h | |
+| 1.7 | 每用戶校正係數（median actual/raw、3 筆啟用、clamp [0.5,2.0]、回饋隔離） | ✅ 完成 | 高 | 6.4 | 4h | 2026-07-11，v0.56.0 |
+| 2.1 | 安全審查（OWASP 檢查、依賴掃描、auth 流程審計） | ⏳ 待處理 | 高 | - | 8h | 可用 /verify 與 sunnydata-security skill |
+| 2.2 | 負載測試基線（單機 Docker Compose 下的容量報告） | ✅ 完成 | 中 | - | 6h | 2026-07-11，v0.56.0：scripts/load_test.py，read-mix p95 158ms @108req/s、generate p95 392ms @30.6req/s、零錯誤 |
 | 3.1 | 生產級 auth：session 管理、帳號救援、管理端支援 | ⏳ 待處理 | 高 | 2.1 | 16h | |
 | 4.1 | 託管部署：DNS、TLS、production secrets、監控基礎設施 | ⏳ 待處理 | 高 | 2.1, 3.1 | 24h | 需要雲端帳號決策（目前 Non-Goal） |
 | 4.2 | Off-host 備份儲存與 production 還原演練 | ⏳ 待處理 | 高 | 4.1 | 8h | 本地備份腳本已存在 |

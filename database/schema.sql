@@ -110,6 +110,7 @@ CREATE TABLE IF NOT EXISTS prediction_logs (
   model_name VARCHAR(120) NOT NULL,
   model_version VARCHAR(40) NOT NULL,
   predicted_minutes INT NOT NULL,
+  raw_predicted_minutes INT NULL,
   estimated_minutes INT NOT NULL,
   actual_minutes INT NULL,
   actual_recorded_at DATETIME(6) NULL,

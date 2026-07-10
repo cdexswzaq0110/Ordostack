@@ -10,6 +10,7 @@ class DurationPredictionRead(BaseModel):
     confidence: float
     model_name: str
     reason: str
+    raw_predicted_minutes: int | None = None
 
 
 class DurationPredictionResponse(BaseModel):
@@ -18,6 +19,8 @@ class DurationPredictionResponse(BaseModel):
     model_name: str
     model_version: str
     predictions: list[DurationPredictionRead]
+    calibration_factor: float | None = None
+    calibration_samples: int = 0
 
 
 class DurationFeedbackExportResponse(BaseModel):

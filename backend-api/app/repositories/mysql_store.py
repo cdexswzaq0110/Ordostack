@@ -309,6 +309,7 @@ class MySqlStore:
             "model_name",
             "model_version",
             "predicted_minutes",
+            "raw_predicted_minutes",
             "estimated_minutes",
             "created_at",
         ]
@@ -317,7 +318,7 @@ class MySqlStore:
         with self._connect() as connection:
             with connection.cursor() as cursor:
                 for entry in entries:
-                    row = {"created_at": now, **entry}
+                    row = {"created_at": now, "raw_predicted_minutes": None, **entry}
                     values = [self._serialize_value(field, row[field]) for field in fields]
                     cursor.execute(
                         f"INSERT INTO prediction_logs ({', '.join(fields)}) VALUES ({placeholders})",
@@ -1195,6 +1196,7 @@ SCHEMA_STATEMENTS = [
       model_name VARCHAR(120) NOT NULL,
       model_version VARCHAR(40) NOT NULL,
       predicted_minutes INT NOT NULL,
+      raw_predicted_minutes INT NULL,
       estimated_minutes INT NOT NULL,
       actual_minutes INT NULL,
       actual_recorded_at DATETIME(6) NULL,
