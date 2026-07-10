@@ -23,7 +23,7 @@
 | 4.1 | 託管部署：DNS、TLS、production secrets、監控基礎設施 | ⏳ 待處理 | 高 | 2.1, 3.1 | 24h | 需要雲端帳號決策（目前 Non-Goal） |
 | 4.2 | Off-host 備份儲存與 production 還原演練 | ⏳ 待處理 | 高 | 4.1 | 8h | 本地備份腳本已存在 |
 | 5.1 | Production ML model registry 與 promotion workflow | 🔄 進行中 | 中 | 4.1 | 12h | 本地 JSON registry + 指標閘門晉升 + /model/reload 已完成（1.4）；生產版（ClearML/雲端）待 M3 |
-| 5.2 | ClearML agent 執行 | ⏳ 待處理 | 低 | 5.1 | 8h | 目前僅文件 |
+| 5.2 | ClearML 整合 | 🔄 進行中 | 低 | 5.1 | 8h | SDK 整合完成（訓練追蹤＋晉升註冊，離線模式驗證，2026-07-10）；server/agent 自架步驟已文件化，實際運行為部署決策 |
 | 6.1 | 外部行事曆整合（Google/Outlook） | ⏳ 待處理 | 中 | 3.1 | 16h | |
 | 6.2 | Mobile app 實作 | ⏳ 待處理 | 低 | 3.1 | 40h+ | 目前為 placeholder |
 | 6.3 | 前端 UX P1 殘項（經過時間計時器、預測偏差徽章、範圍化 refetch、App.tsx 分模組） | ⏳ 待處理 | 中 | 1.6 | 8h | 死按鈕/plan score/視圖導覽已於 1.6 完成 |

@@ -1,6 +1,6 @@
 # ClearML MLOps Plan
 
-ClearML is optional future infrastructure. OrdoStack currently works with a local JSON model artifact and deterministic heuristic fallback; no ClearML server or agent is running.
+ClearML is optional infrastructure. OrdoStack works with a local JSON model artifact and deterministic heuristic fallback; no ClearML server or agent is required. As of v0.54.0 the SDK integration is implemented (see [clearml/README.md](../clearml/README.md)): training and promotion record tasks, metrics, and artifacts when `ORDOSTACK_CLEARML_ENABLED=1`, verified end to end in offline mode.
 
 ## Current Local Contract
 
@@ -12,14 +12,14 @@ ClearML is optional future infrastructure. OrdoStack currently works with a loca
 
 ## ClearML Mapping
 
-| Local concept | Future ClearML object |
-| --- | --- |
-| Training CSV | Dataset artifact with source and review date |
-| Training run | Task named `duration-training/<date>/<git-sha>` |
-| Parameters | Feature names, weights, model version, row count |
-| Metrics | Baseline MAE and model MAE |
-| Model JSON | Output model registered after validation |
-| Runtime selection | Approved model version copied to the local artifact contract |
+| Local concept | ClearML object | Status |
+| --- | --- | --- |
+| Training CSV | Dataset artifacts uploaded with each training task | Implemented |
+| Training run | Task named `duration-training <timestamp>` | Implemented |
+| Parameters | Model name/version, seed, training and feedback row counts | Implemented |
+| Metrics | Baseline MAE, model MAE, improvement ratio (holdout) | Implemented |
+| Model JSON | Output model registered on gate-passing promotion | Implemented (task artifact in offline mode) |
+| Runtime selection | Approved model version copied to the local artifact contract | Local JSON registry remains authoritative |
 
 ## Promotion Workflow
 
@@ -35,11 +35,11 @@ ClearML is optional future infrastructure. OrdoStack currently works with a loca
 
 ## Configuration
 
-The blank `CLEARML_*` variables in `.env.production.example` are examples only. Real values belong in the selected secret store. The product must continue to start and predict without ClearML credentials.
+Tracking is opt-in via `ORDOSTACK_CLEARML_ENABLED=1`; `CLEARML_OFFLINE_MODE=1` records local sessions with no account or server. The blank `CLEARML_API_*` variables in `.env.production.example` document the SDK's server credentials and are examples only; real values belong in the selected secret store. The product must continue to start and predict without ClearML credentials — the integration degrades to a no-op and the local JSON registry stays authoritative.
 
 ## Deferred Work
 
-- ClearML server selection and cost ownership.
+- ClearML server selection and cost ownership (self-hosted bring-up steps are documented in `clearml/README.md`).
 - Agent queue and worker deployment.
 - Dataset retention and access policy.
 - Automated model promotion or online serving.

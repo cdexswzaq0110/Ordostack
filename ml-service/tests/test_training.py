@@ -80,3 +80,16 @@ def test_train_duration_model_ignores_missing_feedback_file(tmp_path) -> None:
     )
 
     assert result["model"]["feedback_rows"] == 0
+
+
+def test_train_duration_model_accepts_header_only_feedback_file(tmp_path) -> None:
+    training_module = load_training_module()
+    feedback_path = tmp_path / "duration_feedback.csv"
+    feedback_path.write_text(
+        "category,estimated_minutes,priority,difficulty,requires_focus,actual_minutes\n",
+        encoding="utf-8",
+    )
+
+    result = training_module.train_duration_model(artifact_dir=tmp_path, feedback_path=feedback_path)
+
+    assert result["model"]["feedback_rows"] == 0

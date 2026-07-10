@@ -82,7 +82,7 @@ The retraining loop is local and metrics-gated:
 3. `ml-service/training/promote_duration_model.py` promotes the candidate into the registry only when it beats the baseline and does not regress against the active model.
 4. `POST /model/reload` serves the promoted artifact without a restart.
 
-Longer-term model lifecycle planning lives in [docs/internal/mlops-production-roadmap.md](docs/internal/mlops-production-roadmap.md).
+Training and promotion optionally record tasks, metrics, and artifacts to ClearML (`ORDOSTACK_CLEARML_ENABLED=1`, offline-capable, never blocking the loop); see [clearml/README.md](clearml/README.md). Longer-term model lifecycle planning lives in [docs/internal/mlops-production-roadmap.md](docs/internal/mlops-production-roadmap.md).
 
 ## Persistence
 
