@@ -1,10 +1,16 @@
-from datetime import date
+from datetime import date, timedelta
 from typing import Any
 
 import httpx
 
 from app.config import load_runtime_config
-from app.schemas.predictions import DurationFeedbackExportResponse, DurationPredictionResponse
+from app.repositories.store import get_store
+from app.schemas.predictions import (
+    DurationFeedbackExportResponse,
+    DurationPredictionResponse,
+    PredictionAccuracyDay,
+    PredictionAccuracyResponse,
+)
 from app.schemas.tasks import TaskRead
 from app.services import analytics as analytics_service
 from app.services import tasks as task_service
@@ -46,6 +52,80 @@ def export_duration_feedback(user_id: int, target_date: date) -> DurationFeedbac
         row_count=max(0, len(rows) - 1),
         content=content,
     )
+
+
+def log_served_predictions(
+    user_id: int,
+    target_date: date,
+    tasks: list[TaskRead],
+    prediction_response: DurationPredictionResponse,
+) -> int:
+    """Persist the predictions a generated plan was built on, for later accuracy pairing."""
+    estimated_by_task = {task.id: task.estimated_minutes for task in tasks}
+    entries = [
+        {
+            "user_id": user_id,
+            "task_id": prediction.task_id,
+            "target_date": target_date,
+            "model_name": prediction.model_name,
+            "model_version": prediction_response.model_version,
+            "predicted_minutes": prediction.predicted_minutes,
+            "estimated_minutes": estimated_by_task.get(prediction.task_id, prediction.predicted_minutes),
+        }
+        for prediction in prediction_response.predictions
+        if prediction.task_id in estimated_by_task
+    ]
+    if not entries:
+        return 0
+    return len(get_store().create_prediction_logs(entries))
+
+
+def record_prediction_actual(user_id: int, task_id: int, actual_minutes: int) -> int:
+    if actual_minutes <= 0:
+        return 0
+    return get_store().record_prediction_actual(user_id=user_id, task_id=task_id, actual_minutes=actual_minutes)
+
+
+def get_prediction_accuracy(user_id: int, days: int = 90) -> PredictionAccuracyResponse:
+    since_date = date.today() - timedelta(days=days)
+    logs = get_store().list_prediction_logs(user_id=user_id, since_date=since_date)
+    paired_logs = [log for log in logs if log["actual_minutes"] is not None]
+
+    daily: list[PredictionAccuracyDay] = []
+    for day in sorted({log["target_date"] for log in paired_logs}):
+        day_logs = [log for log in paired_logs if log["target_date"] == day]
+        daily.append(
+            PredictionAccuracyDay(
+                target_date=day,
+                paired_count=len(day_logs),
+                model_mae=mean_absolute_error(day_logs, "predicted_minutes"),
+                estimate_mae=mean_absolute_error(day_logs, "estimated_minutes"),
+            )
+        )
+
+    model_mae = mean_absolute_error(paired_logs, "predicted_minutes") if paired_logs else None
+    estimate_mae = mean_absolute_error(paired_logs, "estimated_minutes") if paired_logs else None
+    improvement_ratio = (
+        round(1 - (model_mae / estimate_mae), 4) if model_mae is not None and estimate_mae else None
+    )
+
+    return PredictionAccuracyResponse(
+        user_id=user_id,
+        window_days=days,
+        logged_count=len(logs),
+        paired_count=len(paired_logs),
+        model_mae=model_mae,
+        estimate_mae=estimate_mae,
+        improvement_ratio=improvement_ratio,
+        daily=daily,
+    )
+
+
+def mean_absolute_error(logs: list[dict[str, Any]], prediction_field: str) -> float:
+    if not logs:
+        return 0.0
+    total_error = sum(abs(log[prediction_field] - log["actual_minutes"]) for log in logs)
+    return round(total_error / len(logs), 2)
 
 
 def predict_for_tasks(

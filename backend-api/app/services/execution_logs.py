@@ -4,6 +4,8 @@ from fastapi import HTTPException, status
 
 from app.repositories.store import get_store
 from app.schemas.execution_logs import ExecutionEventType, TaskExecutionEventRequest, TaskExecutionLogRead
+from app.services import analytics as analytics_service
+from app.services import predictions as prediction_service
 
 
 def list_execution_logs(
@@ -45,7 +47,16 @@ def record_execution_event(
     next_status = status_for_event(event_type)
     store.update_task(task_id, {"status": next_status})
 
+    if event_type == "complete":
+        pair_prediction_with_actual(user_id=user_id, task_id=task_id)
+
     return TaskExecutionLogRead.model_validate(execution_log)
+
+
+def pair_prediction_with_actual(user_id: int, task_id: int) -> None:
+    task_logs = get_store().list_execution_logs(user_id=user_id, task_id=task_id)
+    actual_minutes = analytics_service.calculate_actual_minutes_by_task(task_logs).get(task_id, 0)
+    prediction_service.record_prediction_actual(user_id=user_id, task_id=task_id, actual_minutes=actual_minutes)
 
 
 def validate_execution_transition(task: dict, event_type: ExecutionEventType) -> None:

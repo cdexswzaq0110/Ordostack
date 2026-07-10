@@ -27,4 +27,22 @@ class DurationFeedbackExportResponse(BaseModel):
     content: str
 
 
+class PredictionAccuracyDay(BaseModel):
+    target_date: date
+    paired_count: int
+    model_mae: float
+    estimate_mae: float
+
+
+class PredictionAccuracyResponse(BaseModel):
+    user_id: int
+    window_days: int
+    logged_count: int
+    paired_count: int
+    model_mae: float | None
+    estimate_mae: float | None
+    improvement_ratio: float | None
+    daily: list[PredictionAccuracyDay]
+
+
 DurationPredictionPayload = dict[str, Any]

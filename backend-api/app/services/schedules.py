@@ -86,6 +86,12 @@ def generate_schedule(payload: ScheduleGenerateRequest) -> ScheduleGenerateRespo
         request_payload=payload.model_dump(mode="json"),
         schedule=schedule_response,
     )
+    prediction_service.log_served_predictions(
+        user_id=payload.user_id,
+        target_date=payload.target_date,
+        tasks=tasks,
+        prediction_response=duration_predictions,
+    )
     return schedule_response
 
 

@@ -101,3 +101,19 @@ CREATE TABLE IF NOT EXISTS schedule_templates (
   deleted_at DATETIME(6) NULL,
   INDEX idx_schedule_templates_user_active (user_id, deleted_at, name)
 );
+
+CREATE TABLE IF NOT EXISTS prediction_logs (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  task_id INT NOT NULL,
+  target_date DATE NOT NULL,
+  model_name VARCHAR(120) NOT NULL,
+  model_version VARCHAR(40) NOT NULL,
+  predicted_minutes INT NOT NULL,
+  estimated_minutes INT NOT NULL,
+  actual_minutes INT NULL,
+  actual_recorded_at DATETIME(6) NULL,
+  created_at DATETIME(6) NOT NULL,
+  INDEX idx_prediction_logs_user_date (user_id, target_date),
+  INDEX idx_prediction_logs_unpaired (user_id, task_id, actual_minutes)
+);
