@@ -66,6 +66,20 @@ def prepare_demo_data() -> str:
         payload={"target_date": DEMO_DATASET_DATE, "planning_mode": "balanced"},
         token=token,
     )
+    # Complete one task after generation so the MLOps view has a paired
+    # prediction and the live-accuracy panel renders with data.
+    tasks = request_json(f"{BACKEND_API_URL}/tasks?target_date={DEMO_DATASET_DATE}", token=token)
+    pending_task = next(task for task in tasks if task["status"] == "pending")
+    request_json(
+        f"{BACKEND_API_URL}/tasks/{pending_task['id']}/execution/start",
+        payload={"occurred_at": f"{DEMO_DATASET_DATE}T15:00:00"},
+        token=token,
+    )
+    request_json(
+        f"{BACKEND_API_URL}/tasks/{pending_task['id']}/execution/complete",
+        payload={"occurred_at": f"{DEMO_DATASET_DATE}T16:22:00"},
+        token=token,
+    )
     return token
 
 
@@ -104,6 +118,12 @@ def capture(token: str) -> list[Path]:
         analytics_path = OUTPUT_DIR / "analytics-view.png"
         page.screenshot(path=str(analytics_path))
         written.append(analytics_path)
+
+        page.get_by_role("button", name="MLOps").click()
+        page.wait_for_selector(".accuracy-panel, .empty-state", timeout=10_000)
+        mlops_path = OUTPUT_DIR / "mlops-view.png"
+        page.screenshot(path=str(mlops_path))
+        written.append(mlops_path)
 
         browser.close()
 

@@ -204,6 +204,24 @@ type ApiDurationPredictionResponse = {
   predictions: ApiDurationPrediction[];
 };
 
+type ApiPredictionAccuracyDay = {
+  target_date: string;
+  paired_count: number;
+  model_mae: number;
+  estimate_mae: number;
+};
+
+type ApiPredictionAccuracy = {
+  user_id: number;
+  window_days: number;
+  logged_count: number;
+  paired_count: number;
+  model_mae: number | null;
+  estimate_mae: number | null;
+  improvement_ratio: number | null;
+  daily: ApiPredictionAccuracyDay[];
+};
+
 type ApiUser = {
   id: number;
   email: string;
@@ -874,6 +892,7 @@ export function App() {
   const [scheduleDiff, setScheduleDiff] = useState<ApiScheduleDiffResponse | null>(null);
   const [analytics, setAnalytics] = useState<ApiDailyAnalytics | null>(null);
   const [durationPredictions, setDurationPredictions] = useState<ApiDurationPredictionResponse | null>(null);
+  const [predictionAccuracy, setPredictionAccuracy] = useState<ApiPredictionAccuracy | null>(null);
   const [query, setQuery] = useState("");
   const [taskStatusFilter, setTaskStatusFilter] = useState<TaskStatusFilter>("all");
   const [taskCategoryFilter, setTaskCategoryFilter] = useState("all");
@@ -1009,6 +1028,7 @@ export function App() {
       setFixedEvents([]);
       setAnalytics(null);
       setDurationPredictions(null);
+      setPredictionAccuracy(null);
       setSchedule(null);
       setScheduleHistory([]);
       setSelectedScheduleRunId(null);
@@ -1030,6 +1050,7 @@ export function App() {
         nextDurationPredictions,
         latestSchedule,
         nextScheduleHistory,
+        nextPredictionAccuracy,
       ] = await Promise.all([
         requestJson<ApiTask[]>(
           `${API_BASE_URL}/tasks?target_date=${selectedDate}`,
@@ -1055,12 +1076,17 @@ export function App() {
           `${API_BASE_URL}/schedules/history?target_date=${selectedDate}&limit=5`,
           { headers: buildAuthHeaders() },
         ),
+        requestJson<ApiPredictionAccuracy>(
+          `${API_BASE_URL}/ml/prediction-accuracy?days=90`,
+          { headers: buildAuthHeaders() },
+        ),
       ]);
 
       setTasks(nextTasks);
       setFixedEvents(nextFixedEvents);
       setAnalytics(nextAnalytics);
       setDurationPredictions(nextDurationPredictions);
+      setPredictionAccuracy(nextPredictionAccuracy);
       setSchedule(latestSchedule);
       setScheduleHistory(nextScheduleHistory);
       setSelectedScheduleRunId(latestSchedule ? nextScheduleHistory[0]?.id ?? null : null);
@@ -2820,6 +2846,71 @@ export function App() {
                   "Predictions come from the local ml-service. Without a trained artifact it falls back to a deterministic heuristic, and to raw estimates when the service is unreachable.",
                 )}
               </p>
+
+              <h2 className="view-subtitle">{t("Live accuracy")}</h2>
+              {predictionAccuracy && predictionAccuracy.paired_count > 0 ? (
+                <div className="accuracy-panel">
+                  <div className="accuracy-stats">
+                    <article>
+                      <span>{t("Paired predictions")}</span>
+                      <strong>{predictionAccuracy.paired_count}</strong>
+                      <em>
+                        {predictionAccuracy.logged_count} {t("logged predictions")}
+                      </em>
+                    </article>
+                    <article>
+                      <span>{t("Model error")}</span>
+                      <strong>{predictionAccuracy.model_mae}m</strong>
+                      <em>{t("mean absolute error")}</em>
+                    </article>
+                    <article>
+                      <span>{t("Estimate error")}</span>
+                      <strong>{predictionAccuracy.estimate_mae}m</strong>
+                      <em>
+                        {predictionAccuracy.improvement_ratio !== null
+                          ? `${Math.abs(Math.round(predictionAccuracy.improvement_ratio * 100))}% ${t(
+                              predictionAccuracy.improvement_ratio >= 0
+                                ? "lower error than raw estimates"
+                                : "higher error than raw estimates",
+                            )}`
+                          : t("mean absolute error")}
+                      </em>
+                    </article>
+                  </div>
+                  <div className="accuracy-days">
+                    {predictionAccuracy.daily.slice(-14).map((day) => {
+                      const maxError = Math.max(day.model_mae, day.estimate_mae, 1);
+                      return (
+                        <div key={day.target_date} className="accuracy-day">
+                          <span>{day.target_date}</span>
+                          <div className="accuracy-bars">
+                            <div
+                              className="accuracy-bar model"
+                              style={{ width: `${Math.max(2, (day.model_mae / maxError) * 100)}%` }}
+                            />
+                            <div
+                              className="accuracy-bar estimate"
+                              style={{ width: `${Math.max(2, (day.estimate_mae / maxError) * 100)}%` }}
+                            />
+                          </div>
+                          <em>
+                            {day.model_mae}m / {day.estimate_mae}m
+                          </em>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="accuracy-legend">
+                    {t("Bars compare daily mean absolute error: model (dark) vs raw estimate (grey).")}
+                  </p>
+                </div>
+              ) : (
+                <div className="empty-state compact-state">
+                  {t("No paired predictions yet. Generate a plan, then complete tasks to measure live accuracy.")}
+                </div>
+              )}
+
+              <h2 className="view-subtitle">{t("Predictions for this date")}</h2>
               {durationPredictions && durationPredictions.predictions.length > 0 ? (
                 <table className="data-table">
                   <thead>

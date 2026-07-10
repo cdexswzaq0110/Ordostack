@@ -1,2 +1,3 @@
 # Optional training-time tools. The runtime service image does not install these.
 clearml>=1.16,<2
+scikit-learn>=1.4,<2

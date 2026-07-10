@@ -299,6 +299,60 @@ class MySqlStore:
                 cursor.execute(query, params)
                 return list(cursor.fetchall())
 
+    def create_prediction_logs(self, entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        self._ensure_ready()
+        now = datetime.now(UTC)
+        fields = [
+            "user_id",
+            "task_id",
+            "target_date",
+            "model_name",
+            "model_version",
+            "predicted_minutes",
+            "estimated_minutes",
+            "created_at",
+        ]
+        placeholders = ", ".join(["%s"] * len(fields))
+        created: list[dict[str, Any]] = []
+        with self._connect() as connection:
+            with connection.cursor() as cursor:
+                for entry in entries:
+                    row = {"created_at": now, **entry}
+                    values = [self._serialize_value(field, row[field]) for field in fields]
+                    cursor.execute(
+                        f"INSERT INTO prediction_logs ({', '.join(fields)}) VALUES ({placeholders})",
+                        values,
+                    )
+                    prediction_log_id = cursor.lastrowid
+                    cursor.execute("SELECT * FROM prediction_logs WHERE id=%s", (prediction_log_id,))
+                    created.append(cursor.fetchone())
+        return created
+
+    def record_prediction_actual(self, user_id: int, task_id: int, actual_minutes: int) -> int:
+        self._ensure_ready()
+        with self._connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE prediction_logs SET actual_minutes=%s, actual_recorded_at=%s "
+                    "WHERE user_id=%s AND task_id=%s AND actual_minutes IS NULL",
+                    (actual_minutes, datetime.now(UTC).replace(tzinfo=None), user_id, task_id),
+                )
+                return cursor.rowcount
+
+    def list_prediction_logs(self, user_id: int, since_date: date | None = None) -> list[dict[str, Any]]:
+        self._ensure_ready()
+        query = "SELECT * FROM prediction_logs WHERE user_id=%s"
+        params: list[Any] = [user_id]
+        if since_date is not None:
+            query += " AND target_date>=%s"
+            params.append(since_date)
+        query += " ORDER BY target_date ASC, id ASC"
+
+        with self._connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(query, params)
+                return list(cursor.fetchall())
+
     def save_generated_schedule(
         self,
         user_id: int,
@@ -706,6 +760,7 @@ class MySqlStore:
                     )
                 cursor.execute("DELETE FROM schedule_runs WHERE user_id=%s", (user_id,))
                 cursor.execute("DELETE FROM execution_logs WHERE user_id=%s", (user_id,))
+                cursor.execute("DELETE FROM prediction_logs WHERE user_id=%s", (user_id,))
                 cursor.execute("DELETE FROM tasks WHERE user_id=%s", (user_id,))
                 cursor.execute("DELETE FROM fixed_events WHERE user_id=%s", (user_id,))
                 cursor.execute("DELETE FROM schedule_templates WHERE user_id=%s", (user_id,))
@@ -1129,6 +1184,23 @@ SCHEMA_STATEMENTS = [
       updated_at DATETIME(6) NULL,
       deleted_at DATETIME(6) NULL,
       INDEX idx_schedule_templates_user_active (user_id, deleted_at, name)
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS prediction_logs (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      task_id INT NOT NULL,
+      target_date DATE NOT NULL,
+      model_name VARCHAR(120) NOT NULL,
+      model_version VARCHAR(40) NOT NULL,
+      predicted_minutes INT NOT NULL,
+      estimated_minutes INT NOT NULL,
+      actual_minutes INT NULL,
+      actual_recorded_at DATETIME(6) NULL,
+      created_at DATETIME(6) NOT NULL,
+      INDEX idx_prediction_logs_user_date (user_id, target_date),
+      INDEX idx_prediction_logs_unpaired (user_id, task_id, actual_minutes)
     )
     """,
 ]

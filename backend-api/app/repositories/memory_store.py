@@ -25,12 +25,14 @@ class InMemoryStore:
             self._next_execution_log_id = 1
             self._next_schedule_run_id = 1
             self._next_schedule_template_id = 1
+            self._next_prediction_log_id = 1
             self._users: dict[int, dict[str, Any]] = {}
             self._tasks: dict[int, dict[str, Any]] = {}
             self._fixed_events: dict[int, dict[str, Any]] = {}
             self._execution_logs: dict[int, dict[str, Any]] = {}
             self._schedule_runs: dict[int, dict[str, Any]] = {}
             self._schedule_templates: dict[int, dict[str, Any]] = {}
+            self._prediction_logs: dict[int, dict[str, Any]] = {}
             self._seed_demo_user()
             self._seed_demo_data()
 
@@ -218,6 +220,49 @@ class InMemoryStore:
             filtered_logs = [log for log in filtered_logs if log["occurred_at"].date() == target_date]
 
         return sorted(filtered_logs, key=lambda log: (log["occurred_at"].replace(tzinfo=None), log["id"]))
+
+    def create_prediction_logs(self, entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        now = datetime.now(UTC)
+        created: list[dict[str, Any]] = []
+        with self._lock:
+            for entry in entries:
+                prediction_log_id = self._next_prediction_log_id
+                self._next_prediction_log_id += 1
+                prediction_log = {
+                    "id": prediction_log_id,
+                    "actual_minutes": None,
+                    "actual_recorded_at": None,
+                    "created_at": now,
+                    **entry,
+                }
+                self._prediction_logs[prediction_log_id] = prediction_log
+                created.append(deepcopy(prediction_log))
+        return created
+
+    def record_prediction_actual(self, user_id: int, task_id: int, actual_minutes: int) -> int:
+        now = datetime.now(UTC)
+        updated = 0
+        with self._lock:
+            for prediction_log in self._prediction_logs.values():
+                if (
+                    prediction_log["user_id"] == user_id
+                    and prediction_log["task_id"] == task_id
+                    and prediction_log["actual_minutes"] is None
+                ):
+                    prediction_log["actual_minutes"] = actual_minutes
+                    prediction_log["actual_recorded_at"] = now
+                    updated += 1
+        return updated
+
+    def list_prediction_logs(self, user_id: int, since_date: date | None = None) -> list[dict[str, Any]]:
+        with self._lock:
+            prediction_logs = [deepcopy(log) for log in self._prediction_logs.values()]
+
+        filtered_logs = [log for log in prediction_logs if log["user_id"] == user_id]
+        if since_date is not None:
+            filtered_logs = [log for log in filtered_logs if log["target_date"] >= since_date]
+
+        return sorted(filtered_logs, key=lambda log: (log["target_date"], log["id"]))
 
     def save_generated_schedule(
         self,

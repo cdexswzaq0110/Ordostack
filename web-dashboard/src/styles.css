@@ -1420,6 +1420,109 @@ h3 {
   white-space: nowrap;
 }
 
+.view-subtitle {
+  margin: 22px 0 12px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.accuracy-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.accuracy-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.accuracy-stats article {
+  padding: 14px 16px;
+  border: 1px solid var(--line-soft);
+  background: var(--canvas);
+}
+
+.accuracy-stats span,
+.accuracy-stats strong,
+.accuracy-stats em {
+  display: block;
+}
+
+.accuracy-stats span {
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.accuracy-stats strong {
+  margin-top: 8px;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 500;
+}
+
+.accuracy-stats em {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-style: normal;
+}
+
+.accuracy-days {
+  display: grid;
+  gap: 7px;
+}
+
+.accuracy-day {
+  display: grid;
+  grid-template-columns: 86px minmax(0, 1fr) 110px;
+  align-items: center;
+  gap: 12px;
+}
+
+.accuracy-day span {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.accuracy-day em {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-style: normal;
+  text-align: right;
+}
+
+.accuracy-bars {
+  display: grid;
+  gap: 3px;
+}
+
+.accuracy-bar {
+  height: 7px;
+  min-width: 2px;
+}
+
+.accuracy-bar.model {
+  background: var(--ink);
+}
+
+.accuracy-bar.estimate {
+  background: var(--line);
+}
+
+.accuracy-legend {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
 .data-table {
   width: 100%;
   border-collapse: collapse;
