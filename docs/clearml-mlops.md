@@ -2,7 +2,7 @@
 
 Issue 5 adds a local duration prediction MVP through `ml-service`. Issue 6 adds a local training artifact workflow. Neither step requires ClearML credentials or calls any paid API.
 
-Issue 39 adds a disabled-by-default local ClearML tracking baseline. It records the intended experiment metadata shape but does not require a ClearML account, server, agent, or paid API. Credentials must not be committed.
+As of v0.54.0 the ClearML integration is implemented and optional. Training and promotion record tasks, parameters, metrics, and artifacts to ClearML when `ORDOSTACK_CLEARML_ENABLED=1`; with `CLEARML_OFFLINE_MODE=1` the SDK stores sessions locally without an account or server. The integration degrades to a no-op on any failure, so the local loop never depends on it. Setup commands live in [clearml/README.md](../clearml/README.md). Credentials must not be committed.
 
 Current ML boundary:
 
@@ -34,30 +34,31 @@ Outputs:
 
 The Docker image copies `ml-service/training` so `ml-service` can load `training/artifacts/duration_model.json` at runtime. If the artifact is missing, it falls back to `heuristic-duration`.
 
-Current artifact metrics:
+Current artifact metrics (seeded holdout split, out-of-sample):
 
 ```json
 {
-  "baseline_mae": 14.14,
-  "model_mae": 6.57,
-  "training_rows": 14
+  "baseline_mae": 7.33,
+  "model_mae": 4.33,
+  "improvement_ratio": 0.4093,
+  "evaluation_mode": "holdout",
+  "training_rows": 11,
+  "evaluation_rows": 3
 }
 ```
 
-## Optional ClearML Local Tracking Baseline
+## Optional ClearML Tracking
 
-No account is required for this issue.
-
-Local metadata to track before a real ClearML server exists:
+Implemented in `ml-service/training/clearml_utils.py` and wired into training
+and promotion. What each run records:
 
 - `project_name`: `OrdoStack`
-- `task_name`: training script name and date
-- `model_name`: active duration model name
-- `model_version`: semantic model version
-- `metrics`: `baseline_mae`, `model_mae`, `training_rows`
-- `artifacts`: model JSON, metrics JSON, and future registry entry
+- training task: `duration-training <timestamp>` with parameters (`model_name`, `model_version`, `seed`, `training_rows`, `feedback_rows`), scalar metrics (`baseline_mae`, `model_mae`, `improvement_ratio`), and artifacts (model JSON, metrics JSON, dataset CSVs)
+- promotion task: `duration-promotion <timestamp>` tagged `promoted`, registering the versioned artifact as an output model (task artifact in offline mode)
 
-When ClearML is introduced later, the local metadata should map directly to ClearML Task parameters, scalar metrics, and artifact uploads. Until then, keep tracking disabled and do not add credentials to Git.
+Enable with `ORDOSTACK_CLEARML_ENABLED=1`; add `CLEARML_OFFLINE_MODE=1` to run
+without an account or server. Tracking stays off by default and never blocks
+the loop. Do not add credentials to Git.
 
 ## Local Model Registry Baseline
 

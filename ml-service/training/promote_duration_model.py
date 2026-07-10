@@ -9,8 +9,12 @@ the serving path (app/model_registry.py) picks it up after POST /model/reload.
 import argparse
 import json
 import shutil
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from clearml_utils import register_promoted_model
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ARTIFACT_DIR = PROJECT_ROOT / "training" / "artifacts"
@@ -65,7 +69,8 @@ def promote_duration_model(
     registry["active_model"] = {key: new_entry[key] for key in ("name", "version", "path", "promoted_at", "metrics")}
 
     registry_path.write_text(json.dumps(registry, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return {"promoted": True, "active_model": registry["active_model"]}
+    clearml_model_id = register_promoted_model(model, metrics, registry_path.parent / promoted_filename)
+    return {"promoted": True, "active_model": registry["active_model"], "clearml_model_id": clearml_model_id}
 
 
 def validate_candidate(model: dict, metrics: dict) -> None:

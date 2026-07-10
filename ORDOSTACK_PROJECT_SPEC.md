@@ -5,7 +5,7 @@ This file records the current product baseline for the repository. The original 
 ## Current Baseline
 
 ```text
-Version: 0.53.0
+Version: 0.54.0
 Stage: Local Private Beta Candidate
 Runtime: Docker Compose local stack
 Primary UI: web-dashboard
@@ -55,7 +55,7 @@ OrdoStack can be used for controlled local beta evaluation. It is not yet a host
 | `ml-service` | Local duration prediction | Implemented MVP |
 | `mysql` | Docker persistence | Implemented MVP |
 | `mobile-app` | Future mobile client | Placeholder only |
-| `clearml` | Future MLOps work | Documentation / placeholder only |
+| `clearml` | Optional experiment tracking for the training loop | Implemented, disabled by default; server/agent remain future work |
 
 ## Implemented Scope
 
@@ -68,7 +68,7 @@ OrdoStack can be used for controlled local beta evaluation. It is not yet a host
 | Schedule history | Save generated runs, reload, rename, soft delete, compare, lock items, move items |
 | Export | Markdown, CSV, local PDF |
 | Analytics | Actual minutes, estimate drift, completion rate, focus minutes, completion forecast |
-| ML | Local duration prediction, JSON artifact, heuristic fallback, model metadata, feedback export, holdout-evaluated retraining, metrics-gated promotion into a local registry, hot model reload |
+| ML | Local duration prediction, JSON artifact, heuristic fallback, model metadata, feedback export, holdout-evaluated retraining, metrics-gated promotion into a local registry, hot model reload, optional ClearML tracking |
 | Storage | MySQL in Docker, memory store in tests |
 | Observability | Request IDs, structured request logs, health and readiness endpoints |
 | Backup | Local MySQL backup script and verification script |

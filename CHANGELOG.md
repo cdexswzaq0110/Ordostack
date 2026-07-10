@@ -2,6 +2,15 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.54.0 - 2026-07-10
+
+- Add optional ClearML integration for the training loop: training runs record tasks, parameters, holdout metrics, and artifacts; gate-passing promotions register the versioned model, all behind `ORDOSTACK_CLEARML_ENABLED=1`.
+- Support credential-free verification through ClearML offline mode (`CLEARML_OFFLINE_MODE=1`); every integration point degrades to a logged no-op so the local loop never depends on ClearML.
+- Document self-hosted ClearML server and agent bring-up in `clearml/README.md` and align the MLOps plan documents with the implemented mapping.
+- Fix training to treat an exported feedback CSV with zero data rows as "no feedback yet" instead of failing.
+- Stack the README interface screenshots vertically so GitHub renders them at full width.
+- Expand ml-service tests from 19 to 26 covering ClearML enablement, tracking payloads, failure safety, promotion registration fallback, and empty-feedback training.
+
 ## 0.53.0 - 2026-07-09
 
 - Redesign the dashboard with a warm editorial design system: ink/warm/canvas palette, display typography with letter-spaced uppercase labels, hairline borders, and square corners throughout.

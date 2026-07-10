@@ -1,13 +1,13 @@
-# OrdoStack 測試報告（v0.53.0）
+# OrdoStack 測試報告（v0.54.0）
 
-> **日期:** 2026-07-09
-> **版本:** 0.53.0（branch `feature/v0.53.0`）
+> **日期:** 2026-07-10
+> **版本:** 0.54.0（branch `feature/clearml-tracking`）
 > **測試環境:** Windows 10 Pro、Docker Desktop（Engine 29.4.3）、Python 3.11（專案 `.venv`）、Node.js 20、Microsoft Edge（headless smoke）
-> **結論:** ✅ 全數通過 —— 90 個單元/整合測試、11 項靜態閘門、Docker runtime 驗證（5 容器 healthy + E2E + browser smoke + 視覺回歸）
+> **結論:** ✅ 全數通過 —— 97 個單元/整合測試、11 項靜態閘門、Docker runtime 驗證（5 容器 healthy + E2E + browser smoke + 視覺回歸）
 
 ## 1. 測試範圍
 
-本報告涵蓋 v0.52.0–v0.53.0 的完整驗證：三個後端服務的測試套件、dashboard build、八項靜態稽核、Docker Compose runtime 全鏈路驗證，以及兩版新增功能的實測——ML 重訓迴路（0.52.0）、介面重設計與側邊欄視圖導覽（0.53.0）。
+本報告涵蓋 v0.52.0–v0.54.0 的完整驗證：三個後端服務的測試套件、dashboard build、八項靜態稽核、Docker Compose runtime 全鏈路驗證，以及兩版新增功能的實測——ML 重訓迴路（0.52.0）、介面重設計與側邊欄視圖導覽（0.53.0）、選配 ClearML 整合（0.54.0）。
 
 ## 2. 單元 / 整合測試
 
@@ -15,10 +15,10 @@
 | --- | ---: | --- | ---: | --- |
 | backend-api | 60 | ✅ 全過 | 6.12s | auth（註冊/登入/鎖定）、tasks、fixed events、execution logs、analytics、schedule 持久化/diff/export、demo reset 與生產環境防護、migration guard |
 | scheduler-service | 11 | ✅ 全過 | 0.39s | 優先級評分、拓撲排序、容量選擇、free-slot 建構、鎖定項保留 |
-| ml-service | 19 | ✅ 全過 | 0.58s | 預測（artifact/heuristic/registry 三路徑）、**holdout 訓練指標、回饋合併、訓練決定性、晉升閘門（通過/拒絕基線/拒絕退步/回滾覆寫/歸檔）、熱載入** |
-| **合計** | **90** | ✅ | | |
+| ml-service | 26 | ✅ 全過 | 0.75s | 預測（artifact/heuristic/registry 三路徑）、**holdout 訓練指標、回饋合併、訓練決定性、晉升閘門（通過/拒絕基線/拒絕退步/回滾覆寫/歸檔）、熱載入、ClearML 追蹤（停用預設/追蹤內容/失敗安全/註冊回退/空回饋檔）** |
+| **合計** | **97** | ✅ | | |
 
-ml-service 測試由 11 個擴充至 19 個，新增涵蓋為本版新功能。
+ml-service 測試由 11 個（0.51.x）擴充至 26 個。
 
 執行指令（Windows PowerShell，各服務目錄下）：
 
@@ -109,6 +109,16 @@ python scripts\browser_smoke.py
 | demo-reset 生產環境防護 | backend 回歸測試 | ✅ 測試數 59→60 |
 | 合併後全鏈路 | Docker rebuild + E2E + browser smoke | ✅ |
 
+### 5.5 選配 ClearML 整合（0.54.0）
+
+| 項目 | 驗證方式 | 結果 |
+| --- | --- | --- |
+| 預設停用 | 單元測試 + 全閘門於未設定環境下執行 | ✅ 無 ClearML 套件/憑證/伺服器時迴路完全不受影響 |
+| 訓練追蹤（參數/指標/artifacts/資料集） | 真實 SDK（clearml 1.18.0）離線模式實跑 | ✅ offline session 內含 task 參數 5 項與 4 個 artifacts |
+| 晉升註冊 | 真實 SDK 離線模式實跑 | ✅ 回傳 task id；OutputModel 離線不支援時自動回退為 task artifact |
+| 失敗安全 | 單元測試（Task.init 拋錯） | ✅ 訓練/晉升照常完成，僅記錄一行略過訊息 |
+| 空回饋檔修正 | 回歸測試 | ✅ 0 列匯出檔視為「尚無回饋」而非錯誤 |
+
 ## 6. 涵蓋 / 不涵蓋
 
 **涵蓋：** 單元/整合測試、靜態稽核、本地 Docker 全鏈路、視覺回歸、新功能實測。
@@ -125,6 +135,7 @@ python scripts\browser_smoke.py
 - 訓練資料量過小（14 筆），模型指標僅具管線驗證意義。
 - `feedback export` 依日期逐日拉取，大量歷史資料時效率待優化。
 - 視覺回歸僅比對單一 1440×1000 桌面版面。
+- ClearML server/agent 未實際運行（自架步驟已文件化，屬部署決策）。
 
 ## 8. 重現方式
 

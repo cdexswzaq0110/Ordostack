@@ -2,9 +2,13 @@ import argparse
 import csv
 import json
 import random
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
 from statistics import mean
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from clearml_utils import track_training_run
 
 MODEL_NAME = "local-duration-regressor"
 MODEL_VERSION = "0.2.0"
@@ -30,7 +34,8 @@ def train_duration_model(
     rows = load_training_rows(input_path)
     feedback_rows: list[dict] = []
     if feedback_path is not None and feedback_path.exists():
-        feedback_rows = load_training_rows(feedback_path)
+        # An exported feedback file with zero data rows means "no feedback yet".
+        feedback_rows = load_training_rows(feedback_path, allow_empty=True)
 
     train_rows, evaluation_rows, evaluation_mode = split_rows(rows + feedback_rows, seed)
     category_multipliers = build_category_multipliers(train_rows)
@@ -55,7 +60,13 @@ def train_duration_model(
     artifact_dir.mkdir(parents=True, exist_ok=True)
     write_json(artifact_dir / "duration_model.json", model)
     write_json(artifact_dir / "duration_metrics.json", metrics)
-    return {"model": model, "metrics": metrics}
+    clearml_task_id = track_training_run(
+        model,
+        metrics,
+        artifact_dir,
+        dataset_paths=[input_path] + ([feedback_path] if feedback_path is not None else []),
+    )
+    return {"model": model, "metrics": metrics, "clearml_task_id": clearml_task_id}
 
 
 def split_rows(rows: list[dict], seed: int) -> tuple[list[dict], list[dict], str]:
@@ -69,7 +80,7 @@ def split_rows(rows: list[dict], seed: int) -> tuple[list[dict], list[dict], str
     return shuffled[holdout_count:], shuffled[:holdout_count], "holdout"
 
 
-def load_training_rows(input_path: Path) -> list[dict]:
+def load_training_rows(input_path: Path, allow_empty: bool = False) -> list[dict]:
     with input_path.open("r", encoding="utf-8", newline="") as training_file:
         reader = csv.DictReader(training_file)
         rows = [
@@ -85,7 +96,7 @@ def load_training_rows(input_path: Path) -> list[dict]:
             if int(row["estimated_minutes"]) > 0 and int(row["actual_minutes"]) > 0
         ]
 
-    if not rows:
+    if not rows and not allow_empty:
         raise ValueError("training dataset is empty")
     return rows
 
