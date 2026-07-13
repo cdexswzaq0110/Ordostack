@@ -1,22 +1,22 @@
-# OrdoStack 測試報告（v0.56.0）
+# OrdoStack 測試報告（v0.57.0）
 
-> **日期:** 2026-07-11
-> **版本:** 0.56.0（branch `feature/calibration-and-load-baseline`）
+> **日期:** 2026-07-13
+> **版本:** 0.57.0（branch `feature/security-and-ux-p1`）
 > **測試環境:** Windows 10 Pro、Docker Desktop（Engine 29.4.3）、Python 3.11（專案 `.venv`）、Node.js 20、Microsoft Edge（headless smoke）
-> **結論:** ✅ 全數通過 —— 112 個單元/整合測試、11 項靜態閘門、Docker runtime 驗證（5 容器 healthy + E2E + browser smoke + 視覺回歸）、單機負載基線（零錯誤）
+> **結論:** ✅ 全數通過 —— 113 個單元/整合測試、11 項靜態閘門、Docker runtime 驗證（5 容器 healthy + E2E + browser smoke + 視覺回歸）、單機負載基線（零錯誤）
 
 ## 1. 測試範圍
 
-本報告涵蓋 v0.52.0–v0.56.0 的完整驗證：三個後端服務的測試套件、dashboard build、八項靜態稽核、Docker Compose runtime 全鏈路驗證，以及兩版新增功能的實測——ML 重訓迴路（0.52.0）、介面重設計與側邊欄視圖導覽（0.53.0）、選配 ClearML 整合（0.54.0）、預測服務日誌與線上準確度（0.55.0）、每用戶校正與負載基線（0.56.0）。
+本報告涵蓋 v0.52.0–v0.57.0 的完整驗證：三個後端服務的測試套件、dashboard build、八項靜態稽核、Docker Compose runtime 全鏈路驗證，以及兩版新增功能的實測——ML 重訓迴路（0.52.0）、介面重設計與側邊欄視圖導覽（0.53.0）、選配 ClearML 整合（0.54.0）、預測服務日誌與線上準確度（0.55.0）、每用戶校正與負載基線（0.56.0）、安全修補與前端 P1（0.57.0）。
 
 ## 2. 單元 / 整合測試
 
 | 服務 | 測試數 | 結果 | 執行時間 | 重點涵蓋 |
 | --- | ---: | --- | ---: | --- |
-| backend-api | 71 | ✅ 全過 | 7.72s | auth（註冊/登入/鎖定）、tasks、fixed events、execution logs、analytics、schedule 持久化/diff/export、demo reset 與生產環境防護、migration guard、**預測日誌（記錄/配對/準確度/零分鐘排除/授權）、每用戶校正（中位數/clamp/最低樣本/回饋隔離/套用/回退）** |
+| backend-api | 72 | ✅ 全過 | 8.05s | auth（註冊/登入/鎖定）、tasks、fixed events、execution logs、analytics、schedule 持久化/diff/export、demo reset 與生產環境防護、migration guard、**預測日誌（記錄/配對/準確度/零分鐘排除/授權）、每用戶校正（中位數/clamp/最低樣本/回饋隔離/套用/回退）、PBKDF2 迭代升級相容性** |
 | scheduler-service | 11 | ✅ 全過 | 0.39s | 優先級評分、拓撲排序、容量選擇、free-slot 建構、鎖定項保留 |
 | ml-service | 30 | ✅ 全過 | 3.10s | 預測（artifact/heuristic/registry 三路徑）、**holdout 訓練指標、回饋合併、訓練決定性、晉升閘門（通過/拒絕基線/拒絕退步/回滾覆寫/歸檔）、熱載入、ClearML 追蹤（停用預設/追蹤內容/失敗安全/註冊回退/空回饋檔）、誤差輪廓信心值、模型對比實驗** |
-| **合計** | **112** | ✅ | | |
+| **合計** | **113** | ✅ | | |
 
 ml-service 測試由 11 個（0.51.x）擴充至 30 個。
 
@@ -37,11 +37,11 @@ python scripts\ponytail.py --include-compose-config
 | backend-api / scheduler / ml-service tests | ✅ | 同上表 |
 | web-dashboard build（tsc + vite） | ✅ | 216.61 kB JS（gzip 64.86 kB）＋ 22.97 kB CSS |
 | a11y static audit | ✅ | focus-visible 與 ARIA 標籤檢查 |
-| security audit | ✅ | 含 0.52.0 修正的金鑰誤判（`task-assignment-*` 檔名不再誤報） |
+| security audit | ✅ | 含 0.52.0 金鑰誤判修正；0.57.0 依賴修補後 pip-audit / npm audit 均為 0 已知漏洞 |
 | documentation completeness | ✅ | 10 份 launch-facing 文件必要章節齊備 |
 | backup policy audit | ✅ | |
 | beta readiness check | ✅ | |
-| translation coverage | ✅ | 243 keys（0.55.0 +9 線上準確度區塊；0.53.0 +31：視圖標題、分析表頭、設定頁、預覽提示，以及自 main 合入的操作成功提示與執行狀態文案） |
+| translation coverage | ✅ | 249 keys（0.57.0 +6 計時器/徽章；0.55.0 +9 線上準確度區塊；0.53.0 +31：視圖標題、分析表頭、設定頁、預覽提示，以及自 main 合入的操作成功提示與執行狀態文案） |
 | visual regression | ✅ | 重設計屬預期變更，基線經人工檢視後重建；合併 main 後 diff 0.14% |
 | git whitespace check | ✅ | |
 | docker compose config | ✅ | |
@@ -151,13 +151,23 @@ python scripts\browser_smoke.py
 
 註：單機基線用於容量規劃起點與回歸比較，非託管環境數字。
 
+### 5.9 安全修補與前端 P1（0.57.0）
+
+| 項目 | 驗證方式 | 結果 |
+| --- | --- | --- |
+| starlette 8 個 CVE + pytest 1 個（pip-audit 發現） | 升級 FastAPI 0.139.0 / Starlette 1.3.1 / Uvicorn 0.51.0 / pytest 9.1.1 後重掃 | ✅ 三服務 pip-audit 乾淨、npm audit 0 漏洞、113 測試全過、Docker 全鏈路通過 |
+| PBKDF2 600k 迭代升級 | 回歸測試 | ✅ 新雜湊帶 600000 前綴；120k 舊雜湊持續可驗證 |
+| 缺 token 回 401（RFC 7235） | 測試修正 | ✅ 框架行為修正，測試同步 |
+| 進行中任務經過時間 | Playwright 實測 | ✅ 底部欄顯示「任務 · just started／Xm elapsed」，每分鐘更新；>8h 顯示 8h+ |
+| 預測偏差徽章 | Playwright 實測 | ✅ 偏差 ≥max(10m, 15%) 顯示 ▲/▼ 帶符號差值（實測 ▲+46m、▲+32m），hover 顯示預測值與信心度 |
+
 ## 6. 涵蓋 / 不涵蓋
 
 **涵蓋：** 單元/整合測試、靜態稽核、本地 Docker 全鏈路、視覺回歸、新功能實測。
 
 **不涵蓋（已列入 WBS）：**
 - 託管環境負載測試（單機基線已建立）
-- 滲透測試與正式安全審查（WBS 2.1）
+- 滲透測試（依賴掃描與 auth 審計已於 v0.57.0 完成，WBS 2.1）
 - 跨瀏覽器矩陣（僅驗證 Chromium 系 Edge）
 - 行動裝置實機測試（mobile-app 為 placeholder）
 - 以真實用戶資料的模型品質評估（需 Beta 資料累積）
