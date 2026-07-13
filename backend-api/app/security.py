@@ -20,10 +20,15 @@ def validate_password_policy(password: str, *, email: str, min_length: int) -> l
     return violations
 
 
+# OWASP password-storage guidance for PBKDF2-HMAC-SHA256. The hash format is
+# self-describing, so hashes created with older iteration counts keep verifying.
+PBKDF2_ITERATIONS = 600_000
+
+
 def hash_password(password: str) -> str:
     salt = secrets.token_hex(16)
-    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 120_000)
-    return f"pbkdf2_sha256$120000${salt}${digest.hex()}"
+    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), PBKDF2_ITERATIONS)
+    return f"pbkdf2_sha256${PBKDF2_ITERATIONS}${salt}${digest.hex()}"
 
 
 def verify_password(password: str, password_hash: str) -> bool:

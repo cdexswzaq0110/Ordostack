@@ -51,7 +51,7 @@ def create_recurring_fixed_events(user_id: int, payload: RecurringFixedEventCrea
 
     if not created_events:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="recurrence rule does not produce any events",
         )
 
@@ -69,7 +69,7 @@ def update_fixed_event(user_id: int, fixed_event_id: int, payload: FixedEventUpd
     next_end_time = update_payload.get("end_time", current_fixed_event["end_time"])
     if next_end_time <= next_start_time:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="end_time must be later than start_time",
         )
 

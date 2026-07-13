@@ -114,7 +114,7 @@ def update_schedule_history_title(
 ) -> ScheduleHistoryItem:
     title = payload.title.strip()
     if not title:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Title is required")
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Title is required")
 
     schedule = get_store().update_generated_schedule_title(
         user_id=user_id,

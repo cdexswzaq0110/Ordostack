@@ -2,6 +2,15 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.57.0 - 2026-07-13
+
+- Patch nine dependency advisories by upgrading FastAPI 0.139.0 / Starlette 1.3.1 / Uvicorn 0.51.0 / pytest 9.1.1 across all three services, with explicit pins; pip-audit and npm audit now report clean.
+- Raise password hashing to 600k PBKDF2-HMAC-SHA256 iterations per current OWASP guidance; the self-describing hash format keeps existing hashes verifying (regression-tested).
+- Missing bearer credentials now return 401 per RFC 7235 (previously 403 via the older framework default).
+- Record the dependency and auth-flow security review in docs/internal/security-review-2026-07.md (WBS 2.1).
+- Show a live elapsed-time indicator for the in-progress task in the bottom rail, fed by execution logs and refreshed every minute.
+- Flag tasks whose predicted duration diverges from the estimate (over 15 percent and at least 10 minutes) with direction badges in the task queue, including predicted value and confidence on hover.
+
 ## 0.56.0 - 2026-07-11
 
 - Apply a per-user calibration factor to served predictions: the median actual/predicted ratio over the user's recent paired prediction logs, active from three pairs, clamped to [0.5, 2.0], and computed from separately logged raw model outputs so the correction cannot feed back on itself (migration 0006).

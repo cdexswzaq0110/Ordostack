@@ -35,7 +35,7 @@ def update_schedule_template(
     next_end_hour = update_payload.get("end_hour", current_template["end_hour"])
     if next_end_hour <= next_start_hour:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="end_hour must be later than start_hour",
         )
 

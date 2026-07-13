@@ -5,7 +5,7 @@ This file records the current product baseline for the repository. The original 
 ## Current Baseline
 
 ```text
-Version: 0.56.0
+Version: 0.57.0
 Stage: Local Private Beta Candidate
 Runtime: Docker Compose local stack
 Primary UI: web-dashboard
@@ -158,4 +158,4 @@ Any Docker, database, migration, or deployment change also requires `docker comp
 - ClearML agent execution.
 - Mobile app implementation.
 - External calendar integration.
-- Security review. (A single-machine load baseline exists; hosted-scale load testing remains open.)
+- Penetration testing. (Dependency audits, auth-flow review, and a single-machine load baseline exist; hosted-scale testing remains open.)
