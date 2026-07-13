@@ -213,6 +213,13 @@ type ApiPredictionAccuracyDay = {
   estimate_mae: number;
 };
 
+type ApiExecutionLog = {
+  id: number;
+  task_id: number;
+  event_type: "start" | "pause" | "complete" | "skip";
+  occurred_at: string;
+};
+
 type ApiPredictionAccuracy = {
   user_id: number;
   window_days: number;
@@ -895,6 +902,7 @@ export function App() {
   const [analytics, setAnalytics] = useState<ApiDailyAnalytics | null>(null);
   const [durationPredictions, setDurationPredictions] = useState<ApiDurationPredictionResponse | null>(null);
   const [predictionAccuracy, setPredictionAccuracy] = useState<ApiPredictionAccuracy | null>(null);
+  const [executionLogs, setExecutionLogs] = useState<ApiExecutionLog[]>([]);
   const [query, setQuery] = useState("");
   const [taskStatusFilter, setTaskStatusFilter] = useState<TaskStatusFilter>("all");
   const [taskCategoryFilter, setTaskCategoryFilter] = useState("all");
@@ -1031,6 +1039,7 @@ export function App() {
       setAnalytics(null);
       setDurationPredictions(null);
       setPredictionAccuracy(null);
+      setExecutionLogs([]);
       setSchedule(null);
       setScheduleHistory([]);
       setSelectedScheduleRunId(null);
@@ -1053,6 +1062,7 @@ export function App() {
         latestSchedule,
         nextScheduleHistory,
         nextPredictionAccuracy,
+        nextExecutionLogs,
       ] = await Promise.all([
         requestJson<ApiTask[]>(
           `${API_BASE_URL}/tasks?target_date=${selectedDate}`,
@@ -1082,6 +1092,10 @@ export function App() {
           `${API_BASE_URL}/ml/prediction-accuracy?days=90`,
           { headers: buildAuthHeaders() },
         ),
+        requestJson<ApiExecutionLog[]>(
+          `${API_BASE_URL}/task-execution-logs?target_date=${selectedDate}`,
+          { headers: buildAuthHeaders() },
+        ),
       ]);
 
       setTasks(nextTasks);
@@ -1089,6 +1103,7 @@ export function App() {
       setAnalytics(nextAnalytics);
       setDurationPredictions(nextDurationPredictions);
       setPredictionAccuracy(nextPredictionAccuracy);
+      setExecutionLogs(nextExecutionLogs);
       setSchedule(latestSchedule);
       setScheduleHistory(nextScheduleHistory);
       setSelectedScheduleRunId(latestSchedule ? nextScheduleHistory[0]?.id ?? null : null);
@@ -1248,6 +1263,59 @@ export function App() {
     [...fixedEvents]
       .sort((left, right) => left.start_time.localeCompare(right.start_time))
       .find((event) => new Date(event.end_time) > now) ?? null;
+  const inProgressTask = tasks.find((task) => task.status === "in_progress") ?? null;
+  const focusElapsedLabel = useMemo(() => {
+    if (!inProgressTask) {
+      return null;
+    }
+
+    const closingEvents = new Set(["pause", "complete", "skip"]);
+    let openStart: Date | null = null;
+    for (const log of executionLogs
+      .filter((log) => log.task_id === inProgressTask.id)
+      .sort((left, right) => left.occurred_at.localeCompare(right.occurred_at))) {
+      if (log.event_type === "start" && openStart === null) {
+        openStart = new Date(log.occurred_at);
+      } else if (closingEvents.has(log.event_type) && openStart !== null) {
+        openStart = null;
+      }
+    }
+
+    const closedMinutes = analyticsByTask.get(inProgressTask.id)?.actual_minutes ?? 0;
+    const runningMinutes =
+      openStart !== null && now > openStart ? Math.floor((now.getTime() - openStart.getTime()) / 60000) : 0;
+    const totalMinutes = closedMinutes + runningMinutes;
+    if (totalMinutes <= 0) {
+      return t("just started");
+    }
+    if (totalMinutes > 480) {
+      return `8h+ ${t("elapsed")}`;
+    }
+    return `${formatMinutes(totalMinutes, locale)} ${t("elapsed")}`;
+  }, [analyticsByTask, executionLogs, inProgressTask, locale, now, t]);
+
+  function predictionDeltaBadge(task: ApiTask, prediction: ApiDurationPrediction | undefined) {
+    const predicted = prediction?.predicted_minutes ?? task.predicted_minutes;
+    if (predicted == null || task.status === "completed" || task.status === "skipped") {
+      return null;
+    }
+
+    const delta = predicted - task.estimated_minutes;
+    if (Math.abs(delta) < Math.max(10, task.estimated_minutes * 0.15)) {
+      return null;
+    }
+
+    return (
+      <span
+        className={delta > 0 ? "delta-badge over" : "delta-badge under"}
+        title={`${t("Model predicts")} ${formatMinutes(predicted, locale)}${
+          prediction ? ` · ${Math.round(prediction.confidence * 100)}% ${t("Confidence")}` : ""
+        }`}
+      >
+        {delta > 0 ? "▲" : "▼"} {formatSignedMinutes(delta, locale)}
+      </span>
+    );
+  }
 
   const insights: InsightItem[] = algorithmSummary
     ? [
@@ -2478,7 +2546,10 @@ export function App() {
                               <CheckCircle2 size={18} />
                             </button>
                             <div className="task-copy">
-                              <h3>{task.title}</h3>
+                              <h3>
+                                {task.title}
+                                {predictionDeltaBadge(task, taskPrediction)}
+                              </h3>
                               <p>
                                 {task.category} | {t("estimate")} {formatMinutes(task.estimated_minutes, locale)} |{" "}
                                 {t("predicted")}{" "}
@@ -2752,9 +2823,10 @@ export function App() {
                 <Timer size={18} aria-hidden="true" />
                 <span>{t("Current focus")}</span>
                 <strong>
-                  {tasks.find((task) => task.status === "in_progress")?.title ??
-                    tasks.find((task) => task.requires_focus && task.status === "pending")?.title ??
-                    t("No focus task")}
+                  {inProgressTask
+                    ? `${inProgressTask.title} · ${focusElapsedLabel}`
+                    : tasks.find((task) => task.requires_focus && task.status === "pending")?.title ??
+                      t("No focus task")}
                 </strong>
               </div>
               <div>

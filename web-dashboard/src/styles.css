@@ -1136,6 +1136,30 @@ h3 {
   font-size: 0.78rem;
 }
 
+.delta-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 6px;
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.delta-badge.over {
+  color: var(--danger);
+  border: 1px solid #d9b7ae;
+  background: var(--danger-soft);
+}
+
+.delta-badge.under {
+  color: var(--ok);
+  border: 1px solid #b7c6ba;
+  background: #ebf0ea;
+}
+
 .task-meta {
   display: grid;
   gap: 7px;
