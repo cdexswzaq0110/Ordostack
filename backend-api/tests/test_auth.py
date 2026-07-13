@@ -123,4 +123,20 @@ def test_me_requires_bearer_token() -> None:
 
     response = client.get("/api/auth/me")
 
-    assert response.status_code == 403
+    # Missing credentials: 401 per RFC 7235 (FastAPI >= 0.116 corrected this from 403).
+    assert response.status_code == 401
+
+
+def test_password_hashing_uses_current_iterations_and_verifies_legacy() -> None:
+    from app.security import PBKDF2_ITERATIONS, hash_password, verify_password
+    import hashlib
+
+    fresh_hash = hash_password("Sample-Passw0rd")
+    assert f"pbkdf2_sha256${PBKDF2_ITERATIONS}$" in fresh_hash
+    assert verify_password("Sample-Passw0rd", fresh_hash)
+    assert not verify_password("wrong-password", fresh_hash)
+
+    # Hashes minted before the iteration bump keep verifying.
+    legacy_digest = hashlib.pbkdf2_hmac("sha256", b"Sample-Passw0rd", b"legacysalt", 120_000).hex()
+    legacy_hash = f"pbkdf2_sha256$120000$legacysalt${legacy_digest}"
+    assert verify_password("Sample-Passw0rd", legacy_hash)

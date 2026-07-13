@@ -133,7 +133,7 @@ def validate_register_password(*, password: str, email: str) -> None:
         return
 
     raise HTTPException(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
         detail="Password must include " + ", ".join(violations),
     )
 
