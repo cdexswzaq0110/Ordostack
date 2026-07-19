@@ -7,7 +7,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from statistics import mean
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from app.data_contract import validate_rows
+from artifact_meta import build_artifact_metadata
 from clearml_utils import track_training_run
 
 MODEL_NAME = "local-duration-regressor"
@@ -37,6 +40,10 @@ def train_duration_model(
         # An exported feedback file with zero data rows means "no feedback yet".
         feedback_rows = load_training_rows(feedback_path, allow_empty=True)
 
+    validation_report = validate_rows(rows + feedback_rows)
+    if not validation_report.ok:
+        raise ValueError("dataset violates data contract: " + "; ".join(validation_report.errors))
+
     train_rows, evaluation_rows, evaluation_mode = split_rows(rows + feedback_rows, seed)
     category_multipliers = build_category_multipliers(train_rows)
     global_multiplier = round(mean(row["actual_minutes"] / row["estimated_minutes"] for row in train_rows), 4)
@@ -44,6 +51,7 @@ def train_duration_model(
     model = {
         "model_name": MODEL_NAME,
         "model_version": MODEL_VERSION,
+        "model_type": "multiplier-table",
         "source": "local-artifact",
         "trained_at": datetime.now(UTC).isoformat(),
         "seed": seed,
@@ -54,8 +62,22 @@ def train_duration_model(
         "difficulty_weight": DIFFICULTY_WEIGHT,
         "priority_weight": PRIORITY_WEIGHT,
         "focus_multiplier": FOCUS_MULTIPLIER,
+        "estimated_minutes_range": [
+            min(row["estimated_minutes"] for row in train_rows),
+            max(row["estimated_minutes"] for row in train_rows),
+        ],
     }
-    model["category_mae"], model["global_mae"] = build_error_profile(train_rows, model)
+    model["category_mae"], model["global_mae"], model["category_sample_counts"] = build_error_profile(
+        train_rows, model
+    )
+    model.update(
+        build_artifact_metadata(
+            dataset_paths=[input_path] + ([feedback_path] if feedback_path is not None else []),
+            training_rows=len(train_rows),
+            evaluation_rows=len(evaluation_rows),
+            evaluation_strategy=evaluation_mode,
+        )
+    )
     metrics = evaluate_model(evaluation_rows, model, evaluation_mode, seed)
 
     artifact_dir.mkdir(parents=True, exist_ok=True)
@@ -115,7 +137,7 @@ def build_category_multipliers(rows: list[dict]) -> dict[str, float]:
     }
 
 
-def build_error_profile(rows: list[dict], model: dict) -> tuple[dict[str, float], float]:
+def build_error_profile(rows: list[dict], model: dict) -> tuple[dict[str, float], float, dict[str, int]]:
     """Per-category training residuals; serving derives prediction confidence from these."""
     errors_by_category: dict[str, list[int]] = {}
     for row in rows:
@@ -126,7 +148,8 @@ def build_error_profile(rows: list[dict], model: dict) -> tuple[dict[str, float]
         category: round(mean(errors), 2) for category, errors in sorted(errors_by_category.items())
     }
     global_mae = round(mean(error for errors in errors_by_category.values() for error in errors), 2)
-    return category_mae, global_mae
+    sample_counts = {category: len(errors) for category, errors in sorted(errors_by_category.items())}
+    return category_mae, global_mae, sample_counts
 
 
 def evaluate_model(rows: list[dict], model: dict, evaluation_mode: str, seed: int) -> dict:

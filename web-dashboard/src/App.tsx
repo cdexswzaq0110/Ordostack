@@ -228,6 +228,8 @@ type ApiPredictionAccuracy = {
   model_mae: number | null;
   estimate_mae: number | null;
   improvement_ratio: number | null;
+  sufficient_data: boolean;
+  min_paired_required: number;
   daily: ApiPredictionAccuracyDay[];
 };
 
@@ -2953,13 +2955,17 @@ export function App() {
                       <span>{t("Estimate error")}</span>
                       <strong>{predictionAccuracy.estimate_mae}m</strong>
                       <em>
-                        {predictionAccuracy.improvement_ratio !== null
-                          ? `${Math.abs(Math.round(predictionAccuracy.improvement_ratio * 100))}% ${t(
-                              predictionAccuracy.improvement_ratio >= 0
-                                ? "lower error than raw estimates"
-                                : "higher error than raw estimates",
-                            )}`
-                          : t("mean absolute error")}
+                        {!predictionAccuracy.sufficient_data
+                          ? `${t("insufficient samples for a model verdict")} (${
+                              predictionAccuracy.paired_count
+                            }/${predictionAccuracy.min_paired_required})`
+                          : predictionAccuracy.improvement_ratio !== null
+                            ? `${Math.abs(Math.round(predictionAccuracy.improvement_ratio * 100))}% ${t(
+                                predictionAccuracy.improvement_ratio >= 0
+                                  ? "lower error than raw estimates"
+                                  : "higher error than raw estimates",
+                              )}`
+                            : t("mean absolute error")}
                       </em>
                     </article>
                   </div>

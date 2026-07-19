@@ -32,3 +32,5 @@ Thumbs.db
 .claude/taskmaster-data/.current-task
 .claude/taskmaster-data/timelog.jsonl
 .claude/taskmaster-data/wbs-history.log
+ml-service/training/data/external/raw/
+docs/interview/*.docx

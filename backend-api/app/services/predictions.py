@@ -26,6 +26,10 @@ CALIBRATION_FLOOR = 0.5
 CALIBRATION_CEILING = 2.0
 PREDICTION_MAX_MINUTES = 480
 
+# Below this many paired predictions, model-vs-estimate MAE comparison is
+# noise; the API says so instead of serving a misleading percentage.
+MIN_PAIRED_FOR_ACCURACY = 10
+
 
 def get_duration_predictions(user_id: int, target_date: date) -> DurationPredictionResponse:
     tasks = task_service.list_tasks(user_id=user_id, target_date=target_date)
@@ -125,6 +129,8 @@ def get_prediction_accuracy(user_id: int, days: int = 90) -> PredictionAccuracyR
         model_mae=model_mae,
         estimate_mae=estimate_mae,
         improvement_ratio=improvement_ratio,
+        sufficient_data=len(paired_logs) >= MIN_PAIRED_FOR_ACCURACY,
+        min_paired_required=MIN_PAIRED_FOR_ACCURACY,
         daily=daily,
     )
 
@@ -163,6 +169,9 @@ def predict_for_tasks(
             **prediction,
             "raw_predicted_minutes": prediction["predicted_minutes"],
             "predicted_minutes": calibrate_minutes(prediction["predicted_minutes"], calibration_factor),
+            # Bounds shift with the calibrated point so the band stays honest.
+            "lower_bound": calibrate_optional_minutes(prediction.get("lower_bound"), calibration_factor),
+            "upper_bound": calibrate_optional_minutes(prediction.get("upper_bound"), calibration_factor),
         }
         for prediction in payload["predictions"]
     ]
@@ -203,6 +212,12 @@ def calibrate_minutes(predicted_minutes: int, calibration_factor: float | None) 
     if calibration_factor is None:
         return predicted_minutes
     return min(PREDICTION_MAX_MINUTES, max(1, round(predicted_minutes * calibration_factor)))
+
+
+def calibrate_optional_minutes(minutes: int | None, calibration_factor: float | None) -> int | None:
+    if minutes is None:
+        return None
+    return calibrate_minutes(minutes, calibration_factor)
 
 
 def csv_escape(value: str) -> str:
@@ -250,6 +265,9 @@ def build_fallback_predictions(
                 "confidence": 0.2,
                 "model_name": FALLBACK_MODEL_NAME,
                 "reason": "ml-service unavailable",
+                "model_version": FALLBACK_MODEL_VERSION,
+                "reliability": "insufficient-data",
+                "fallback": True,
             }
             for task in tasks
         ],

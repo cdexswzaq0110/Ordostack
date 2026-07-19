@@ -15,16 +15,42 @@
     "qa": 0.9,
     "study": 1.2759
   },
+  "category_sample_counts": {
+    "admin": 1,
+    "analytics": 1,
+    "backend": 1,
+    "coding": 3,
+    "qa": 2,
+    "study": 3
+  },
+  "dataset_checksum": "520720d34796b474175e54acf013a63e7e88e9ae4f902e7988e6ffe26643784d",
   "difficulty_weight": 0.04,
+  "estimated_minutes_range": [
+    45,
+    120
+  ],
+  "evaluation_rows": 3,
+  "evaluation_strategy": "holdout",
   "feedback_rows": 0,
   "focus_multiplier": 1.05,
   "global_mae": 7.27,
   "global_multiplier": 1.1255,
+  "library_versions": {
+    "scikit-learn": "1.8.0"
+  },
   "model_name": "local-duration-regressor",
+  "model_type": "multiplier-table",
   "model_version": "0.2.0",
+  "prediction_bounds": {
+    "max_minutes": 480,
+    "min_minutes": 1
+  },
   "priority_weight": 0.015,
+  "python_version": "3.12.10",
+  "schema_version": "1.0.0",
   "seed": 42,
   "source": "local-artifact",
-  "trained_at": "2026-07-10T15:58:27.069109+00:00",
+  "source_commit_sha": "d21153aabdec0aabb7dff2a371dacfd428197127",
+  "trained_at": "2026-07-18T04:40:41.586374+00:00",
   "training_rows": 11
 }

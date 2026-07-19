@@ -157,3 +157,21 @@ def test_prediction_accuracy_requires_auth() -> None:
     response = client.get("/api/ml/prediction-accuracy")
 
     assert response.status_code in {401, 403}
+
+
+def test_prediction_accuracy_flags_insufficient_samples(monkeypatch) -> None:
+    store.reset()
+    client = TestClient(app)
+    client.headers.update(auth_headers(client))
+
+    generate_plan(client, monkeypatch)
+    task = next(task for task in store.list_tasks(user_id=1) if task["status"] == "pending")
+    client.post(f"/api/tasks/{task['id']}/execution/start", json={"occurred_at": "2026-06-03T15:00:00"})
+    client.post(f"/api/tasks/{task['id']}/execution/complete", json={"occurred_at": "2026-06-03T15:52:00"})
+
+    accuracy = client.get("/api/ml/prediction-accuracy", params={"days": 365}).json()
+
+    # One paired sample cannot support a model-vs-estimate verdict.
+    assert accuracy["paired_count"] == 1
+    assert accuracy["sufficient_data"] is False
+    assert accuracy["min_paired_required"] >= 10

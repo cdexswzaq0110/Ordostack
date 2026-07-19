@@ -28,10 +28,10 @@ OrdoStack focuses on that loop for one day at a time.
 - Schedule history with rename, compare, export, lock, and manual time adjustment.
 - Local schedule exports in Markdown, CSV, and PDF.
 - Execution logs and daily analytics: actual minutes, estimate drift, completion rate, focus minutes, and forecast.
-- Local duration prediction through `ml-service` using a JSON artifact or heuristic fallback.
+- Local duration prediction through `ml-service` using a JSON artifact or heuristic fallback, with per-prediction explanations (factor contributions), an honest reliability label, historical error bounds, and out-of-distribution warnings.
 - Workspace views for planning, task management, schedule review, analytics, prediction insight, and settings.
 - English UI by default, with Traditional Chinese available in the dashboard.
-- Local retraining loop: export execution feedback, retrain with holdout evaluation, metrics-gated model promotion, hot reload.
+- Local retraining loop under a shared train/serving data contract: dataset validation, six-candidate cross-validated comparison (including DummyRegressor and elastic-net), holdout evaluation with MAE / Median AE / RMSE, evidence-gated promotion with dry-run and audit log, hot reload, and one-command rollback.
 - Docker Compose runtime with MySQL persistence.
 - Local QA gates for tests, build, security, accessibility, backup policy, visual regression, and smoke checks.
 - Clean-checkout Docker runtime CI covering migrations, E2E, persistence across MySQL restart, backup verification, and isolated restore.
@@ -88,6 +88,15 @@ docker compose up --build -d
 ```
 
 The first build takes a few minutes. When it finishes, `docker compose ps` should show five services (`backend-api`, `scheduler-service`, `ml-service`, `mysql`, `web-dashboard`) with status `healthy`. Database migrations run automatically before `backend-api` starts.
+
+**One-click launcher (Windows).** `scripts/ordostack_launcher.py` starts Docker Desktop when needed, brings the stack up, waits for every health endpoint, and opens the dashboard. Build it into a standalone `dist/OrdoStack.exe` (not committed; `dist/` is gitignored):
+
+```powershell
+# Windows PowerShell
+python -m pip install pyinstaller
+pyinstaller --onefile --name OrdoStack --distpath dist scripts\ordostack_launcher.py
+.\dist\OrdoStack.exe
+```
 
 ### 2. Sign in
 
@@ -193,6 +202,12 @@ Start here:
 | Environment variables | [docs/environment.md](docs/environment.md) |
 | Backup and restore | [docs/backup-restore.md](docs/backup-restore.md) |
 | Architecture decisions | [docs/adr/README.md](docs/adr/README.md) |
+| ML system audit | [docs/ml/ML_SYSTEM_AUDIT.md](docs/ml/ML_SYSTEM_AUDIT.md) |
+| ML data card | [docs/ml/DATA_CARD.md](docs/ml/DATA_CARD.md) |
+| ML model card | [docs/ml/MODEL_CARD.md](docs/ml/MODEL_CARD.md) |
+| ML experiment report | [docs/ml/EXPERIMENT_REPORT.md](docs/ml/EXPERIMENT_REPORT.md) |
+| MLOps runbook | [docs/ml/MLOPS_RUNBOOK.md](docs/ml/MLOPS_RUNBOOK.md) |
+| Future ML roadmap | [docs/ml/FUTURE_ML_ROADMAP.md](docs/ml/FUTURE_ML_ROADMAP.md) |
 | Product roadmap | [docs/product-roadmap.md](docs/product-roadmap.md) |
 | AWS deployment plan | [docs/aws-deployment-plan.md](docs/aws-deployment-plan.md) |
 | ClearML MLOps plan | [docs/mlops-clearml-plan.md](docs/mlops-clearml-plan.md) |

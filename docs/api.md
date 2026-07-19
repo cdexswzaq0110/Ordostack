@@ -346,7 +346,7 @@ Backend entrypoint:
 | --- | --- | --- |
 | `GET` | `/ml/duration-predictions?target_date=2026-06-03` | Predict task duration for dashboard and scheduler; served values include the per-user calibration factor (median actual/raw ratio over recent paired predictions, active from 3 pairs, clamped to [0.5, 2.0]) and each prediction carries its raw pre-calibration value |
 | `GET` | `/ml/duration-feedback?target_date=2026-06-03` | Export completed-task duration feedback as CSV |
-| `GET` | `/ml/prediction-accuracy?days=90` | Rolling accuracy of served predictions: overall and per-day MAE for the model vs the raw-estimate baseline, from prediction logs paired with actual execution minutes |
+| `GET` | `/ml/prediction-accuracy?days=90` | Rolling accuracy of served predictions: overall and per-day MAE for the model vs the raw-estimate baseline, from prediction logs paired with actual execution minutes. Includes `sufficient_data` / `min_paired_required`; below the threshold the comparison is explicitly marked as not yet meaningful |
 
 Response shape:
 
@@ -355,18 +355,41 @@ Response shape:
   "user_id": 1,
   "target_date": "2026-06-03",
   "model_name": "local-duration-regressor",
-  "model_version": "0.1.0",
+  "model_version": "0.2.0",
   "predictions": [
     {
       "task_id": 1,
       "predicted_minutes": 150,
       "confidence": 0.58,
       "model_name": "local-duration-regressor",
-      "reason": "trained local artifact"
+      "reason": "trained local artifact",
+      "raw_predicted_minutes": 150,
+      "model_version": "0.2.0",
+      "lower_bound": 136,
+      "upper_bound": 164,
+      "reliability": "high",
+      "sample_count": 3,
+      "fallback": false,
+      "out_of_distribution": false,
+      "factors": [
+        { "name": "baseline_estimate", "impact_minutes": 120.0 },
+        { "name": "category_history", "impact_minutes": 24.8 }
+      ]
     }
-  ]
+  ],
+  "calibration_factor": null,
+  "calibration_samples": 0
 }
 ```
+
+Field semantics (added in v0.58.0, all backward-compatible):
+
+- `lower_bound` / `upper_bound` — historical error band (prediction ± recent category MAE), **not** a statistical prediction interval; absent for artifacts without an error profile.
+- `reliability` — `high` / `medium` / `low` / `insufficient-data`. Any category with fewer than 3 training samples reports `insufficient-data`.
+- `confidence` — legacy rule-derived score kept for backward compatibility; not a calibrated probability.
+- `out_of_distribution` — the category was never seen in training, or the estimate is far outside the training range.
+- `factors` — per-factor contributions in minutes; for the linear artifact they sum (with `baseline`) to the unclamped prediction.
+- `fallback` — the ml-service heuristic answered because no valid artifact was loadable.
 
 ML service internal endpoint:
 

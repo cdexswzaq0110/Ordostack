@@ -2,6 +2,23 @@
 
 All notable MVP changes are recorded here. This project follows incremental issue-based delivery.
 
+## 0.58.0 - 2026-07-18
+
+- Add a shared ML data contract (`ml-service/app/data_contract.py`, schema 1.0.0): feature definitions, valid ranges, excluded leakage/PII fields, one-hot encoding, and executable dataset validation (`training/validate_dataset.py`) with a JSON report; both trainers refuse contract-violating data.
+- Add `training/train_linear_model.py`: StandardScaler + ridge/elastic-net trained with the same seeded holdout, exported as a pure-JSON `linear-json` artifact (coefficients, scaler stats, categories) that the runtime serves without scikit-learn; a parity test pins JSON inference to the fitted sklearn pipeline within 0.01 minutes.
+- Expand `training/compare_models.py` to six candidates (naive estimate, DummyRegressor, multiplier table, ridge, elastic-net, gradient boosting) with pooled MAE, Median AE, RMSE, per-fold errors, improvement vs naive, servability flags, and an explicit evidence verdict for small datasets.
+- Harden promotion: evidence gate (minimum 10 out-of-sample evaluation rows, otherwise `insufficient evidence for automatic promotion`), `--dry-run`, atomic registry writes, an append-only `promotion_audit.jsonl`, and a new `training/rollback_duration_model.py` that verifies the target artifact before restoring it.
+- Enrich artifacts with provenance: schema version, feature names, dataset checksum, source commit SHA, Python/library versions, evaluation strategy, prediction bounds, and per-category sample counts.
+- Serve honest uncertainty and explanations: each prediction now carries `lower_bound`/`upper_bound` (historical error band), a `reliability` label (`insufficient-data` under 3 category samples), `sample_count`, `out_of_distribution` warnings for unseen categories or extreme estimates, per-factor contributions, a `fallback` flag, and `model_version`; the legacy `confidence` score is unchanged and documented as rule-derived, not a probability.
+- Degrade safely: corrupted artifact JSON, missing linear keys, or an incompatible schema major version now fall back to the heuristic instead of failing the service.
+- Report accuracy honestly: `GET /api/ml/prediction-accuracy` adds `sufficient_data`/`min_paired_required`, and the MLOps view shows "insufficient samples for a model verdict" below 10 paired predictions instead of an improvement percentage; calibrated predictions scale their bounds with the same factor.
+- Document the ML system in `docs/ml/`: system audit, data card, model card, experiment report, MLOps runbook, and a future-work roadmap that separates shipped capabilities from aspirations.
+- Expand tests from 124 to 147 (ml-service 41 to 63, backend 72 to 73, scheduler 11): data-contract validation, parity, unseen-category handling, corrupted/incompatible artifact fallback, deterministic linear training, evidence-gate rejection, dry-run, audit log, and rollback paths.
+
+- Add a real external training corpus: 4,227 finished tasks converted from the public SiP effort-estimation dataset (Jones & Cullum 2019, arXiv:1901.01621) via `training/prepare_external_dataset.py` (status/bounds filtering, priority 1-10 -> 1-5 mapping, checksummed provenance, documented in the data card). On this corpus the evidence gate passes (845 holdout rows) and the baseline gate then legitimately rejects every servable candidate — no linear model beats the users' own estimates on MAE (ridge 165.9 vs naive 152.7; median-regression side experiment ties at best) — validating the estimate-anchored production model with real data.
+- Add a one-click Windows launcher (`scripts/ordostack_launcher.py`, PyInstaller-buildable to `dist/OrdoStack.exe`): starts Docker Desktop if needed, runs `docker compose up -d`, waits for all health endpoints, then opens the dashboard.
+- Add a Traditional Chinese interview handbook (`docs/interview/OrdoStack_Interview_Handbook_zh-TW.md` + generated `.docx` via `build_handbook.py`): 20 chapters covering architecture, data flows, ML problem framing, model comparison with the real v0.58.0 metrics, code walkthroughs, scheduling algorithms, MLOps lifecycle, a demo script, 52 interview Q&As, and a 7-day preparation plan.
+
 ## 0.57.0 - 2026-07-13
 
 - Patch nine dependency advisories by upgrading FastAPI 0.139.0 / Starlette 1.3.1 / Uvicorn 0.51.0 / pytest 9.1.1 across all three services, with explicit pins; pip-audit and npm audit now report clean.
