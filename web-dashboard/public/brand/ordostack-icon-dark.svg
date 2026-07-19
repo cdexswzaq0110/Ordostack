@@ -9,7 +9,7 @@
   <circle cx="202" cy="112" r="7" fill="#111111" stroke="#DBD4CD" stroke-width="5"/>
   <path d="M128 87V151" stroke="#DBD4CD" stroke-width="5" stroke-linecap="round"/>
   <circle cx="128" cy="154" r="7" fill="#111111" stroke="#DBD4CD" stroke-width="5"/>
-  <path d="M48 134C37 112 48 88 86 82C101 103 91 129 48 134Z" fill="#B93A2F"/>
+  <path d="M48 134C37 112 48 88 86 82C101 103 91 129 48 134Z" fill="#111111" stroke="#DBD4CD" stroke-width="2"/>
   <path d="M207 127C195 106 205 82 244 76C259 97 249 123 207 127Z" fill="#A39E9A"/>
-  <path d="M127 185C107 170 105 145 133 124C157 141 154 171 127 185Z" fill="#4C6B58"/>
+  <path d="M127 185C107 170 105 145 133 124C157 141 154 171 127 185Z" fill="#E8E3DC"/>
 </svg>

@@ -19,8 +19,8 @@ It maps the product idea to a simple visual system:
 | Canvas | `#f5f5f5` | light logo background |
 | Warm stone | `#dbd4cd` | dark icon linework |
 | Muted taupe | `#6f6964` | light logo linework |
-| Success green | `#4c6b58` | balanced/active task leaf |
-| Terracotta | `#b93a2f` | priority accent leaf |
+| Light beige | `#e8e3dc` | balanced/active task leaf |
+| Black leaf | `#111111` | priority accent leaf |
 | Frame grey | `#a39e9a` | secondary task leaf |
 
 ## Files
