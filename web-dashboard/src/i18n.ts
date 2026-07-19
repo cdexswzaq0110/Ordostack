@@ -204,6 +204,7 @@ const zhTW: Record<string, string> = {
   "mean absolute error": "平均絕對誤差",
   "lower error than raw estimates": "誤差低於原始估時",
   "higher error than raw estimates": "誤差高於原始估時",
+  "insufficient samples for a model verdict": "樣本不足，暫無法評判模型",
   "Bars compare daily mean absolute error: model (dark) vs raw estimate (grey).":
     "長條比較每日平均絕對誤差：深色為模型、灰色為原始估時。",
   "No paired predictions yet. Generate a plan, then complete tasks to measure live accuracy.":
