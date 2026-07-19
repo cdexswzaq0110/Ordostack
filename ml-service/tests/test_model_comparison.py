@@ -34,13 +34,21 @@ def test_comparison_covers_all_candidates_on_seed_data() -> None:
     assert comparison["rows"] >= 10
     assert set(comparison["results"]) == {
         "naive-estimate",
+        "dummy-mean",
         "multiplier-table (production)",
         "ridge-regression",
+        "elastic-net",
         "gradient-boosting",
     }
     assert all(stats["mae_mean"] >= 0 for stats in comparison["results"].values())
     naive_mae = comparison["results"]["naive-estimate"]["mae_mean"]
     assert naive_mae >= min(stats["mae_mean"] for stats in comparison["results"].values())
+    for stats in comparison["results"].values():
+        assert {"pooled_mae", "median_ae", "rmse", "fold_mae", "improvement_vs_naive", "servable"} <= set(stats)
+    assert comparison["recommended_candidate"]["name"] in comparison["results"]
+    assert comparison["results"][comparison["recommended_candidate"]["name"]]["servable"]
+    assert comparison["results"]["gradient-boosting"]["servable"] is False
+    assert "sufficient_evidence" in comparison
 
 
 def test_comparison_is_deterministic_for_same_seed() -> None:

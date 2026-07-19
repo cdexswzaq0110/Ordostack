@@ -1,25 +1,112 @@
 {
   "dataset": "duration_training_samples.csv",
+  "evidence_note": "comparison over 14 rows is directional only (needs >= 30); insufficient evidence for automatic promotion",
   "folds": 5,
-  "metric": "mean absolute error (minutes), lower is better",
+  "metric": "absolute error (minutes), lower is better; pooled across folds",
+  "recommended_candidate": {
+    "name": "elastic-net",
+    "pooled_mae": 3.77,
+    "reason": "lowest pooled out-of-sample MAE among candidates the runtime can serve without adding scikit-learn to the serving image"
+  },
   "results": {
+    "dummy-mean": {
+      "fold_mae": [
+        19.76,
+        56.48,
+        38.91,
+        26.0,
+        24.5
+      ],
+      "improvement_vs_naive": -1.3868,
+      "mae_mean": 33.13,
+      "mae_std": 13.29,
+      "median_ae": 29.18,
+      "pooled_mae": 33.75,
+      "rmse": 41.43,
+      "servable": true
+    },
+    "elastic-net": {
+      "fold_mae": [
+        4.45,
+        5.2,
+        4.39,
+        2.41,
+        1.68
+      ],
+      "improvement_vs_naive": 0.7334,
+      "mae_mean": 3.63,
+      "mae_std": 1.34,
+      "median_ae": 3.22,
+      "pooled_mae": 3.77,
+      "rmse": 4.87,
+      "servable": true
+    },
     "gradient-boosting": {
-      "mae_mean": 8.84,
-      "mae_std": 2.88
+      "fold_mae": [
+        4.15,
+        10.87,
+        9.38,
+        5.67,
+        12.81
+      ],
+      "improvement_vs_naive": 0.4151,
+      "mae_mean": 8.58,
+      "mae_std": 3.22,
+      "median_ae": 7.74,
+      "pooled_mae": 8.27,
+      "rmse": 9.36,
+      "servable": false
     },
     "multiplier-table (production)": {
+      "fold_mae": [
+        7.0,
+        7.33,
+        14.0,
+        7.0,
+        7.5
+      ],
+      "improvement_vs_naive": 0.389,
       "mae_mean": 8.57,
-      "mae_std": 2.72
+      "mae_std": 2.72,
+      "median_ae": 8.0,
+      "pooled_mae": 8.64,
+      "rmse": 10.96,
+      "servable": true
     },
     "naive-estimate": {
+      "fold_mae": [
+        11.67,
+        15.67,
+        19.33,
+        9.67,
+        14.5
+      ],
+      "improvement_vs_naive": 0.0,
       "mae_mean": 14.17,
-      "mae_std": 3.33
+      "mae_std": 3.33,
+      "median_ae": 9.0,
+      "pooled_mae": 14.14,
+      "rmse": 18.79,
+      "servable": true
     },
     "ridge-regression": {
-      "mae_mean": 4.95,
-      "mae_std": 1.99
+      "fold_mae": [
+        5.34,
+        5.35,
+        5.16,
+        4.61,
+        1.87
+      ],
+      "improvement_vs_naive": 0.6711,
+      "mae_mean": 4.47,
+      "mae_std": 1.32,
+      "median_ae": 4.34,
+      "pooled_mae": 4.65,
+      "rmse": 5.44,
+      "servable": true
     }
   },
   "rows": 14,
-  "seed": 42
+  "seed": 42,
+  "sufficient_evidence": false
 }
