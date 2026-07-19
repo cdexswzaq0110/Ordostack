@@ -58,6 +58,7 @@ def test_promotion_accepts_candidate_that_beats_baseline(tmp_path) -> None:
         artifact_path=artifact_path,
         metrics_path=metrics_path,
         registry_path=registry_path,
+        allow_insufficient_evidence=True,
     )
 
     assert result["promoted"] is True
@@ -78,6 +79,7 @@ def test_promotion_rejects_candidate_worse_than_baseline(tmp_path) -> None:
             artifact_path=artifact_path,
             metrics_path=metrics_path,
             registry_path=tmp_path / "model_registry.json",
+            allow_insufficient_evidence=True,
         )
 
 
@@ -90,6 +92,7 @@ def test_promotion_rejects_regression_against_active_model(tmp_path) -> None:
         artifact_path=artifact_path,
         metrics_path=metrics_path,
         registry_path=registry_path,
+        allow_insufficient_evidence=True,
     )
 
     # A later candidate that is much worse than the active model must be rejected.
@@ -99,6 +102,7 @@ def test_promotion_rejects_regression_against_active_model(tmp_path) -> None:
             artifact_path=artifact_path,
             metrics_path=worse_metrics,
             registry_path=registry_path,
+            allow_insufficient_evidence=True,
         )
 
 
@@ -111,12 +115,14 @@ def test_promotion_archives_previous_active_model(tmp_path) -> None:
         artifact_path=artifact_path,
         metrics_path=metrics_path,
         registry_path=registry_path,
+        allow_insufficient_evidence=True,
     )
     _, better_metrics = write_candidate(tmp_path, model_mae=6.0, baseline_mae=20.0)
     promotion.promote_duration_model(
         artifact_path=artifact_path,
         metrics_path=better_metrics,
         registry_path=registry_path,
+        allow_insufficient_evidence=True,
     )
 
     registry = json.loads(registry_path.read_text(encoding="utf-8"))
@@ -135,6 +141,7 @@ def test_promotion_allow_regression_overrides_gates(tmp_path) -> None:
         metrics_path=metrics_path,
         registry_path=tmp_path / "model_registry.json",
         allow_regression=True,
+        allow_insufficient_evidence=True,
     )
 
     assert result["promoted"] is True
