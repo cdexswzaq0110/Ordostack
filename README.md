@@ -1,5 +1,7 @@
 # OrdoStack
 
+![OrdoStack balanced planning hero](docs/images/ordostack-hero.png)
+
 OrdoStack is a local-first daily planner. It combines tasks, fixed events, execution logs, schedule generation, and duration prediction into one workflow: plan the day, adjust the schedule, run the work, then compare estimates with reality.
 
 The repository is currently a local Private Beta Candidate. It runs with Docker Compose, does not use paid APIs, and is not a hosted production service.
