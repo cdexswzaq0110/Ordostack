@@ -4,6 +4,8 @@
 
 The selected logo direction is concept A: a balanced hanging mobile.
 
+All logo variants use the same A-version silhouette: the suspension meets the arc at its apex, while the center leaf hangs slightly to the right to counterbalance the larger lower-left leaf and higher right leaf.
+
 It maps the product idea to a simple visual system:
 
 - suspended arcs = daily scheduling flow

@@ -2,17 +2,18 @@
   <title id="title">OrdoStack logo</title>
   <desc id="desc">OrdoStack wordmark with a balanced mobile task mark.</desc>
   <rect width="640" height="220" fill="#F5F5F5"/>
-  <g transform="translate(42 26)">
-    <path d="M72 0V31" stroke="#6F6964" stroke-width="4" stroke-linecap="round"/>
-    <circle cx="72" cy="36" r="6" fill="#F5F5F5" stroke="#6F6964" stroke-width="4"/>
-    <path d="M16 73C39 52 104 48 136 67" stroke="#6F6964" stroke-width="4" stroke-linecap="round"/>
-    <circle cx="19" cy="71" r="5" fill="#F5F5F5" stroke="#6F6964" stroke-width="4"/>
-    <circle cx="134" cy="66" r="5" fill="#F5F5F5" stroke="#6F6964" stroke-width="4"/>
-    <path d="M72 43V96" stroke="#6F6964" stroke-width="4" stroke-linecap="round"/>
-    <circle cx="72" cy="99" r="5" fill="#F5F5F5" stroke="#6F6964" stroke-width="4"/>
-    <path d="M3 86C-6 67 4 47 36 42C48 59 39 81 3 86Z" fill="#111111"/>
-    <path d="M138 80C128 62 137 42 169 37C182 55 173 76 138 80Z" fill="#A39E9A"/>
-    <path d="M72 126C55 113 53 92 77 75C97 89 95 114 72 126Z" fill="#E8E3DC"/>
+  <g transform="translate(36 8) scale(.72)">
+    <path d="M122 20V77" stroke="#6F6964" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="122" cy="84" r="6" fill="#F5F5F5" stroke="#6F6964" stroke-width="3"/>
+    <path d="M122 91V120" stroke="#6F6964" stroke-width="3" stroke-linecap="round"/>
+    <path d="M55 142C85 118 147 109 190 135" stroke="#6F6964" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="55" cy="142" r="5" fill="#F5F5F5" stroke="#6F6964" stroke-width="3"/>
+    <circle cx="190" cy="135" r="5" fill="#F5F5F5" stroke="#6F6964" stroke-width="3"/>
+    <path d="M147 121V173" stroke="#6F6964" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="147" cy="178" r="5" fill="#F5F5F5" stroke="#6F6964" stroke-width="3"/>
+    <path d="M55 148C36 150 20 164 15 180C11 191 13 201 17 204C35 194 50 176 55 148Z" fill="#111111"/>
+    <path d="M194 140C215 137 232 146 238 160C241 169 240 178 239 182C220 174 203 159 194 140Z" fill="#A39E9A"/>
+    <path d="M147 184C133 195 134 213 142 223C147 229 154 232 159 234C167 220 171 201 147 184Z" fill="#E8E3DC"/>
   </g>
   <text x="244" y="121" fill="#111111" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="48" font-weight="600" letter-spacing="12">ORDOSTACK</text>
   <text x="248" y="151" fill="#6F6964" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" letter-spacing="4">BALANCED DAILY ORCHESTRATION</text>
